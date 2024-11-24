@@ -70,20 +70,30 @@
           </button>
         </div>
       </div>
-      <div id="preview-section" style="display: none; margin-bottom: 30px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-          <button id="back-btn" style="padding: 8px 16px; background-color: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer; font-family: Arial, sans-serif; font-weight: 500; font-size: 14px; box-shadow: 0 2px 4px rgba(108, 117, 125, 0.2); transition: all 0.2s ease; display: flex; align-items: center; gap: 6px;">
-            <span style="font-size: 18px;">←</span> Back
-          </button>
-          <h3 style="font-family: Arial, sans-serif; font-size: 16px; color: #2c3e50; margin: 0; font-weight: 600;">Route Details</h3>
-          <div style="width: 80px;"></div>
+      <div id="dsp-progress-section" style="display: none;">
+        <h2 style="font-family: Arial, sans-serif; margin-bottom: 25px; border-bottom: 2px solid #eee; padding-bottom: 15px; color: #2c3e50; font-size: 24px;">DSP Total Progress</h2>
+        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin-bottom: 30px;">
+          <div class="input-group">
+            <label style="display: block; margin-bottom: 8px; color: #2c3e50; font-weight: 600; font-size: 14px;">In Progress:</label>
+            <input type="number" id="in-progress-input" class="progress-input" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px;" min="0">
+          </div>
+          <div class="input-group">
+            <label style="display: block; margin-bottom: 8px; color: #2c3e50; font-weight: 600; font-size: 14px;">At Risk:</label>
+            <input type="number" id="at-risk-input" class="progress-input" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px;" min="0">
+          </div>
+          <div class="input-group">
+            <label style="display: block; margin-bottom: 8px; color: #2c3e50; font-weight: 600; font-size: 14px;">Behind:</label>
+            <input type="number" id="behind-input" class="progress-input" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px;" min="0">
+          </div>
+          <div class="input-group">
+            <label style="display: block; margin-bottom: 8px; color: #2c3e50; font-weight: 600; font-size: 14px;">Package Progress:</label>
+            <input type="number" id="package-progress-input" class="progress-input" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px;" min="0" max="100">
+          </div>
         </div>
-        <div id="route-details" style="max-height: 400px; overflow-y: auto; padding: 15px; background: #f8f9fa; border-radius: 12px; border: 1px solid #edf2f7; scrollbar-width: thin; scrollbar-color: #cbd5e0 #f8f9fa;">
-        </div>
-        <div style="margin-top: 20px; text-align: center;">
+        <div style="text-align: center;">
           <button id="download-btn" style="padding: 12px 30px; background-color: #4CAF50; color: white; border: none; border-radius: 8px; cursor: pointer; font-family: Arial, sans-serif; font-weight: 500; font-size: 15px; box-shadow: 0 4px 6px rgba(76, 175, 80, 0.2); transition: all 0.2s ease; display: inline-flex; align-items: center; gap: 8px;">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" style="margin-right: 4px;">
-              <path d="M8 0a8 8 0 0 1 8 8 8 8 0 0 1-8 8A8 8 0 0 1 0 8a8 8 0 0 1 8-8zM4.5 7.5a.5.5 0 0 0 0 1h5.793l-2.147 2.146a.5.5 0 0 0 .708.708l3-3a.5.5 0 0 0 0-.708l-3-3a.5.5 0 1 0-.708.708L10.293 7.5H4.5z"/>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M8 12L3 7L4.4 5.55L7 8.15V0H9V8.15L11.6 5.55L13 7L8 12ZM2 16C1.45 16 0.979333 15.8043 0.588 15.413C0.196667 15.0217 0.001333 14.5507 0 14V11H2V14H14V11H16V14C16 14.55 15.8043 15.021 15.413 15.413C15.0217 15.805 14.5507 16 14 16H2Z" fill="white"/>
             </svg>
             Download File
           </button>
@@ -532,7 +542,27 @@
 
       // Update download functionality to include RC and POA
       downloadBtn.onclick = () => {
-        const fileContent = behindRoutes.map((route) => {
+        // Get current date and time
+        const now = new Date();
+        const formattedDate = `${now.getMonth() + 1}/${now.getDate()}/${now.getFullYear().toString().substr(-2)}`;
+        const hour = now.getHours();
+        const roundedHour = hour >= 12 ? `${hour === 12 ? 12 : hour - 12}PM` : `${hour === 0 ? 12 : hour}AM`;
+        
+        // Get values from input fields
+        const inProgress = document.getElementById('in-progress-input').value || '0';
+        const atRisk = document.getElementById('at-risk-input').value || '0';
+        const behind = document.getElementById('behind-input').value || '0';
+        const packageProgress = document.getElementById('package-progress-input').value || '0';
+
+        // Create header
+        const header = `/md\n@\n## CRDR UPDATE - ${formattedDate} ${roundedHour}\n\n` +
+                      `**IN PROGRESS: ${inProgress.toString().padStart(2, '0')}**\n` +
+                      `**AT RISK: ${atRisk.toString().padStart(2, '0')}**\n` +
+                      `**BEHIND: ${behind.toString().padStart(2, '0')}**\n` +
+                      `**PACKAGE PROGRESS: ${packageProgress}%**\n\n` +
+                      `---\n\n`;
+
+        const routeContent = behindRoutes.map((route) => {
           const select = daDropdowns.querySelector(`select[data-route-code="${route.routeCode}"]`);
           const associateInfo = select ? select.value : route.associateInfo;
           
@@ -569,6 +599,8 @@
           return `${route.routeCode}: ${associateInfo} (${route.progress})\nRoot Cause: ${rc}\nPoint of Action: ${poa}\n`;
         }).join('\n');
 
+        const fileContent = header + routeContent;
+
         const blob = new Blob([fileContent], { type: "text/plain" });
         const blobURL = URL.createObjectURL(blob);
 
@@ -600,5 +632,16 @@
   backBtn.addEventListener("mouseout", () => {
     backBtn.style.backgroundColor = "#6c757d";
     backBtn.style.boxShadow = "0 2px 4px rgba(108, 117, 125, 0.2)";
+  });
+
+  // Add next button to preview section
+  const previewNextBtn = document.createElement('button');
+  previewNextBtn.innerHTML = 'Next';
+  previewNextBtn.style.cssText = 'padding: 12px 30px; background-color: #4CAF50; color: white; border: none; border-radius: 8px; cursor: pointer; font-family: Arial, sans-serif; font-weight: 500; font-size: 15px; box-shadow: 0 4px 6px rgba(76, 175, 80, 0.2); transition: all 0.2s ease; margin-top: 20px;';
+  modal.querySelector("#preview-section").appendChild(previewNextBtn);
+
+  previewNextBtn.addEventListener('click', () => {
+    modal.querySelector("#preview-section").style.display = 'none';
+    modal.querySelector("#dsp-progress-section").style.display = 'block';
   });
 })();
