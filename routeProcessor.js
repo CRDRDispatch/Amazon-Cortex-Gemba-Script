@@ -61,16 +61,6 @@
     console.log(message);
   };
 
-  const hashString = (str) => {
-    let hash = 0;
-    for (let i = 0; i < str.length; i++) {
-      const char = str.charCodeAt(i);
-      hash = (hash << 5) - hash + char;
-      hash |= 0; // Convert to 32-bit integer
-    }
-    return hash;
-  };
-
   const extractBehindProgress = (progressText) => {
     console.log("Extracting progress from text:", progressText);
     const match = progressText?.match(/(\d+)\s*behind/);
@@ -86,34 +76,16 @@
     return cleanedNames;
   };
 
-  const extractAssociates = (container, isV1) => {
-    console.log("Extracting associates. Version:", isV1 ? "V1" : "V2");
-    if (!isV1) {
-      const associates = Array.from(container.querySelectorAll(".css-1kttr4w"))
-        .map((el) => cleanAssociateNames(el.textContent.trim()))
-        .join(", ");
-      console.log("Extracted associates (V2):", associates);
-      return associates;
-    }
-
-    const associateContainer = container.querySelector(".ml-lg-4.ml-2.mr-2.mr-lg-auto.normal-white-space");
-    const tooltip = associateContainer?.nextElementSibling?.classList.contains("af-tooltip")
-      ? Array.from(associateContainer.nextElementSibling.querySelectorAll("div")).map((el) =>
-          cleanAssociateNames(el.textContent.trim())
-        )
-      : null;
-
-    if (tooltip) {
-      console.log("Extracted associates from tooltip (V1):", tooltip.join(", "));
-      return tooltip.join(", ");
-    }
-
-    const associateInfo = cleanAssociateNames(associateContainer?.textContent.trim() || "No associate info");
-    console.log("Extracted associates (V1):", associateInfo);
-    return associateInfo;
+  const extractAssociates = (container) => {
+    console.log("Extracting associates.");
+    const associates = Array.from(container.querySelectorAll(".css-1kttr4w"))
+      .map((el) => cleanAssociateNames(el.textContent.trim()))
+      .join(", ");
+    console.log("Extracted associates:", associates);
+    return associates;
   };
 
-  const collectRoutes = async (selector, routes, maxScrolls = 20, scrollDelay = 100, isV1 = false) => {
+  const collectRoutes = async (selector, routes, maxScrolls = 20, scrollDelay = 100) => {
     console.log("Starting route collection. Selector:", selector);
     for (let i = 0; i < maxScrolls; i++) {
       console.log(`Scroll iteration ${i + 1} of ${maxScrolls}`);
@@ -122,11 +94,11 @@
 
       elements.forEach((el, index) => {
         console.log(`Processing element ${index + 1} of ${elements.length}`);
-        const routeCodeElem = el.querySelector(".css-1nqzkik") || el.querySelector(".left-column.text-sm div:first-child");
-        const progressElem = el.querySelector(".css-1xac89n.font-weight-bold") || el.querySelector(".progress");
+        const routeCodeElem = el.querySelector(".css-1nqzkik");
+        const progressElem = el.querySelector(".css-1xac89n.font-weight-bold");
 
         const routeCode = routeCodeElem?.textContent.trim() || routeCodeElem?.getAttribute("title");
-        const associateInfo = extractAssociates(el, isV1);
+        const associateInfo = extractAssociates(el);
         const progressRaw = progressElem?.textContent.trim();
         const progress = extractBehindProgress(progressRaw); // Extract only "X behind"
 
@@ -134,11 +106,11 @@
         console.log("Associate Info:", associateInfo);
         console.log("Progress:", progress);
 
-        if (routeCode && progress) {
+        if (routeCode) {
           routes.push({ routeCode, associateInfo, progress });
           console.log("Added route:", { routeCode, associateInfo, progress });
         } else {
-          console.log("Skipped route due to missing code or progress.");
+          console.log("Skipped route due to missing code.");
         }
       });
 
@@ -157,30 +129,26 @@
     console.log("Script started");
     updateProgress("Script started...");
 
-    const isV1 = document.querySelector(".css-hkr77h")?.checked;
-    updateProgress(`Detected Cortex Version: ${isV1 ? "V1" : "V2"}`);
-    console.log(`Cortex Version: ${isV1 ? "V1" : "V2"}`);
+    updateProgress(`Detected Cortex Version: V2`);
+    console.log(`Cortex Version: V2`);
 
-    const routeSelector = isV1
-      ? '[class^="af-link routes-list-item p-2 d-flex align-items-center w-100 route-"]'
-      : ".css-1muusaa";
-
+    const routeSelector = ".css-1muusaa";
     const routes = [];
 
     updateProgress("Scrolling to collect routes...");
-    await collectRoutes(routeSelector, routes, 20, 100, isV1);
+    await collectRoutes(routeSelector, routes, 20, 100);
 
     updateProgress("Scrolling back to the top...");
     window.scrollTo({ top: 0, behavior: "smooth" });
     await new Promise((resolve) => setTimeout(resolve, 2000)); // Wait for everything to load again
 
     updateProgress("Rechecking routes...");
-    await collectRoutes(routeSelector, routes, 20, 100, isV1);
+    await collectRoutes(routeSelector, routes, 20, 100);
 
     updateProgress(`Final collection complete. ${routes.length} routes found.`);
     console.log("Final routes collected:", routes);
 
-    const behindRoutes = routes.filter((route) => route.progress);
+    const behindRoutes = routes.filter((route) => route.progress?.includes("behind"));
     console.log("Behind Routes:", behindRoutes);
 
     if (behindRoutes.length > 0) {
