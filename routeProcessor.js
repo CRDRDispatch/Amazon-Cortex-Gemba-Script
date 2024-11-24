@@ -61,17 +61,16 @@
         </div>
         <div id="route-details" style="max-height: 400px; overflow-y: auto; padding: 15px; background: #f8f9fa; border-radius: 12px; border: 1px solid #edf2f7; scrollbar-width: thin; scrollbar-color: #cbd5e0 #f8f9fa;">
         </div>
-        <div style="margin-top: 20px; text-align: center;">
-          <button id="download-btn" style="padding: 12px 30px; background-color: #4CAF50; color: white; border: none; border-radius: 8px; cursor: pointer; font-family: Arial, sans-serif; font-weight: 500; font-size: 15px; box-shadow: 0 4px 6px rgba(76, 175, 80, 0.2); transition: all 0.2s ease; display: inline-flex; align-items: center; gap: 8px;">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" style="margin-right: 4px;">
-              <path d="M8 0a8 8 0 0 1 8 8 8 8 0 0 1-8 8A8 8 0 0 1 0 8a8 8 0 0 1 8-8zM4.5 7.5a.5.5 0 0 0 0 1h5.793l-2.147 2.146a.5.5 0 0 0 .708.708l3-3a.5.5 0 0 0 0-.708l-3-3a.5.5 0 1 0-.708.708L10.293 7.5H4.5z"/>
-            </svg>
-            Download File
-          </button>
-        </div>
+        <button id="preview-next-btn" style="padding: 12px 30px; background-color: #4CAF50; color: white; border: none; border-radius: 8px; cursor: pointer; font-family: Arial, sans-serif; font-weight: 500; font-size: 15px; box-shadow: 0 4px 6px rgba(76, 175, 80, 0.2); transition: all 0.2s ease; margin-top: 20px;">Next</button>
       </div>
       <div id="dsp-progress-section" style="display: none;">
-        <h2 style="font-family: Arial, sans-serif; margin-bottom: 25px; border-bottom: 2px solid #eee; padding-bottom: 15px; color: #2c3e50; font-size: 24px;">DSP Total Progress</h2>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <button id="progress-back-btn" style="padding: 8px 16px; background-color: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer; font-family: Arial, sans-serif; font-weight: 500; font-size: 14px; box-shadow: 0 2px 4px rgba(108, 117, 125, 0.2); transition: all 0.2s ease; display: flex; align-items: center; gap: 6px;">
+            <span style="font-size: 18px;">←</span> Back
+          </button>
+          <h3 style="font-family: Arial, sans-serif; font-size: 16px; color: #2c3e50; margin: 0; font-weight: 600;">DSP Total Progress</h3>
+          <div style="width: 80px;"></div>
+        </div>
         <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin-bottom: 30px;">
           <div class="input-group">
             <label style="display: block; margin-bottom: 8px; color: #2c3e50; font-weight: 600; font-size: 14px;">In Progress:</label>
@@ -635,13 +634,26 @@
   });
 
   // Add next button to preview section
-  const previewNextBtn = document.createElement('button');
-  previewNextBtn.innerHTML = 'Next';
-  previewNextBtn.style.cssText = 'padding: 12px 30px; background-color: #4CAF50; color: white; border: none; border-radius: 8px; cursor: pointer; font-family: Arial, sans-serif; font-weight: 500; font-size: 15px; box-shadow: 0 4px 6px rgba(76, 175, 80, 0.2); transition: all 0.2s ease; margin-top: 20px;';
-  modal.querySelector("#preview-section").appendChild(previewNextBtn);
+  const previewNextBtn = modal.querySelector("#preview-next-btn");
+  previewNextBtn.addEventListener("click", () => {
+    modal.querySelector("#preview-section").style.display = "none";
+    modal.querySelector("#dsp-progress-section").style.display = "block";
+  });
 
-  previewNextBtn.addEventListener('click', () => {
-    modal.querySelector("#preview-section").style.display = 'none';
-    modal.querySelector("#dsp-progress-section").style.display = 'block';
+  // Add event listeners for the progress back button
+  const progressBackBtn = modal.querySelector("#progress-back-btn");
+  progressBackBtn.addEventListener("click", () => {
+    modal.querySelector("#dsp-progress-section").style.display = "none";
+    modal.querySelector("#preview-section").style.display = "block";
+  });
+
+  progressBackBtn.addEventListener("mouseover", () => {
+    progressBackBtn.style.backgroundColor = "#5a6268";
+    progressBackBtn.style.boxShadow = "0 4px 6px rgba(108, 117, 125, 0.3)";
+  });
+
+  progressBackBtn.addEventListener("mouseout", () => {
+    progressBackBtn.style.backgroundColor = "#6c757d";
+    progressBackBtn.style.boxShadow = "0 2px 4px rgba(108, 117, 125, 0.2)";
   });
 })();
