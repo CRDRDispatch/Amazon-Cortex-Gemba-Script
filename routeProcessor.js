@@ -58,6 +58,7 @@
         progressDetails.innerHTML = `<p>${message}</p>`;
       }
     }
+    console.log(message);
   };
 
   const hashString = (str) => {
@@ -71,19 +72,28 @@
   };
 
   const extractBehindProgress = (progressText) => {
+    console.log("Extracting progress from text:", progressText);
     const match = progressText?.match(/(\d+)\s*behind/);
-    return match ? `${match[1]} behind` : null;
+    const result = match ? `${match[1]} behind` : null;
+    console.log("Extracted progress:", result);
+    return result;
   };
 
   const cleanAssociateNames = (names) => {
-    return names.replace(/\(Cornerstone Delivery Service\)/g, "").trim();
+    console.log("Cleaning associate names:", names);
+    const cleanedNames = names.replace(/\(Cornerstone Delivery Service\)/g, "").trim();
+    console.log("Cleaned associate names:", cleanedNames);
+    return cleanedNames;
   };
 
   const extractAssociates = (container, isV1) => {
+    console.log("Extracting associates. Version:", isV1 ? "V1" : "V2");
     if (!isV1) {
-      return Array.from(container.querySelectorAll(".css-1kttr4w"))
+      const associates = Array.from(container.querySelectorAll(".css-1kttr4w"))
         .map((el) => cleanAssociateNames(el.textContent.trim()))
         .join(", ");
+      console.log("Extracted associates (V2):", associates);
+      return associates;
     }
 
     const associateContainer = container.querySelector(".ml-lg-4.ml-2.mr-2.mr-lg-auto.normal-white-space");
@@ -94,17 +104,24 @@
       : null;
 
     if (tooltip) {
+      console.log("Extracted associates from tooltip (V1):", tooltip.join(", "));
       return tooltip.join(", ");
     }
 
-    return cleanAssociateNames(associateContainer?.textContent.trim() || "No associate info");
+    const associateInfo = cleanAssociateNames(associateContainer?.textContent.trim() || "No associate info");
+    console.log("Extracted associates (V1):", associateInfo);
+    return associateInfo;
   };
 
   const collectRoutes = async (selector, uniqueKeys, routes, maxScrolls = 20, scrollDelay = 100, isV1 = false) => {
+    console.log("Starting route collection. Selector:", selector);
     for (let i = 0; i < maxScrolls; i++) {
+      console.log(`Scroll iteration ${i + 1} of ${maxScrolls}`);
       const elements = document.querySelectorAll(selector);
+      console.log(`Found ${elements.length} route elements`);
 
-      elements.forEach((el) => {
+      elements.forEach((el, index) => {
+        console.log(`Processing element ${index + 1} of ${elements.length}`);
         const routeCodeElem = el.querySelector(".css-1nqzkik") || el.querySelector(".left-column.text-sm div:first-child");
         const progressElem = el.querySelector(".css-1xac89n.font-weight-bold") || el.querySelector(".progress");
 
@@ -113,10 +130,17 @@
         const progressRaw = progressElem?.textContent.trim();
         const progress = extractBehindProgress(progressRaw); // Extract only "X behind"
 
+        console.log("Route Code:", routeCode);
+        console.log("Associate Info:", associateInfo);
+        console.log("Progress:", progress);
+
         const uniqueKey = hashString(`${routeCode}-${associateInfo}-${progress}`);
         if (!uniqueKeys.has(uniqueKey) && progress) {
           uniqueKeys.add(uniqueKey);
           routes.push({ routeCode, associateInfo, progress });
+          console.log("Added route:", { routeCode, associateInfo, progress });
+        } else {
+          console.log("Skipped duplicate or non-behind route.");
         }
       });
 
@@ -125,6 +149,7 @@
     }
 
     updateProgress(`Collected ${routes.length} unique routes so far.`);
+    console.log("Completed route collection. Total routes:", routes.length);
   };
 
   const modal = createModal();
@@ -136,6 +161,7 @@
 
     const isV1 = document.querySelector(".css-hkr77h")?.checked;
     updateProgress(`Detected Cortex Version: ${isV1 ? "V1" : "V2"}`);
+    console.log(`Cortex Version: ${isV1 ? "V1" : "V2"}`);
 
     const routeSelector = isV1
       ? '[class^="af-link routes-list-item p-2 d-flex align-items-center w-100 route-"]'
@@ -155,8 +181,10 @@
     await collectRoutes(routeSelector, uniqueKeys, routes, 20, 100, isV1);
 
     updateProgress(`Final collection complete. ${routes.length} unique routes found.`);
+    console.log("Final routes collected:", routes);
 
     const behindRoutes = routes.filter((route) => route.progress);
+    console.log("Behind Routes:", behindRoutes);
 
     if (behindRoutes.length > 0) {
       const fileContent = behindRoutes
