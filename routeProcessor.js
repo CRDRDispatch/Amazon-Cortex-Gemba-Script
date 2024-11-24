@@ -1,6 +1,5 @@
 (async function () {
   const createModal = () => {
-    // Create the overlay
     const overlay = document.createElement("div");
     overlay.id = "custom-overlay";
     overlay.style.position = "fixed";
@@ -12,7 +11,6 @@
     overlay.style.zIndex = "9999";
     document.body.appendChild(overlay);
 
-    // Create the modal
     const modal = document.createElement("div");
     modal.id = "custom-modal";
     modal.style.position = "fixed";
@@ -42,7 +40,6 @@
 
     document.body.appendChild(modal);
 
-    // Close the modal and overlay on button click
     modal.querySelector("#close-btn").addEventListener("click", () => {
       modal.remove();
       overlay.remove();
@@ -58,7 +55,7 @@
     }
   };
 
-  const waitForElements = (selector, timeout = 10000) => {
+  const waitForElements = (selector, timeout = 15000) => {
     return new Promise((resolve, reject) => {
       const observer = new MutationObserver(() => {
         const elements = document.querySelectorAll(selector);
@@ -86,14 +83,13 @@
     updateProgress("Script started...");
 
     const isV1 = document.querySelector(".css-hkr77h")?.checked;
-    console.log("Cortex Version:", isV1 ? "V1" : "V2");
     updateProgress(`Detected Cortex Version: ${isV1 ? "V1" : "V2"}`);
 
     const routeSelector = isV1
       ? '[class^="af-link routes-list-item p-2 d-flex align-items-center w-100 route-"]'
       : ".css-1muusaa";
 
-    const routeContainers = await waitForElements(routeSelector).catch((err) => {
+    let routeContainers = await waitForElements(routeSelector).catch((err) => {
       console.error(err);
       modal.querySelector("#progress-details").innerHTML = `<p>${err}</p>`;
       return [];
@@ -104,46 +100,53 @@
     updateProgress(`Found ${routeContainers.length} routes. Processing...`);
 
     const results = [];
-    routeContainers.forEach((container, index) => {
-      console.log(`Processing container ${index + 1}`);
+    const processedIds = new Set();
 
-      // Route Code
-      const routeCodeElem = isV1
-        ? container.querySelector(".left-column.text-sm div:first-child")
-        : container.querySelector(".css-1nqzkik");
-      const routeCode = isV1
-        ? routeCodeElem?.textContent.trim()
-        : routeCodeElem?.getAttribute("title")?.trim();
+    const processRoutes = (containers) => {
+      containers.forEach((container, index) => {
+        if (processedIds.has(container)) return;
 
-      // Associated Info
-      const associateContainers = isV1
-        ? container.querySelector(".ml-lg-4.ml-2.mr-2.mr-lg-auto.normal-white-space")
-        : container.querySelectorAll(".css-1kttr4w");
-      const associateNames = Array.from(associateContainers || []).map((el) => el.textContent.trim()).join(", ");
+        processedIds.add(container);
 
-      // Route Progress
-      const progressElem = isV1
-        ? container.querySelector(".progress")
-        : container.querySelector(".css-1xac89n.font-weight-bold");
-      let progressText = progressElem?.textContent.trim();
+        const routeCodeElem = isV1
+          ? container.querySelector(".left-column.text-sm div:first-child")
+          : container.querySelector(".css-1nqzkik");
+        const routeCode = isV1
+          ? routeCodeElem?.textContent.trim()
+          : routeCodeElem?.getAttribute("title")?.trim();
 
-      // Extract number before "behind" and filter routes
-      const behindMatch = progressText?.match(/(\d+)\s*behind/);
-      progressText = behindMatch ? `${behindMatch[1]} behind` : null;
+        const associateContainers = isV1
+          ? container.querySelector(".ml-lg-4.ml-2.mr-2.mr-lg-auto.normal-white-space")
+          : container.querySelectorAll(".css-1kttr4w");
+        const associateNames = Array.from(associateContainers || [])
+          .map((el) => el.textContent.trim())
+          .join(", ");
 
-      console.log({
-        routeCode,
-        associateNames,
-        progressText,
+        const progressElem = isV1
+          ? container.querySelector(".progress")
+          : container.querySelector(".css-1xac89n.font-weight-bold");
+        let progressText = progressElem?.textContent.trim();
+
+        const behindMatch = progressText?.match(/(\d+)\s*behind/);
+        progressText = behindMatch ? `${behindMatch[1]} behind` : null;
+
+        if (routeCode && progressText) {
+          results.push(`${routeCode}: ${associateNames || "No associate info"} (${progressText})`);
+        }
       });
+    };
 
-      // Only include routes with "behind" progress info
-      if (routeCode && progressText) {
-        results.push(`${routeCode}: ${associateNames || "No associate info"} (${progressText})`);
-      }
+    processRoutes(routeContainers);
+
+    updateProgress(`Initial processing complete. Checking for missed routes...`);
+    routeContainers = await waitForElements(routeSelector).catch((err) => {
+      console.warn("Backup check failed:", err);
+      return [];
     });
 
-    updateProgress("Processing complete.");
+    processRoutes(routeContainers);
+
+    updateProgress("Final processing complete.");
 
     if (results.length > 0) {
       updateProgress(`Exporting ${results.length} routes.`);
