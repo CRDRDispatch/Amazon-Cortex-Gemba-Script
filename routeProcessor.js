@@ -1,4 +1,5 @@
 (async function () {
+  // Create a modal for progress and downloading the file
   const createModal = () => {
     const modal = document.createElement("div");
     modal.id = "custom-modal";
@@ -31,32 +32,33 @@
     const isV1 = document.querySelector(".css-hkr77h")?.checked;
     console.log("Cortex Version:", isV1 ? "V1" : "V2");
 
-    const waitForRoutes = (timeout = 10000) => {
+    const waitForRoutes = (timeout = 10000, interval = 500) => {
       return new Promise((resolve, reject) => {
         let foundRoutes = false;
+        let elapsed = 0;
 
-        const observer = new MutationObserver(() => {
-          const routeContainers = document.querySelectorAll(
-            ".routes-list.d-flex.flex-1.flex-column.border-y-list > div"
-          );
-          if (routeContainers.length > 0) {
-            console.log(`Found ${routeContainers.length} route containers`);
-            observer.disconnect();
-            foundRoutes = true;
-            resolve(routeContainers);
+        const intervalCheck = setInterval(() => {
+          console.log("Checking for parent container...");
+          const parentContainer = document.querySelector(".routes-list.d-flex.flex-1.flex-column.border-y-list");
+          console.log("Parent container found:", !!parentContainer);
+
+          if (parentContainer) {
+            const routeContainers = parentContainer.querySelectorAll("div");
+            if (routeContainers.length > 0) {
+              console.log(`Found ${routeContainers.length} route containers`);
+              clearInterval(intervalCheck);
+              foundRoutes = true;
+              resolve(routeContainers);
+            }
           }
-        });
 
-        observer.observe(document.body, { childList: true, subtree: true });
-
-        // Timeout fallback
-        setTimeout(() => {
-          if (!foundRoutes) {
-            observer.disconnect();
+          elapsed += interval;
+          if (elapsed >= timeout) {
+            clearInterval(intervalCheck);
             console.warn("Timeout reached. No route containers found.");
             reject("Timeout reached while waiting for routes.");
           }
-        }, timeout);
+        }, interval);
       });
     };
 
