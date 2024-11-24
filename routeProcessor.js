@@ -134,10 +134,13 @@
     console.log("Script started");
     updateProgress("Script started...");
 
-    updateProgress(`Detected Cortex Version: V2`);
-    console.log(`Cortex Version: V2`);
+    const isV1 = document.querySelector(".css-hkr77h")?.checked;
+    updateProgress(`Detected Cortex Version: ${isV1 ? "V1" : "V2"}`);
+    console.log(`Cortex Version: ${isV1 ? "V1" : "V2"}`);
 
-    const routeSelector = ".css-1muusaa";
+    const routeSelector = isV1
+      ? '[class^="af-link routes-list-item p-2 d-flex align-items-center w-100 route-"]'
+      : ".css-1muusaa";
     const routes = [];
 
     updateProgress("Scrolling to collect routes...");
