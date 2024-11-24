@@ -48,24 +48,23 @@
     return modal;
   };
 
-  const updateProgress = (message) => {
+  const updateProgress = (message, append = true) => {
     const progressDetails = document.getElementById("progress-details");
     if (progressDetails) {
-      progressDetails.innerHTML += `<p>${message}</p>`;
+      if (append) {
+        progressDetails.innerHTML += `<p>${message}</p>`;
+      } else {
+        progressDetails.innerHTML = `<p>${message}</p>`;
+      }
     }
   };
 
-  const scrollToBottom = async (maxScrolls = 100, scrollDelay = 500) => {
-    let scrollCount = 0;
-    while (scrollCount < maxScrolls) {
+  const scrollToBottom = async (maxScrolls = 20, scrollDelay = 500) => {
+    updateProgress("Scrolling...", false);
+    for (let scrollCount = 0; scrollCount < maxScrolls; scrollCount++) {
       window.scrollBy(0, window.innerHeight);
-      scrollCount++;
-      updateProgress(`Scrolling... (${scrollCount}/${maxScrolls})`);
-      console.log(`Scrolling... (${scrollCount}/${maxScrolls})`);
-
       await new Promise((resolve) => setTimeout(resolve, scrollDelay));
     }
-    return document.body.scrollHeight;
   };
 
   const modal = createModal();
@@ -82,8 +81,8 @@
       ? '[class^="af-link routes-list-item p-2 d-flex align-items-center w-100 route-"]'
       : ".css-1muusaa";
 
-    await scrollToBottom(100, 500);
-    updateProgress("Scrolling complete. Collecting elements...");
+    await scrollToBottom(20, 500);
+    updateProgress("Scrolling complete. Collecting elements...", false);
 
     const routeContainers = Array.from(document.querySelectorAll(routeSelector));
     if (!routeContainers || routeContainers.length === 0) {
@@ -96,7 +95,7 @@
     const results = [];
     const processedIds = new Set();
 
-    routeContainers.forEach((container, index) => {
+    routeContainers.forEach((container) => {
       if (processedIds.has(container)) return;
 
       processedIds.add(container);
