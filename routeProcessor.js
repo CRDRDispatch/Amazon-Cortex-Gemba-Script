@@ -70,6 +70,11 @@
     return hash;
   };
 
+  const extractBehindProgress = (progressText) => {
+    const match = progressText?.match(/(\d+)\s*behind/);
+    return match ? `${match[1]} behind` : null;
+  };
+
   const collectRoutes = async (selector, uniqueKeys, routes, maxScrolls = 20, scrollDelay = 100) => {
     for (let i = 0; i < maxScrolls; i++) {
       const elements = document.querySelectorAll(selector);
@@ -81,11 +86,11 @@
 
         const routeCode = routeCodeElem?.textContent.trim() || routeCodeElem?.getAttribute("title");
         const associateName = associateElem?.textContent.trim();
-        const progress = progressElem?.textContent.trim();
+        const progressRaw = progressElem?.textContent.trim();
+        const progress = extractBehindProgress(progressRaw); // Extract only "X behind"
 
-        // Combine key elements to create a unique hash
         const uniqueKey = hashString(`${routeCode}-${associateName}-${progress}`);
-        if (!uniqueKeys.has(uniqueKey)) {
+        if (!uniqueKeys.has(uniqueKey) && progress) {
           uniqueKeys.add(uniqueKey);
           routes.push({ routeCode, associateName, progress });
         }
@@ -127,7 +132,7 @@
 
     updateProgress(`Final collection complete. ${routes.length} unique routes found.`);
 
-    const behindRoutes = routes.filter((route) => route.progress && route.progress.includes("behind"));
+    const behindRoutes = routes.filter((route) => route.progress);
 
     if (behindRoutes.length > 0) {
       const fileContent = behindRoutes
