@@ -1,9 +1,23 @@
 (() => {
   console.log("Script started...");
 
-  // Create a modal for progress
+  // Create the modal for progress
   const createModal = () => {
     console.log("Creating modal...");
+
+    // Create overlay
+    const overlay = document.createElement("div");
+    overlay.id = "custom-overlay";
+    overlay.style.position = "fixed";
+    overlay.style.top = 0;
+    overlay.style.left = 0;
+    overlay.style.width = "100%";
+    overlay.style.height = "100%";
+    overlay.style.backgroundColor = "rgba(0, 0, 0, 0.5)";
+    overlay.style.zIndex = 9999;
+    document.body.appendChild(overlay);
+
+    // Create modal container
     const modal = document.createElement("div");
     modal.id = "custom-modal";
     modal.style.position = "fixed";
@@ -13,17 +27,57 @@
     modal.style.background = "white";
     modal.style.border = "1px solid #ccc";
     modal.style.boxShadow = "0 4px 6px rgba(0, 0, 0, 0.1)";
+    modal.style.borderRadius = "8px";
     modal.style.padding = "20px";
-    modal.style.zIndex = 10000;
+    modal.style.width = "400px"; // Adjust modal size
     modal.style.textAlign = "center";
+    modal.style.zIndex = 10000;
 
-    modal.innerHTML = `
-      <p>Processing route data...</p>
-      <button id="download-btn" style="display: none; margin-top: 10px;">Download File</button>
-    `;
+    // Add logo
+    const logo = document.createElement("img");
+    logo.src = "https://crdrdispatch.github.io/GembaScript/Logo.svg";
+    logo.alt = "Company Logo";
+    logo.style.width = "150px";
+    logo.style.marginBottom = "20px";
+    modal.appendChild(logo);
+
+    // Add text
+    const message = document.createElement("p");
+    message.textContent = "Processing route data...";
+    modal.appendChild(message);
+
+    // Add close button
+    const closeButton = document.createElement("button");
+    closeButton.textContent = "Close";
+    closeButton.style.marginTop = "20px";
+    closeButton.style.backgroundColor = "#007bff";
+    closeButton.style.color = "white";
+    closeButton.style.border = "none";
+    closeButton.style.padding = "10px 20px";
+    closeButton.style.borderRadius = "5px";
+    closeButton.style.cursor = "pointer";
+    closeButton.onclick = () => {
+      document.body.removeChild(modal);
+      document.body.removeChild(overlay);
+    };
+    modal.appendChild(closeButton);
+
+    // Add download button (initially hidden)
+    const downloadBtn = document.createElement("button");
+    downloadBtn.id = "download-btn";
+    downloadBtn.style.display = "none";
+    downloadBtn.style.marginTop = "10px";
+    downloadBtn.style.backgroundColor = "#28a745";
+    downloadBtn.style.color = "white";
+    downloadBtn.style.border = "none";
+    downloadBtn.style.padding = "10px 20px";
+    downloadBtn.style.borderRadius = "5px";
+    downloadBtn.style.cursor = "pointer";
+    modal.appendChild(downloadBtn);
 
     document.body.appendChild(modal);
-    return modal;
+
+    return { modal, downloadBtn };
   };
 
   const waitForElements = (selector, timeout = 5000) => {
@@ -42,8 +96,7 @@
     });
   };
 
-  const modal = createModal();
-  const downloadBtn = modal.querySelector("#download-btn");
+  const { modal, downloadBtn } = createModal();
 
   (async function () {
     try {
@@ -92,11 +145,11 @@
           URL.revokeObjectURL(blobURL); // Clean up the blob URL
         };
       } else {
-        modal.innerHTML = "<p>No relevant route data found.</p>";
+        modal.querySelector("p").textContent = "No relevant route data found.";
       }
     } catch (error) {
       console.error("Error processing route data:", error);
-      modal.innerHTML = `<p>Error: ${error.message}</p>`;
+      modal.querySelector("p").textContent = `Error: ${error.message}`;
     }
   })();
 })();
