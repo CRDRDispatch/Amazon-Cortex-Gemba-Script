@@ -34,38 +34,38 @@
     const results = [];
 
     if (isV1) {
-      console.log("Using V1 Cortex");
+  console.log("Using V1 Cortex");
+  const routeContainers = document.querySelectorAll(".routes-list.d-flex.flex-1.flex-column.border-y-list > div");
+  console.log(`Found ${routeContainers.length} route containers`);
 
-      // V1 route extraction
-      const routeContainers = document.querySelectorAll(
-        ".routes-list.d-flex.flex-1.flex-column.border-y-list > div"
-      );
+  routeContainers.forEach((container, index) => {
+    console.log(`Processing container ${index + 1}`);
+    const routeCodeElem = container.querySelector(".left-column.text-sm");
+    const associateContainer = container.querySelector(".ml-lg-4.ml-2.mr-2.mr-lg-auto.normal-white-space");
+    const tooltipElem = associateContainer.nextElementSibling?.classList.contains("af-tooltip")
+      ? associateContainer.nextElementSibling.querySelectorAll("div")
+      : null;
+    const progressElem = container.querySelector(".progress");
 
-      routeContainers.forEach((container) => {
-        const routeCodeElem = container.querySelector(
-          ".left-column.text-sm"
-        );
-        const associateContainer = container.querySelector(
-          ".ml-lg-4.ml-2.mr-2.mr-lg-auto.normal-white-space"
-        );
-        const tooltipElem = associateContainer.nextElementSibling?.classList.contains(
-          "af-tooltip"
-        )
-          ? associateContainer.nextElementSibling.querySelectorAll("div")
-          : null;
-        const progressElem = container.querySelector(".progress");
+    console.log({
+      routeCodeElem,
+      associateContainer,
+      tooltipElem,
+      progressElem,
+    });
 
-        const routeCode = routeCodeElem?.textContent.trim();
-        const associateNames = tooltipElem
-          ? Array.from(tooltipElem).map((el) => el.textContent.trim()).join(", ")
-          : associateContainer.querySelector(".text-truncate")?.textContent.trim();
-        const progressText = progressElem?.textContent.trim();
+    const routeCode = routeCodeElem?.textContent.trim();
+    const associateNames = tooltipElem
+      ? Array.from(tooltipElem).map((el) => el.textContent.trim()).join(", ")
+      : associateContainer.querySelector(".text-truncate")?.textContent.trim();
+    const progressText = progressElem?.textContent.trim();
 
-        if (routeCode && associateNames && progressText && progressText.includes("behind")) {
-          results.push(`${routeCode}: ${associateNames} (${progressText})`);
-        }
-      });
-    } else {
+    if (routeCode && associateNames && progressText && progressText.includes("behind")) {
+      console.log(`Adding route: ${routeCode}`);
+      results.push(`${routeCode}: ${associateNames} (${progressText})`);
+    }
+  });
+} else {
       console.log("Using V2 Cortex");
 
       // V2 route extraction
