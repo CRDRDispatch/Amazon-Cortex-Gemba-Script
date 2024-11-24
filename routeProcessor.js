@@ -34,9 +34,12 @@
       <div style="margin-bottom: 20px;">
         <img src="https://crdrdispatch.github.io/GembaScript/Logo.svg" alt="Logo" style="height: 70px; display: block; margin: 0 auto;">
       </div>
-      <h2 style="font-family: Arial, sans-serif; margin-bottom: 20px;">Gimme That GEMBA</h2>
-      <div id="route-dropdowns" style="font-family: Arial, sans-serif; text-align: left; margin-bottom: 20px;"></div>
-      <button id="download-btn" style="display: none; margin: 0 auto; padding: 10px 20px; background-color: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer; font-family: Arial, sans-serif; box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);">Download File</button>
+      <h2 style="font-family: Arial, sans-serif; margin-bottom: 20px; border-bottom: 1px solid #ddd; padding-bottom: 10px;">Gimme That GEMBA</h2>
+      <div id="progress-details" style="font-family: Arial, sans-serif; text-align: left; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid #ddd;">
+        <p>Initializing...</p>
+      </div>
+      <div id="route-dropdowns" style="font-family: Arial, sans-serif; text-align: left; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid #ddd;"></div>
+      <button id="download-btn" style="display: none; margin: 20px auto 0; padding: 10px 20px; background-color: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer; font-family: Arial, sans-serif; box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);">Download File</button>
     `;
 
     document.body.appendChild(modal);
@@ -47,6 +50,17 @@
     });
 
     return modal;
+  };
+
+  const updateProgress = (message, append = true) => {
+    const progressDetails = document.getElementById("progress-details");
+    if (progressDetails) {
+      if (append) {
+        progressDetails.innerHTML += `<p>${message}</p>`;
+      } else {
+        progressDetails.innerHTML = `<p>${message}</p>`;
+      }
+    }
   };
 
   const updateDropdowns = (routesWithDropdowns) => {
@@ -105,7 +119,7 @@
     return [cleanAssociateNames(associateContainer?.textContent.trim() || "No associate info")];
   };
 
-  const collectRoutes = async (selector, uniqueKeys, routes, routesWithDropdowns, maxScrolls = 20, scrollDelay = 100, isV1 = false) => {
+  const collectRoutes = async (selector, uniqueKeys, routes, routesWithDropdowns, maxScrolls = 20, scrollDelay = 200, isV1 = false) => {
     for (let i = 0; i < maxScrolls; i++) {
       const elements = document.querySelectorAll(selector);
 
@@ -131,6 +145,7 @@
       });
 
       elements[elements.length - 1]?.scrollIntoView({ behavior: "smooth", block: "end" });
+      updateProgress(`Scrolling... Step ${i + 1} of ${maxScrolls}`, false);
       await new Promise((resolve) => setTimeout(resolve, scrollDelay));
     }
   };
@@ -140,6 +155,7 @@
 
   try {
     console.log("Script started");
+    updateProgress("Script started...");
 
     const isV1 = document.querySelector(".css-hkr77h")?.checked;
 
@@ -151,7 +167,8 @@
     const routes = [];
     const routesWithDropdowns = [];
 
-    await collectRoutes(routeSelector, uniqueKeys, routes, routesWithDropdowns, 20, 100, isV1);
+    updateProgress("Collecting routes...");
+    await collectRoutes(routeSelector, uniqueKeys, routes, routesWithDropdowns, 20, 200, isV1);
 
     if (routesWithDropdowns.length > 0) {
       updateDropdowns(routesWithDropdowns);
@@ -196,5 +213,6 @@
     }
   } catch (error) {
     console.error("Error during route data processing:", error);
+    updateProgress(`Error: ${error.message}`);
   }
 })();
