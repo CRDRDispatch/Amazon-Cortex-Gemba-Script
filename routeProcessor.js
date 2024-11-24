@@ -1,16 +1,5 @@
 (async function () {
   const createModal = () => {
-    const overlay = document.createElement("div");
-    overlay.id = "custom-overlay";
-    overlay.style.position = "fixed";
-    overlay.style.top = "0";
-    overlay.style.left = "0";
-    overlay.style.width = "100%";
-    overlay.style.height = "100%";
-    overlay.style.background = "rgba(0, 0, 0, 0.5)";
-    overlay.style.zIndex = "9999";
-    document.body.appendChild(overlay);
-
     const modal = document.createElement("div");
     modal.id = "custom-modal";
     modal.style.position = "fixed";
@@ -34,11 +23,12 @@
     modal.style.overflowY = "auto";
     modal.style.willChange = "transform";
     modal.style.isolation = "isolate";
+    modal.style.cursor = "move";  // Indicate draggable
 
     modal.innerHTML = `
       <button id="close-btn" style="position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 18px; cursor: pointer; color: #666; transition: color 0.2s ease;">✖</button>
-      <div style="margin-bottom: 25px;">
-        <img src="https://crdrdispatch.github.io/GembaScript/Logo.svg" alt="Logo" style="height: 90px; display: block; margin: 0 auto; -webkit-transform: translateZ(0); transform: translateZ(0);">
+      <div style="margin-bottom: 25px; cursor: move;">
+        <img src="https://crdrdispatch.github.io/GembaScript/Logo.svg" alt="Logo" style="height: 90px; display: block; margin: 0 auto; -webkit-transform: translateZ(0); transform: translateZ(0); pointer-events: none;">
       </div>
       <h2 style="font-family: Arial, sans-serif; margin-bottom: 25px; border-bottom: 2px solid #eee; padding-bottom: 15px; color: #2c3e50; font-size: 24px;">Gimme That GEMBA</h2>
       <div id="progress-section" style="margin-bottom: 30px;">
@@ -88,21 +78,67 @@
 
     document.body.appendChild(modal);
 
+    // Make modal draggable
+    let isDragging = false;
+    let currentX;
+    let currentY;
+    let initialX;
+    let initialY;
+    let xOffset = 0;
+    let yOffset = 0;
+
+    const dragStart = (e) => {
+      if (e.target.closest('button') || e.target.closest('select')) return;  // Don't drag when clicking buttons or dropdowns
+
+      if (e.type === "touchstart") {
+        initialX = e.touches[0].clientX - xOffset;
+        initialY = e.touches[0].clientY - yOffset;
+      } else {
+        initialX = e.clientX - xOffset;
+        initialY = e.clientY - yOffset;
+      }
+
+      if (e.target === modal || e.target.closest('.modal-header')) {
+        isDragging = true;
+      }
+    };
+
+    const dragEnd = () => {
+      initialX = currentX;
+      initialY = currentY;
+      isDragging = false;
+    };
+
+    const drag = (e) => {
+      if (isDragging) {
+        e.preventDefault();
+
+        if (e.type === "touchmove") {
+          currentX = e.touches[0].clientX - initialX;
+          currentY = e.touches[0].clientY - initialY;
+        } else {
+          currentX = e.clientX - initialX;
+          currentY = e.clientY - initialY;
+        }
+
+        xOffset = currentX;
+        yOffset = currentY;
+
+        modal.style.transform = `translate(${currentX}px, ${currentY}px) translateZ(0)`;
+        modal.style.webkitTransform = `translate(${currentX}px, ${currentY}px) translateZ(0)`;
+      }
+    };
+
+    modal.addEventListener("touchstart", dragStart, false);
+    modal.addEventListener("touchend", dragEnd, false);
+    modal.addEventListener("touchmove", drag, false);
+    modal.addEventListener("mousedown", dragStart, false);
+    modal.addEventListener("mouseup", dragEnd, false);
+    modal.addEventListener("mousemove", drag, false);
+    modal.addEventListener("mouseleave", dragEnd, false);
+
     modal.querySelector("#close-btn").addEventListener("click", () => {
       modal.remove();
-      overlay.remove();
-    });
-
-    // Add toggle functionality for progress section
-    const progressDetails = modal.querySelector("#progress-details");
-    modalToggleBtn.addEventListener("click", () => {
-      if (progressDetails.style.display === "none") {
-        progressDetails.style.display = "block";
-        modalToggleBtn.textContent = "Hide";
-      } else {
-        progressDetails.style.display = "none";
-        modalToggleBtn.textContent = "Show";
-      }
     });
 
     return modal;
@@ -112,7 +148,7 @@
     const progressDetails = document.getElementById("progress-details");
     const progressStatus = document.getElementById("progress-status");
     const toggleBtn = document.getElementById("toggle-progress");
-    
+
     if (progressDetails) {
       if (append) {
         progressDetails.innerHTML += `<p>${message}</p>`;
@@ -120,13 +156,13 @@
         progressDetails.innerHTML = `<p>${message}</p>`;
       }
     }
-    
+
     if (complete && progressStatus && toggleBtn) {
       progressStatus.style.display = "inline-block";
       progressDetails.style.display = "none";
       toggleBtn.textContent = "Show";
     }
-    
+
     console.log(message);
   };
 
@@ -256,10 +292,10 @@
       const daSelectionSection = modal.querySelector("#da-selection-section");
       const daDropdowns = modal.querySelector("#da-dropdowns");
       const downloadSection = modal.querySelector("#download-section");
-      
+
       // Show the DA selection section
       daSelectionSection.style.display = "block";
-      
+
       // Create dropdowns for routes with multiple DAs
       behindRoutes.forEach((route) => {
         const das = route.associateInfo.split(", ");
@@ -271,14 +307,14 @@
           container.style.borderRadius = "8px";
           container.style.boxShadow = "0 2px 4px rgba(0,0,0,0.05)";
           container.style.border = "1px solid #edf2f7";
-          
+
           const label = document.createElement("label");
           label.textContent = `${route.routeCode} (${route.progress}):`;
           label.style.display = "block";
           label.style.marginBottom = "8px";
           label.style.fontWeight = "600";
           label.style.color = "#2c3e50";
-          
+
           const select = document.createElement("select");
           select.style.width = "100%";
           select.style.padding = "8px 12px";
@@ -289,14 +325,14 @@
           select.style.color = "#2c3e50";
           select.style.fontSize = "14px";
           select.dataset.routeCode = route.routeCode;
-          
+
           das.forEach((da) => {
             const option = document.createElement("option");
             option.value = da;
             option.textContent = da;
             select.appendChild(option);
           });
-          
+
           container.appendChild(label);
           container.appendChild(select);
           daDropdowns.appendChild(container);
@@ -307,7 +343,7 @@
       downloadSection.style.display = "block";
       const downloadBtn = modal.querySelector("#download-btn");
       downloadBtn.textContent = `Download (${behindRoutes.length} Routes)`;
-      
+
       downloadBtn.onclick = () => {
         // Create file content with selected DAs
         const fileContent = behindRoutes.map((route) => {
