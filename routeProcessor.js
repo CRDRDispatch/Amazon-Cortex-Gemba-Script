@@ -113,7 +113,7 @@
     return associateInfo;
   };
 
-  const collectRoutes = async (selector, uniqueKeys, routes, maxScrolls = 20, scrollDelay = 100, isV1 = false) => {
+  const collectRoutes = async (selector, routes, maxScrolls = 20, scrollDelay = 100, isV1 = false) => {
     console.log("Starting route collection. Selector:", selector);
     for (let i = 0; i < maxScrolls; i++) {
       console.log(`Scroll iteration ${i + 1} of ${maxScrolls}`);
@@ -134,13 +134,15 @@
         console.log("Associate Info:", associateInfo);
         console.log("Progress:", progress);
 
-        const uniqueKey = hashString(`${routeCode}-${associateInfo}-${progress}`);
-        if (!uniqueKeys.has(uniqueKey) && progress) {
-          uniqueKeys.add(uniqueKey);
-          routes.push({ routeCode, associateInfo, progress });
-          console.log("Added route:", { routeCode, associateInfo, progress });
+        if (routeCode && progress) {
+          if (!routes.some(route => route.routeCode === routeCode)) {
+            routes.push({ routeCode, associateInfo, progress });
+            console.log("Added route:", { routeCode, associateInfo, progress });
+          } else {
+            console.log("Skipped duplicate route code:", routeCode);
+          }
         } else {
-          console.log("Skipped duplicate or non-behind route.");
+          console.log("Skipped route due to missing code or progress.");
         }
       });
 
@@ -167,18 +169,17 @@
       ? '[class^="af-link routes-list-item p-2 d-flex align-items-center w-100 route-"]'
       : ".css-1muusaa";
 
-    const uniqueKeys = new Set();
     const routes = [];
 
     updateProgress("Scrolling to collect routes...");
-    await collectRoutes(routeSelector, uniqueKeys, routes, 20, 100, isV1);
+    await collectRoutes(routeSelector, routes, 20, 100, isV1);
 
     updateProgress("Scrolling back to the top...");
     window.scrollTo({ top: 0, behavior: "smooth" });
     await new Promise((resolve) => setTimeout(resolve, 2000)); // Wait for everything to load again
 
     updateProgress("Rechecking routes...");
-    await collectRoutes(routeSelector, uniqueKeys, routes, 20, 100, isV1);
+    await collectRoutes(routeSelector, routes, 20, 100, isV1);
 
     updateProgress(`Final collection complete. ${routes.length} unique routes found.`);
     console.log("Final routes collected:", routes);
