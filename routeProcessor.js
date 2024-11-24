@@ -51,7 +51,7 @@
           <button id="next-btn" style="padding: 12px 25px; background-color: #4CAF50; color: white; border: none; border-radius: 8px; cursor: pointer; font-family: Arial, sans-serif; font-weight: 500; font-size: 15px; box-shadow: 0 4px 6px rgba(76, 175, 80, 0.2); transition: all 0.2s ease;">Next</button>
         </div>
       </div>
-      <div id="preview-section" style="display: none; margin-bottom: 30px;">
+      <div id="route-details-section" style="display: none; margin-bottom: 30px;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
           <button id="back-btn" style="padding: 8px 16px; background-color: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer; font-family: Arial, sans-serif; font-weight: 500; font-size: 14px; box-shadow: 0 2px 4px rgba(108, 117, 125, 0.2); transition: all 0.2s ease; display: flex; align-items: center; gap: 6px;">
             <span style="font-size: 18px;">←</span> Back
@@ -61,7 +61,7 @@
         </div>
         <div id="route-details" style="max-height: 400px; overflow-y: auto; padding: 15px; background: #f8f9fa; border-radius: 12px; border: 1px solid #edf2f7; scrollbar-width: thin; scrollbar-color: #cbd5e0 #f8f9fa;">
         </div>
-        <div style="margin-top: 20px; text-align: center;">
+        <div style="margin-top: 20px; text-align: right;">
           <button id="next-to-progress-btn" style="padding: 12px 30px; background-color: #4CAF50; color: white; border: none; border-radius: 8px; cursor: pointer; font-family: Arial, sans-serif; font-weight: 500; font-size: 15px; box-shadow: 0 4px 6px rgba(76, 175, 80, 0.2); transition: all 0.2s ease;">Next</button>
         </div>
       </div>
@@ -616,18 +616,19 @@
   });
 
   // Add navigation between sections
+  const routeDetailsSection = modal.querySelector("#route-details-section");
   const nextToProgressBtn = modal.querySelector("#next-to-progress-btn");
   const backToRoutesBtn = modal.querySelector("#back-to-routes-btn");
   const dspProgressSection = modal.querySelector("#dsp-progress-section");
   
   nextToProgressBtn.addEventListener("click", () => {
-    previewSection.style.display = "none";
+    routeDetailsSection.style.display = "none";
     dspProgressSection.style.display = "block";
   });
   
   backToRoutesBtn.addEventListener("click", () => {
     dspProgressSection.style.display = "none";
-    previewSection.style.display = "block";
+    routeDetailsSection.style.display = "block";
   });
 
   // Add hover effects for new buttons
