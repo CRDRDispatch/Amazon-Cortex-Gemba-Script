@@ -55,7 +55,7 @@
         <h3 style="font-family: Arial, sans-serif; font-size: 16px; color: #2c3e50; margin-bottom: 12px; font-weight: 600;">Route Details</h3>
         <div id="route-details" style="max-height: 400px; overflow-y: auto; padding: 15px; background: #f8f9fa; border-radius: 12px; border: 1px solid #edf2f7;">
         </div>
-        <div style="margin-top: 20px; text-align: right;">
+        <div style="margin-top: 20px; text-align: center;">
           <button id="download-btn" style="padding: 12px 25px; background-color: #4CAF50; color: white; border: none; border-radius: 8px; cursor: pointer; font-family: Arial, sans-serif; font-weight: 500; font-size: 15px; box-shadow: 0 4px 6px rgba(76, 175, 80, 0.2); transition: all 0.2s ease;">Download File</button>
         </div>
       </div>
@@ -405,22 +405,94 @@
           container.style.borderRadius = "8px";
           container.style.boxShadow = "0 2px 4px rgba(0,0,0,0.05)";
           container.style.border = "1px solid #edf2f7";
+          
+          // Store the route code as a data attribute for easier reference
+          container.dataset.routeCode = route.routeCode;
 
           container.innerHTML = `
             <div style="margin-bottom: 15px;">
               <h4 style="margin: 0 0 10px 0; color: #2c3e50; font-size: 16px;">${route.routeCode}: ${associateInfo} (${route.progress})</h4>
               <div style="margin-bottom: 10px;">
                 <label style="display: block; margin-bottom: 5px; color: #2c3e50; font-weight: 600;">Root Cause:</label>
-                <input type="text" class="rc-input" style="width: 100%; padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px;" placeholder="Enter root cause...">
+                <div class="rc-checkboxes" style="display: flex; flex-direction: column; gap: 8px;">
+                  <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                    <input type="checkbox" class="rc-checkbox" value="Route is spread out" style="cursor: pointer;">
+                    <span style="color: #2c3e50;">Route is spread out</span>
+                  </label>
+                  <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                    <input type="checkbox" class="rc-checkbox" value="DA is working at a slow pace" style="cursor: pointer;">
+                    <span style="color: #2c3e50;">DA is working at a slow pace</span>
+                  </label>
+                  <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                    <input type="checkbox" class="rc-checkbox" value="DA is having connection issues" style="cursor: pointer;">
+                    <span style="color: #2c3e50;">DA is having connection issues</span>
+                  </label>
+                  <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                    <input type="checkbox" class="rc-checkbox" value="High Package Count" style="cursor: pointer;">
+                    <span style="color: #2c3e50;">High Package Count</span>
+                  </label>
+                  <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                    <input type="checkbox" class="rc-checkbox" value="High Stop Count" style="cursor: pointer;">
+                    <span style="color: #2c3e50;">High Stop Count</span>
+                  </label>
+                  <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                    <input type="checkbox" class="rc-checkbox other-checkbox" value="Other" style="cursor: pointer;">
+                    <span style="color: #2c3e50;">Other</span>
+                  </label>
+                  <div class="other-input-container" style="display: none; margin-left: 24px;">
+                    <input type="text" class="other-input" style="width: calc(100% - 24px); padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px;" placeholder="Enter other root cause...">
+                  </div>
+                </div>
               </div>
               <div>
                 <label style="display: block; margin-bottom: 5px; color: #2c3e50; font-weight: 600;">Point of Action:</label>
-                <input type="text" class="poa-input" style="width: 100%; padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px;" placeholder="Enter point of action...">
+                <select class="poa-select" style="width: 100%; padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; background-color: white; cursor: pointer; color: #2c3e50;">
+                  <option value="">Select a point of action...</option>
+                  <option value="Rescue Planned">Rescue Planned</option>
+                  <option value="Rescue Sent">Rescue Sent</option>
+                  <option value="Rescue on the way">Rescue on the way</option>
+                  <option value="We're monitoring progress and will send a rescue if needed">We're monitoring progress and will send a rescue if needed</option>
+                  <option value="Route Complete">Route Complete</option>
+                  <option value="Other">Other</option>
+                </select>
+                <div class="poa-other-container" style="display: none; margin-top: 8px;">
+                  <input type="text" class="poa-other-input" style="width: 100%; padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px;" placeholder="Enter other point of action...">
+                </div>
               </div>
             </div>
           `;
 
+          // Add event listener for Other checkbox
+          const otherCheckbox = container.querySelector('.other-checkbox');
+          const otherInputContainer = container.querySelector('.other-input-container');
+          
+          otherCheckbox.addEventListener('change', (e) => {
+            otherInputContainer.style.display = e.target.checked ? 'block' : 'none';
+          });
+
+          // Add event listener for POA select
+          const poaSelect = container.querySelector('.poa-select');
+          const poaOtherContainer = container.querySelector('.poa-other-container');
+          
+          poaSelect.addEventListener('change', (e) => {
+            poaOtherContainer.style.display = e.target.value === 'Other' ? 'block' : 'none';
+          });
+
           routeDetails.appendChild(container);
+        });
+
+        // Add change event listeners to all DA dropdowns
+        const allDropdowns = daDropdowns.querySelectorAll('select');
+        allDropdowns.forEach(select => {
+          select.addEventListener('change', (e) => {
+            const routeCode = e.target.dataset.routeCode;
+            const container = routeDetails.querySelector(`div[data-route-code="${routeCode}"]`);
+            if (container) {
+              const h4 = container.querySelector('h4');
+              const progress = h4.textContent.match(/\((.*?)\)/)[0]; // Get the progress part
+              h4.textContent = `${routeCode}: ${e.target.value} ${progress}`;
+            }
+          });
         });
       });
 
@@ -439,8 +511,26 @@
           
           if (!container) return `${route.routeCode}: ${associateInfo} (${route.progress})\n`;
           
-          const rc = container.querySelector('.rc-input').value || 'N/A';
-          const poa = container.querySelector('.poa-input').value || 'N/A';
+          // Get all checked root causes
+          const checkedBoxes = container.querySelectorAll('.rc-checkbox:checked');
+          const rootCauses = Array.from(checkedBoxes).map(checkbox => {
+            if (checkbox.value === 'Other') {
+              const otherInput = container.querySelector('.other-input');
+              return otherInput.value.trim() || 'Other (unspecified)';
+            }
+            return checkbox.value;
+          });
+          
+          const rc = rootCauses.length > 0 ? rootCauses.join(', ') : 'N/A';
+          
+          // Get POA value
+          const poaSelect = container.querySelector('.poa-select');
+          let poa = poaSelect.value;
+          if (poa === 'Other') {
+            const poaOtherInput = container.querySelector('.poa-other-input');
+            poa = poaOtherInput.value.trim() || 'Other (unspecified)';
+          }
+          poa = poa || 'N/A';
           
           return `${route.routeCode}: ${associateInfo} (${route.progress})\nRoot Cause: ${rc}\nPoint of Action: ${poa}\n`;
         }).join('\n');
