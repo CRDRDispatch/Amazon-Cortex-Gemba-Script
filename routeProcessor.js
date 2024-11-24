@@ -133,6 +133,7 @@
     const nextBtn = modal.querySelector("#next-btn");
     const previewSection = modal.querySelector("#preview-section");
     const daSelectionSection = modal.querySelector("#da-selection-section");
+    const routeDetailsSection = modal.querySelector("#route-details-section");
     const routeDetails = modal.querySelector("#route-details");
 
     nextBtn.addEventListener("mouseover", () => {
@@ -429,116 +430,85 @@
 
       // Add Next button functionality
       const nextBtn = modal.querySelector("#next-btn");
-      const previewSection = modal.querySelector("#preview-section");
+      const routeDetailsSection = modal.querySelector("#route-details-section");
       const routeDetails = modal.querySelector("#route-details");
 
       nextBtn.addEventListener("click", () => {
         daSelectionSection.style.display = "none";
-        previewSection.style.display = "block";
-
-        // Create route detail inputs
-        behindRoutes.forEach((route) => {
+        routeDetailsSection.style.display = "block";
+        
+        // Update route details content
+        routeDetails.innerHTML = behindRoutes.map((route) => {
           const select = daDropdowns.querySelector(`select[data-route-code="${route.routeCode}"]`);
           const associateInfo = select ? select.value : route.associateInfo;
-
-          const container = document.createElement("div");
-          container.style.marginBottom = "20px";
-          container.style.padding = "15px";
-          container.style.background = "white";
-          container.style.borderRadius = "12px";
-          container.style.boxShadow = "0 2px 4px rgba(0,0,0,0.05)";
-          container.style.border = "1px solid #edf2f7";
-          container.style.overflow = "hidden";
-          container.dataset.routeCode = route.routeCode;
-
-          container.innerHTML = `
-            <div style="padding: 15px; border-bottom: 1px solid #edf2f7; background: #f8fafc;">
-              <h4 style="margin: 0; color: #2c3e50; font-size: 16px; display: flex; justify-content: space-between; align-items: center;">
+          
+          return `
+            <div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+              <h4 style="margin: 0 0 15px 0; color: #2c3e50; font-family: Arial, sans-serif; font-size: 16px; display: flex; justify-content: space-between;">
                 <span>${route.routeCode}: ${associateInfo}</span>
-                <span style="font-size: 14px; padding: 4px 8px; background: #ebf5ff; color: #3182ce; border-radius: 6px;">${route.progress}</span>
+                <span style="color: #e74c3c;">${route.progress}</span>
               </h4>
-            </div>
-            <div style="padding: 15px;">
-              <div style="margin-bottom: 15px;">
-                <label style="display: block; margin-bottom: 8px; color: #2c3e50; font-weight: 600; font-size: 14px;">Root Cause:</label>
-                <div class="rc-checkboxes" style="display: flex; flex-direction: column; gap: 10px;">
-                  <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 8px; border-radius: 6px; transition: background-color 0.2s; hover:background-color: #f7fafc;">
-                    <input type="checkbox" class="rc-checkbox" value="Route is spread out" style="cursor: pointer; width: 16px; height: 16px;">
-                    <span style="color: #2c3e50; font-size: 14px;">Route is spread out</span>
+              
+              <div style="margin-bottom: 20px;">
+                <p style="margin: 0 0 10px 0; font-weight: 600; color: #2c3e50;">Root Cause:</p>
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px;">
+                  <label style="display: flex; align-items: center; gap: 8px;">
+                    <input type="checkbox" class="rc-checkbox" value="Route is spread out" style="width: 16px; height: 16px;">
+                    Route is spread out
                   </label>
-                  <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 8px; border-radius: 6px; transition: background-color 0.2s; hover:background-color: #f7fafc;">
-                    <input type="checkbox" class="rc-checkbox" value="DA is working at a slow pace" style="cursor: pointer; width: 16px; height: 16px;">
-                    <span style="color: #2c3e50; font-size: 14px;">DA is working at a slow pace</span>
+                  <label style="display: flex; align-items: center; gap: 8px;">
+                    <input type="checkbox" class="rc-checkbox" value="DA is working at a slow pace" style="width: 16px; height: 16px;">
+                    DA is working at a slow pace
                   </label>
-                  <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 8px; border-radius: 6px; transition: background-color 0.2s; hover:background-color: #f7fafc;">
-                    <input type="checkbox" class="rc-checkbox" value="DA is having connection issues" style="cursor: pointer; width: 16px; height: 16px;">
-                    <span style="color: #2c3e50; font-size: 14px;">DA is having connection issues</span>
+                  <label style="display: flex; align-items: center; gap: 8px;">
+                    <input type="checkbox" class="rc-checkbox" value="DA is having connection issues" style="width: 16px; height: 16px;">
+                    DA is having connection issues
                   </label>
-                  <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 8px; border-radius: 6px; transition: background-color 0.2s; hover:background-color: #f7fafc;">
-                    <input type="checkbox" class="rc-checkbox" value="High Package Count" style="cursor: pointer; width: 16px; height: 16px;">
-                    <span style="color: #2c3e50; font-size: 14px;">High Package Count</span>
+                  <label style="display: flex; align-items: center; gap: 8px;">
+                    <input type="checkbox" class="rc-checkbox" value="High Package Count" style="width: 16px; height: 16px;">
+                    High Package Count
                   </label>
-                  <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 8px; border-radius: 6px; transition: background-color 0.2s; hover:background-color: #f7fafc;">
-                    <input type="checkbox" class="rc-checkbox" value="High Stop Count" style="cursor: pointer; width: 16px; height: 16px;">
-                    <span style="color: #2c3e50; font-size: 14px;">High Stop Count</span>
+                  <label style="display: flex; align-items: center; gap: 8px;">
+                    <input type="checkbox" class="rc-checkbox" value="High Stop Count" style="width: 16px; height: 16px;">
+                    High Stop Count
                   </label>
-                  <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 8px; border-radius: 6px; transition: background-color 0.2s; hover:background-color: #f7fafc;">
-                    <input type="checkbox" class="rc-checkbox other-checkbox" value="Other" style="cursor: pointer; width: 16px; height: 16px;">
-                    <span style="color: #2c3e50; font-size: 14px;">Other</span>
+                  <label style="display: flex; align-items: center; gap: 8px;">
+                    <input type="checkbox" class="rc-checkbox" value="Other" style="width: 16px; height: 16px;">
+                    Other
                   </label>
-                  <div class="other-input-container" style="display: none; margin-left: 32px;">
-                    <input type="text" class="other-input" style="width: calc(100% - 16px); padding: 8px 12px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px; background: #f8fafc;" placeholder="Enter other root cause...">
-                  </div>
                 </div>
+                <input type="text" class="other-input" placeholder="Specify other root cause..." style="margin-top: 10px; width: calc(100% - 24px); padding: 8px 12px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px; display: none;">
               </div>
+              
               <div>
-                <label style="display: block; margin-bottom: 8px; color: #2c3e50; font-weight: 600; font-size: 14px;">Point of Action:</label>
-                <select class="poa-select" style="width: 100%; padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px; background-color: white; cursor: pointer; color: #2c3e50; appearance: none; background-image: url('data:image/svg+xml;charset=US-ASCII,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%232c3e50" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>'); background-repeat: no-repeat; background-position: right 12px center; background-size: 16px;">
-                  <option value="">Select a point of action...</option>
+                <p style="margin: 0 0 10px 0; font-weight: 600; color: #2c3e50;">Point of Action:</p>
+                <select class="poa-select" style="width: 100%; padding: 8px 12px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px; margin-bottom: 10px;">
+                  <option value="">Select point of action...</option>
                   <option value="Rescue Planned">Rescue Planned</option>
                   <option value="Rescue Sent">Rescue Sent</option>
                   <option value="Rescue on the way">Rescue on the way</option>
-                  <option value="We're monitoring progress and will send a rescue if needed">We're monitoring progress and will send a rescue if needed</option>
+                  <option value="Monitoring progress">Monitoring progress</option>
                   <option value="Route Complete">Route Complete</option>
                   <option value="Other">Other</option>
                 </select>
-                <div class="poa-other-container" style="display: none; margin-top: 8px;">
-                  <input type="text" class="poa-other-input" style="width: 100%; padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px; background: #f8fafc;" placeholder="Enter other point of action...">
-                </div>
+                <input type="text" class="poa-other-input" placeholder="Specify other point of action..." style="width: calc(100% - 24px); padding: 8px 12px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px; display: none;">
               </div>
             </div>
           `;
+        }).join('');
 
-          // Add event listener for Other checkbox
-          const otherCheckbox = container.querySelector('.other-checkbox');
-          const otherInputContainer = container.querySelector('.other-input-container');
-          
-          otherCheckbox.addEventListener('change', (e) => {
-            otherInputContainer.style.display = e.target.checked ? 'block' : 'none';
+        // Add event listeners for "Other" options
+        routeDetails.querySelectorAll('.rc-checkbox[value="Other"]').forEach(checkbox => {
+          const otherInput = checkbox.closest('div').nextElementSibling;
+          checkbox.addEventListener('change', () => {
+            otherInput.style.display = checkbox.checked ? 'block' : 'none';
           });
-
-          // Add event listener for POA select
-          const poaSelect = container.querySelector('.poa-select');
-          const poaOtherContainer = container.querySelector('.poa-other-container');
-          
-          poaSelect.addEventListener('change', (e) => {
-            poaOtherContainer.style.display = e.target.value === 'Other' ? 'block' : 'none';
-          });
-
-          routeDetails.appendChild(container);
         });
 
-        // Add change event listeners to all DA dropdowns
-        const allDropdowns = daDropdowns.querySelectorAll('select');
-        allDropdowns.forEach(select => {
-          select.addEventListener('change', (e) => {
-            const routeCode = e.target.dataset.routeCode;
-            const container = routeDetails.querySelector(`div[data-route-code="${routeCode}"]`);
-            if (container) {
-              const h4 = container.querySelector('h4');
-              const progress = h4.textContent.match(/\((.*?)\)/)[0]; // Get the progress part
-              h4.textContent = `${routeCode}: ${e.target.value} ${progress}`;
-            }
+        routeDetails.querySelectorAll('.poa-select').forEach(select => {
+          const otherInput = select.nextElementSibling;
+          select.addEventListener('change', () => {
+            otherInput.style.display = select.value === 'Other' ? 'block' : 'none';
           });
         });
       });
@@ -600,9 +570,9 @@
   // Add back button functionality
   const backBtn = modal.querySelector("#back-btn");
   backBtn.addEventListener("click", () => {
-    const previewSection = modal.querySelector("#preview-section");
+    const routeDetailsSection = modal.querySelector("#route-details-section");
     const daSelectionSection = modal.querySelector("#da-selection-section");
-    previewSection.style.display = "none";
+    routeDetailsSection.style.display = "none";
     daSelectionSection.style.display = "block";
   });
 
@@ -616,7 +586,6 @@
   });
 
   // Add navigation between sections
-  const routeDetailsSection = modal.querySelector("#route-details-section");
   const nextToProgressBtn = modal.querySelector("#next-to-progress-btn");
   const backToRoutesBtn = modal.querySelector("#back-to-routes-btn");
   const dspProgressSection = modal.querySelector("#dsp-progress-section");
