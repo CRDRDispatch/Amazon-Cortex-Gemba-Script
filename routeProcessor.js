@@ -1,24 +1,51 @@
 (async function () {
   const createModal = () => {
+    // Create the overlay
+    const overlay = document.createElement("div");
+    overlay.id = "custom-overlay";
+    overlay.style.position = "fixed";
+    overlay.style.top = "0";
+    overlay.style.left = "0";
+    overlay.style.width = "100%";
+    overlay.style.height = "100%";
+    overlay.style.background = "rgba(0, 0, 0, 0.7)";
+    overlay.style.zIndex = "9999";
+    document.body.appendChild(overlay);
+
+    // Create the modal
     const modal = document.createElement("div");
     modal.id = "custom-modal";
     modal.style.position = "fixed";
     modal.style.top = "50%";
     modal.style.left = "50%";
     modal.style.transform = "translate(-50%, -50%)";
+    modal.style.width = "400px";
     modal.style.background = "white";
     modal.style.border = "1px solid #ccc";
-    modal.style.boxShadow = "0 4px 6px rgba(0, 0, 0, 0.1)";
+    modal.style.boxShadow = "0 4px 6px rgba(0, 0, 0, 0.3)";
     modal.style.padding = "20px";
-    modal.style.zIndex = 10000;
+    modal.style.borderRadius = "10px";
+    modal.style.zIndex = "10000";
     modal.style.textAlign = "center";
 
     modal.innerHTML = `
-      <p>Processing route data...</p>
-      <button id="download-btn" style="display: none; margin-top: 10px;">Download File</button>
+      <div style="margin-bottom: 20px;">
+        <img src="https://crdrdispatch.github.io/GembaScript/Logo.svg" alt="Logo" style="height: 50px; display: block; margin: 0 auto;">
+      </div>
+      <h2 style="font-family: Arial, sans-serif; margin-bottom: 20px;">Gimme That GEMBA</h2>
+      <p id="modal-content" style="font-family: Arial, sans-serif; margin-bottom: 20px;">Processing route data...</p>
+      <button id="download-btn" style="display: none; padding: 10px 20px; background-color: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer; font-family: Arial, sans-serif;">Download File</button>
+      <button id="close-btn" style="margin-top: 10px; padding: 10px 20px; background-color: #f44336; color: white; border: none; border-radius: 5px; cursor: pointer; font-family: Arial, sans-serif;">Close</button>
     `;
 
     document.body.appendChild(modal);
+
+    // Close the modal and overlay on button click
+    modal.querySelector("#close-btn").addEventListener("click", () => {
+      modal.remove();
+      overlay.remove();
+    });
+
     return modal;
   };
 
@@ -66,7 +93,7 @@
 
     const routeContainers = await waitForRoutes().catch((err) => {
       console.error(err);
-      modal.innerHTML = "<p>Failed to load route data. Please try again later.</p>";
+      modal.querySelector("#modal-content").textContent = "Failed to load route data. Please try again later.";
       return [];
     });
 
@@ -85,9 +112,14 @@
       const tooltipElem = associateContainer?.nextElementSibling?.classList.contains("af-tooltip")
         ? associateContainer.nextElementSibling.querySelectorAll("div")
         : null;
-      const associateNames = tooltipElem
+      let associateNames = tooltipElem
         ? Array.from(tooltipElem).map((el) => el.textContent.trim()).join(", ")
         : associateContainer?.querySelector(".text-truncate")?.textContent.trim();
+
+      // Remove "(Cornerstone Delivery Service)"
+      if (associateNames) {
+        associateNames = associateNames.replace(/\(Cornerstone Delivery Service\)/g, "").trim();
+      }
 
       // Route Progress
       const progressElem = container.querySelector(".progress");
@@ -126,10 +158,10 @@
         URL.revokeObjectURL(blobURL);
       };
     } else {
-      modal.innerHTML = "<p>No relevant route data found.</p>";
+      modal.querySelector("#modal-content").textContent = "No relevant route data found.";
     }
   } catch (error) {
     console.error("Error during route data processing:", error);
-    modal.innerHTML = `<p>Error: ${error.message}</p>`;
+    modal.querySelector("#modal-content").textContent = `Error: ${error.message}`;
   }
 })();
