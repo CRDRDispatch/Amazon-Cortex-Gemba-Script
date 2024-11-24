@@ -1,5 +1,4 @@
 (async function () {
-  // Create a modal for progress and downloading the file
   const createModal = () => {
     const modal = document.createElement("div");
     modal.id = "custom-modal";
@@ -29,50 +28,70 @@
   try {
     console.log("Script started");
 
-    // Detect if using V1 Cortex
     const isV1 = document.querySelector(".css-hkr77h")?.checked;
     console.log("Cortex Version:", isV1 ? "V1" : "V2");
 
-    const results = [];
-    if (isV1) {
-      console.log("Processing V1 Cortex");
+    const waitForRoutes = () => {
+      return new Promise((resolve) => {
+        const observer = new MutationObserver(() => {
+          const routeContainers = document.querySelectorAll(
+            ".routes-list.d-flex.flex-1.flex-column.border-y-list > div"
+          );
+          if (routeContainers.length > 0) {
+            console.log(`Found ${routeContainers.length} route containers`);
+            observer.disconnect();
+            resolve(routeContainers);
+          }
+        });
 
-      // Select route containers
-      const routeContainers = document.querySelectorAll(
-        ".routes-list.d-flex.flex-1.flex-column.border-y-list > div"
-      );
-      console.log(`Found ${routeContainers.length} route containers`);
-
-      routeContainers.forEach((container, index) => {
-        console.log(`Processing container ${index + 1}`);
-
-        const routeCodeElem = container.querySelector(".left-column.text-sm");
-        const associateContainer = container.querySelector(
-          ".ml-lg-4.ml-2.mr-2.mr-lg-auto.normal-white-space"
-        );
-        const tooltipElem = associateContainer?.nextElementSibling?.classList.contains("af-tooltip")
-          ? associateContainer.nextElementSibling.querySelectorAll("div")
-          : null;
-        const progressElem = container.querySelector(".progress");
-
-        const routeCode = routeCodeElem?.textContent.trim();
-        const associateNames = tooltipElem
-          ? Array.from(tooltipElem).map((el) => el.textContent.trim()).join(", ")
-          : associateContainer?.querySelector(".text-truncate")?.textContent.trim();
-        const progressText = progressElem?.textContent.trim();
-
-        console.log({ routeCode, associateNames, progressText });
-
-        if (routeCode && associateNames && progressText?.includes("behind")) {
-          results.push(`${routeCode}: ${associateNames} (${progressText})`);
-        }
+        observer.observe(document.body, { childList: true, subtree: true });
       });
-    }
+    };
 
-    console.log("Processing complete. Results:", results);
+    const routeContainers = await waitForRoutes();
+    const results = [];
+
+    routeContainers.forEach((container, index) => {
+      console.log(`Processing container ${index + 1}`);
+
+      const routeCodeElem = container.querySelector(".left-column.text-sm");
+      const associateContainer = container.querySelector(
+        ".ml-lg-4.ml-2.mr-2.mr-lg-auto.normal-white-space"
+      );
+      const tooltipElem = associateContainer?.nextElementSibling?.classList.contains("af-tooltip")
+        ? associateContainer.nextElementSibling.querySelectorAll("div")
+        : null;
+      const progressElem = container.querySelector(".progress");
+
+      const routeCode = routeCodeElem?.textContent.trim();
+      const associateNames = tooltipElem
+        ? Array.from(tooltipElem).map((el) => el.textContent.trim()).join(", ")
+        : associateContainer?.querySelector(".text-truncate")?.textContent.trim();
+      const progressText = progressElem?.textContent.trim();
+
+      console.log({
+        routeCode,
+        associateNames,
+        progressText,
+      });
+
+      results.push({
+        routeCode: routeCode || "No route code",
+        associateNames: associateNames || "No associate names",
+        progressText: progressText || "No progress text",
+      });
+    });
+
+    console.log("All Routes Processed:", results);
 
     if (results.length > 0) {
-      const fileContent = results.join("\n");
+      const fileContent = results
+        .map(
+          (route) =>
+            `${route.routeCode}: ${route.associateNames} (${route.progressText})`
+        )
+        .join("\n");
+
       const blob = new Blob([fileContent], { type: "text/plain" });
       const blobURL = URL.createObjectURL(blob);
 
