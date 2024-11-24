@@ -26,6 +26,8 @@
     modal.style.borderRadius = "10px";
     modal.style.zIndex = "10000";
     modal.style.textAlign = "center";
+    modal.style.maxHeight = "90vh";  // 90% of viewport height
+    modal.style.overflowY = "auto";
 
     modal.innerHTML = `
       <button id="close-btn" style="position: absolute; top: 10px; right: 10px; background: none; border: none; font-size: 16px; cursor: pointer;">✖</button>
@@ -43,8 +45,8 @@
         </div>
       </div>
       <div id="da-selection-section" style="display: none; margin-bottom: 30px;">
-        <h3 style="font-family: Arial, sans-serif; font-size: 16px; color: #666; margin-bottom: 10px;">Select Delivery Associates</h3>
-        <div id="da-dropdowns" style="max-height: 300px; overflow-y: auto; padding: 10px; background: #f5f5f5; border-radius: 5px;">
+        <h3 style="font-family: Arial, sans-serif; font-size: 16px; color: #666; margin-bottom: 10px;">These routes have multiple DAs. Please select the DA assigned to the route.</h3>
+        <div id="da-dropdowns" style="max-height: 400px; overflow-y: auto; padding: 10px; background: #f5f5f5; border-radius: 5px;">
         </div>
       </div>
       <div id="download-section" style="display: none; padding-top: 20px; border-top: 2px solid #eee;">
