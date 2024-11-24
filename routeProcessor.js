@@ -8,7 +8,6 @@
     overlay.style.width = "100%";
     overlay.style.height = "100%";
     overlay.style.background = "rgba(0, 0, 0, 0.5)";
-    overlay.style.backdropFilter = "blur(5px)";
     overlay.style.zIndex = "9999";
     document.body.appendChild(overlay);
 
@@ -17,7 +16,8 @@
     modal.style.position = "fixed";
     modal.style.top = "50%";
     modal.style.left = "50%";
-    modal.style.transform = "translate(-50%, -50%)";
+    modal.style.transform = "translate(-50%, -50%) translateZ(0)";
+    modal.style.backfaceVisibility = "hidden";
     modal.style.width = "400px";
     modal.style.background = "white";
     modal.style.border = "1px solid #ccc";
@@ -26,7 +26,7 @@
     modal.style.borderRadius = "10px";
     modal.style.zIndex = "10000";
     modal.style.textAlign = "center";
-    modal.style.maxHeight = "90vh";  // 90% of viewport height
+    modal.style.maxHeight = "90vh";
     modal.style.overflowY = "auto";
 
     modal.innerHTML = `
@@ -37,7 +37,10 @@
       <h2 style="font-family: Arial, sans-serif; margin-bottom: 20px; border-bottom: 2px solid #eee; padding-bottom: 10px;">Gimme That GEMBA</h2>
       <div id="progress-section" style="margin-bottom: 30px;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-          <h3 style="font-family: Arial, sans-serif; font-size: 16px; color: #666; margin: 0;">Progress</h3>
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <h3 style="font-family: Arial, sans-serif; font-size: 16px; color: #666; margin: 0;">Progress</h3>
+            <span id="progress-status" style="display: none; font-size: 12px; padding: 2px 8px; border-radius: 12px; background-color: #4CAF50; color: white;">Complete</span>
+          </div>
           <button id="toggle-progress" style="background: none; border: none; color: #666; cursor: pointer; font-size: 14px;">Hide</button>
         </div>
         <div id="progress-details" style="font-family: Arial, sans-serif; text-align: left; margin-bottom: 20px; padding: 10px; background: #f5f5f5; border-radius: 5px;">
@@ -77,8 +80,11 @@
     return modal;
   };
 
-  const updateProgress = (message, append = true) => {
+  const updateProgress = (message, append = true, complete = false) => {
     const progressDetails = document.getElementById("progress-details");
+    const progressStatus = document.getElementById("progress-status");
+    const toggleBtn = document.getElementById("toggle-progress");
+    
     if (progressDetails) {
       if (append) {
         progressDetails.innerHTML += `<p>${message}</p>`;
@@ -86,6 +92,13 @@
         progressDetails.innerHTML = `<p>${message}</p>`;
       }
     }
+    
+    if (complete && progressStatus && toggleBtn) {
+      progressStatus.style.display = "inline-block";
+      progressDetails.style.display = "none";
+      toggleBtn.textContent = "Show";
+    }
+    
     console.log(message);
   };
 
@@ -209,7 +222,7 @@
     const behindRoutes = routes.filter((route) => route.progress?.includes("behind"));
     console.log("Behind Routes:", behindRoutes);
 
-    updateProgress(`Found ${behindRoutes.length} routes that are behind schedule.`);
+    updateProgress(`Found ${behindRoutes.length} routes that are behind schedule.`, true, true);
 
     if (behindRoutes.length > 0) {
       const daSelectionSection = modal.querySelector("#da-selection-section");
