@@ -101,7 +101,8 @@
   };
 
   const extractBehindProgress = (progressText) => {
-    const match = progressText?.match(/(\d+)\s*behind/);
+    if (!progressText || typeof progressText !== "string") return null;
+    const match = progressText.match(/(\d+)\s*behind/);
     return match ? `${match[1]} behind` : null;
   };
 
@@ -159,6 +160,7 @@
     // Filter behind routes
     const behindRoutes = routes.filter((route) => route.progress.includes("behind"));
     updateProgress(`Found ${behindRoutes.length} behind routes.`);
+    console.log("Behind Routes:", behindRoutes);
 
     if (routesWithDropdowns.length > 0) {
       updateDropdowns(routesWithDropdowns);
