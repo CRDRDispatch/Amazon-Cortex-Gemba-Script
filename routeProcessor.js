@@ -1,160 +1,93 @@
-(async function () {
+(() => {
+  // Global state
+  let behindRoutes = [];
+  
   const createModal = () => {
     const modal = document.createElement("div");
-    modal.id = "custom-modal";
-    modal.style.position = "fixed";
-    modal.style.top = "50%";
-    modal.style.left = "50%";
-    modal.style.transform = "translate(-50%, -50%) translateZ(0)";
-    modal.style.webkitTransform = "translate(-50%, -50%) translateZ(0)";
-    modal.style.backfaceVisibility = "hidden";
-    modal.style.webkitBackfaceVisibility = "hidden";
-    modal.style.perspective = "1000";
-    modal.style.webkitPerspective = "1000";
-    modal.style.width = "400px";
-    modal.style.background = "white";
-    modal.style.border = "none";
-    modal.style.boxShadow = "0 10px 25px rgba(0, 0, 0, 0.2), 0 2px 10px rgba(0, 0, 0, 0.1)";
-    modal.style.padding = "25px";
-    modal.style.borderRadius = "16px";
-    modal.style.zIndex = "10000";
-    modal.style.textAlign = "center";
-    modal.style.maxHeight = "90vh";
-    modal.style.overflowY = "auto";
-    modal.style.willChange = "transform";
-    modal.style.isolation = "isolate";
-    modal.style.cursor = "move";  // Indicate draggable
+    modal.style.cssText = `
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background-color: #f8f9fa;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+      z-index: 10000;
+      max-width: 800px;
+      width: 90%;
+      max-height: 90vh;
+      overflow-y: auto;
+      cursor: move;
+    `;
 
     modal.innerHTML = `
-      <div id="modal-content" style="position: relative; width: 90%; max-width: 800px; margin: 50px auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
-        <button id="close-btn" style="position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 18px; cursor: pointer; color: #666; transition: color 0.2s ease;">✖</button>
-        <div style="margin-bottom: 25px; cursor: move;">
-          <img src="https://crdrdispatch.github.io/GembaScript/Logo.svg" alt="Logo" style="height: 90px; display: block; margin: 0 auto; -webkit-transform: translateZ(0); transform: translateZ(0); pointer-events: none;">
-        </div>
+      <div style="position: relative;">
+        <button id="close-btn" style="position: absolute; top: 0; right: 0; background: none; border: none; color: #666; cursor: pointer; font-size: 24px; padding: 5px;">×</button>
+        
+        <h2 style="font-family: Arial, sans-serif; color: #2c3e50; margin-bottom: 20px; font-size: 20px; text-align: center;">Amazon DSP Route Processor</h2>
         
         <div id="initial-section">
           <div style="margin-bottom: 20px; text-align: center;">
             <button id="scan-btn" style="padding: 12px 25px; background-color: #4CAF50; color: white; border: none; border-radius: 8px; cursor: pointer; font-family: Arial, sans-serif; font-weight: 500; font-size: 15px; box-shadow: 0 4px 6px rgba(76, 175, 80, 0.2); transition: all 0.2s ease;">Scan Routes</button>
           </div>
-          <div id="progress-details" style="font-family: Arial, sans-serif; text-align: left; margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 12px; border: 1px solid #edf2f7;">
-            <p id="progress-text">Initializing...</p>
+          <div id="progress-container" style="font-family: Arial, sans-serif; text-align: left; margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 12px; border: 1px solid #edf2f7;">
+            <p id="progress-text" style="margin: 0; color: #2c3e50;">Initializing...</p>
           </div>
         </div>
 
         <div id="da-selection-section" style="display: none;">
           <h3 style="font-family: Arial, sans-serif; font-size: 16px; color: #2c3e50; margin-bottom: 12px; font-weight: 600;">These routes have multiple DAs. Please select the DA assigned to the route.</h3>
-          <div id="da-dropdowns" style="max-height: 400px; overflow-y: auto; padding: 15px; background: #f8f9fa; border-radius: 12px; border: 1px solid #edf2f7;">
-          </div>
-          <div style="margin-top: 20px; text-align: right;">
-            <button id="next-btn" style="padding: 12px 25px; background-color: #4CAF50; color: white; border: none; border-radius: 8px; cursor: pointer; font-family: Arial, sans-serif; font-weight: 500; font-size: 15px; box-shadow: 0 4px 6px rgba(76, 175, 80, 0.2); transition: all 0.2s ease;">Next</button>
+          <div id="da-dropdowns"></div>
+          <div style="text-align: right; margin-top: 15px;">
+            <button id="da-next-btn" style="padding: 8px 20px; background-color: #4CAF50; color: white; border: none; border-radius: 6px; cursor: pointer; font-family: Arial, sans-serif;">Next</button>
           </div>
         </div>
 
         <div id="route-details-section" style="display: none;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-            <button id="back-btn" style="padding: 8px 16px; background-color: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer; font-family: Arial, sans-serif; font-weight: 500; font-size: 14px; box-shadow: 0 2px 4px rgba(108, 117, 125, 0.2); transition: all 0.2s ease; display: flex; align-items: center; gap: 6px;">
-              <span style="font-size: 18px;">←</span> Back
-            </button>
-            <h3 style="font-family: Arial, sans-serif; font-size: 16px; color: #2c3e50; margin: 0; font-weight: 600;">Route Details</h3>
-            <div style="width: 80px;"></div>
-          </div>
-          <div id="route-details" style="max-height: 400px; overflow-y: auto; padding: 15px; background: #f8f9fa; border-radius: 12px; border: 1px solid #edf2f7; scrollbar-width: thin; scrollbar-color: #cbd5e0 #f8f9fa;">
-          </div>
-          <div style="margin-top: 20px; text-align: right;">
-            <button id="next-to-progress-btn" style="padding: 12px 30px; background-color: #4CAF50; color: white; border: none; border-radius: 8px; cursor: pointer; font-family: Arial, sans-serif; font-weight: 500; font-size: 15px; box-shadow: 0 4px 6px rgba(76, 175, 80, 0.2); transition: all 0.2s ease;">Next</button>
+          <h3 style="font-family: Arial, sans-serif; font-size: 16px; color: #2c3e50; margin-bottom: 12px; font-weight: 600;">Route Details</h3>
+          <div id="route-details"></div>
+          <div style="text-align: right; margin-top: 15px;">
+            <button id="details-next-btn" style="padding: 8px 20px; background-color: #4CAF50; color: white; border: none; border-radius: 6px; cursor: pointer; font-family: Arial, sans-serif;">Next</button>
           </div>
         </div>
 
         <div id="dsp-progress-section" style="display: none;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-            <button id="back-to-routes-btn" style="padding: 8px 16px; background-color: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer; font-family: Arial, sans-serif; font-weight: 500; font-size: 14px; box-shadow: 0 2px 4px rgba(108, 117, 125, 0.2); transition: all 0.2s ease; display: flex; align-items: center; gap: 6px;">
-              <span style="font-size: 18px;">←</span> Back
-            </button>
-            <h3 style="font-family: Arial, sans-serif; font-size: 16px; color: #2c3e50; margin: 0; font-weight: 600;">DSP Total Progress</h3>
-            <div style="width: 80px;"></div>
-          </div>
-          <div style="padding: 20px; background: white; border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border: 1px solid #edf2f7;">
-            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px;">
-              <div>
-                <label style="display: block; margin-bottom: 8px; color: #2c3e50; font-weight: 600; font-size: 14px;">In Progress:</label>
-                <input type="number" id="in-progress-input" style="width: 100%; padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px; background: #f8fafc;" placeholder="Enter number...">
-              </div>
-              <div>
-                <label style="display: block; margin-bottom: 8px; color: #2c3e50; font-weight: 600; font-size: 14px;">At Risk:</label>
-                <input type="number" id="at-risk-input" style="width: 100%; padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px; background: #f8fafc;" placeholder="Enter number...">
-              </div>
-              <div>
-                <label style="display: block; margin-bottom: 8px; color: #2c3e50; font-weight: 600; font-size: 14px;">Behind:</label>
-                <input type="number" id="behind-input" style="width: 100%; padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px; background: #f8fafc;" placeholder="Enter number...">
-              </div>
-              <div>
-                <label style="display: block; margin-bottom: 8px; color: #2c3e50; font-weight: 600; font-size: 14px;">Package Progress:</label>
-                <input type="number" id="package-progress-input" style="width: 100%; padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px; background: #f8fafc;" placeholder="Enter percentage...">
-              </div>
+          <h3 style="font-family: Arial, sans-serif; font-size: 16px; color: #2c3e50; margin-bottom: 12px; font-weight: 600;">DSP Total Progress</h3>
+          <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 20px;">
+            <div>
+              <label style="display: block; margin-bottom: 5px; color: #2c3e50;">In Progress:</label>
+              <input type="number" id="in-progress-input" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" min="0">
+            </div>
+            <div>
+              <label style="display: block; margin-bottom: 5px; color: #2c3e50;">At Risk:</label>
+              <input type="number" id="at-risk-input" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" min="0">
+            </div>
+            <div>
+              <label style="display: block; margin-bottom: 5px; color: #2c3e50;">Behind:</label>
+              <input type="number" id="behind-input" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" min="0">
+            </div>
+            <div>
+              <label style="display: block; margin-bottom: 5px; color: #2c3e50;">Package Progress %:</label>
+              <input type="number" id="package-progress-input" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" min="0" max="100">
             </div>
           </div>
-          <div style="margin-top: 20px; text-align: center;">
-            <button id="download-btn" style="padding: 12px 30px; background-color: #4CAF50; color: white; border: none; border-radius: 8px; cursor: pointer; font-family: Arial, sans-serif; font-weight: 500; font-size: 15px; box-shadow: 0 4px 6px rgba(76, 175, 80, 0.2); transition: all 0.2s ease; display: inline-flex; align-items: center; gap: 8px;">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" style="margin-right: 4px;">
-                <path d="M8 0a8 8 0 0 1 8 8 8 8 0 0 1-8 8A8 8 0 0 1 0 8a8 8 0 0 1 8-8zM4.5 7.5a.5.5 0 0 0 0 1h5.793l-2.147 2.146a.5.5 0 0 0 .708.708l3-3a.5.5 0 0 0 0-.708l-3-3a.5.5 0 1 0-.708.708L10.293 7.5H4.5z"/>
-              </svg>
-              Download File
-            </button>
+          <div style="text-align: right;">
+            <button id="download-btn" style="padding: 8px 20px; background-color: #4CAF50; color: white; border: none; border-radius: 6px; cursor: pointer; font-family: Arial, sans-serif;">Download Report</button>
           </div>
         </div>
       </div>
     `;
 
-    // Add hover effects
-    const closeBtn = modal.querySelector("#close-btn");
-    closeBtn.addEventListener("mouseover", () => closeBtn.style.color = "#ff4444");
-    closeBtn.addEventListener("mouseout", () => closeBtn.style.color = "#666");
-
-    const modalToggleBtn = modal.querySelector("#toggle-progress");
-    const progressDetails = modal.querySelector("#progress-details");
-    
-    modalToggleBtn.addEventListener("mouseover", () => {
-      modalToggleBtn.style.backgroundColor = "#f0f0f0";
-    });
-    modalToggleBtn.addEventListener("mouseout", () => {
-      modalToggleBtn.style.backgroundColor = "transparent";
-    });
-    
-    // Add toggle functionality
-    modalToggleBtn.addEventListener("click", () => {
-      if (progressDetails.style.display === "none") {
-        progressDetails.style.display = "block";
-        modalToggleBtn.textContent = "Hide";
-      } else {
-        progressDetails.style.display = "none";
-        modalToggleBtn.textContent = "Show";
-      }
-    });
-
-    const nextBtn = modal.querySelector("#next-btn");
-    const downloadBtn = modal.querySelector("#download-btn");
-    downloadBtn.addEventListener("mouseover", () => {
-      downloadBtn.style.backgroundColor = "#45a049";
-      downloadBtn.style.boxShadow = "0 6px 8px rgba(76, 175, 80, 0.3)";
-    });
-    downloadBtn.addEventListener("mouseout", () => {
-      downloadBtn.style.backgroundColor = "#4CAF50";
-      downloadBtn.style.boxShadow = "0 4px 6px rgba(76, 175, 80, 0.2)";
-    });
-
     document.body.appendChild(modal);
 
-    // Add section navigation handlers
+    // Get section elements
     const initialSection = modal.querySelector("#initial-section");
     const daSelectionSection = modal.querySelector("#da-selection-section");
     const routeDetailsSection = modal.querySelector("#route-details-section");
     const dspProgressSection = modal.querySelector("#dsp-progress-section");
-    const routeDetails = modal.querySelector("#route-details");
     const daDropdowns = modal.querySelector("#da-dropdowns");
-    const progressDetails = modal.querySelector("#progress-details");
-
-    // Store routes data
-    let behindRoutes = [];
+    const routeDetails = modal.querySelector("#route-details");
 
     // Add hover effects for buttons
     const buttons = modal.querySelectorAll("button");
@@ -251,153 +184,54 @@
     const scanBtn = modal.querySelector("#scan-btn");
     scanBtn.addEventListener("click", async () => {
       try {
-        initialSection.style.display = "none";
-        
+        scanBtn.disabled = true;
+        scanBtn.style.opacity = "0.7";
+        scanBtn.style.cursor = "not-allowed";
+
+        updateProgress("Starting route scan...");
+
         const isV1 = document.querySelector(".css-hkr77h")?.checked;
-        updateProgress(`Detected Cortex Version: ${isV1 ? "V1" : "V2"}`);
-        console.log(`Cortex Version: ${isV1 ? "V1" : "V2"}`);
-
         const routeSelector = isV1
-          ? '[class^="af-link routes-list-item p-2 d-flex align-items-center w-100 route-"]'
-          : ".css-1muusaa";
+          ? ".d-flex.flex-column.border-bottom.border-light-gray"
+          : '[role="row"]';
+
         const routes = [];
-
-        updateProgress("Scrolling to collect routes...");
         await collectRoutes(routeSelector, routes, 20, 100, isV1);
-
-        updateProgress("Scrolling back to the top...");
-        window.scrollTo({ top: 0, behavior: "smooth" });
-        await new Promise((resolve) => setTimeout(resolve, 2000));
-
-        updateProgress("Rechecking routes...");
-        await collectRoutes(routeSelector, routes, 20, 100, isV1);
-
-        updateProgress(`Final collection complete. Found ${routes.length} total routes.`);
-        console.log("Final routes collected:", routes);
-
-        behindRoutes = routes.filter((route) => route.progress?.includes("behind"));
-        console.log("Behind Routes:", behindRoutes);
-
-        updateProgress(`Found ${behindRoutes.length} routes that are behind schedule.`, true, true);
-
-        if (behindRoutes.length > 0) {
-          // Set up DA dropdowns if needed
-          const hasMultipleDAs = behindRoutes.some(route => route.das.length > 1);
-          if (hasMultipleDAs) {
-            setupDADropdowns(behindRoutes);
-            daSelectionSection.style.display = "block";
-          } else {
-            setupRouteDetails(behindRoutes);
-            routeDetailsSection.style.display = "block";
-          }
+        console.log("Route collection complete");
+        
+        if (routes.length === 0) {
+          throw new Error("No routes found");
         }
+
+        behindRoutes = routes.filter(route => route.progress?.toLowerCase().includes("behind"));
+        console.log("Behind routes:", behindRoutes);
+
+        if (behindRoutes.length === 0) {
+          updateProgress("No behind routes found", true);
+          return;
+        }
+
+        const hasMultipleDAs = behindRoutes.some(route => route.das.length > 1);
+        if (hasMultipleDAs) {
+          setupDADropdowns(behindRoutes);
+          daSelectionSection.style.display = "block";
+        } else {
+          setupRouteDetails(behindRoutes);
+          routeDetailsSection.style.display = "block";
+        }
+
+        initialSection.style.display = "none";
+        dspProgressSection.style.display = "block";
+
       } catch (error) {
         console.error("Error during route scanning:", error);
-        updateProgress(`Error: ${error.message}`);
+        updateProgress(`Error during scan: ${error.message}`, true, true);
+      } finally {
+        scanBtn.disabled = false;
+        scanBtn.style.opacity = "1";
+        scanBtn.style.cursor = "pointer";
       }
     });
-
-    // Add navigation button handlers
-    const nextBtn = modal.querySelector("#next-btn");
-    nextBtn.addEventListener("click", () => {
-      daSelectionSection.style.display = "none";
-      setupRouteDetails(behindRoutes);
-      routeDetailsSection.style.display = "block";
-    });
-
-    const backBtn = modal.querySelector("#back-btn");
-    backBtn.addEventListener("click", () => {
-      routeDetailsSection.style.display = "none";
-      daSelectionSection.style.display = "block";
-    });
-
-    const nextToProgressBtn = modal.querySelector("#next-to-progress-btn");
-    nextToProgressBtn.addEventListener("click", () => {
-      routeDetailsSection.style.display = "none";
-      dspProgressSection.style.display = "block";
-    });
-
-    const backToRoutesBtn = modal.querySelector("#back-to-routes-btn");
-    backToRoutesBtn.addEventListener("click", () => {
-      dspProgressSection.style.display = "none";
-      routeDetailsSection.style.display = "block";
-    });
-
-    // Setup functions
-    const setupDADropdowns = (routes) => {
-      daDropdowns.innerHTML = routes
-        .filter(route => route.das.length > 1)
-        .map((route) => {
-          return `
-            <div style="margin-bottom: 15px; padding: 15px; background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border: 1px solid #edf2f7;">
-              <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #2c3e50;">
-                ${route.id} (${route.progress}):
-              </label>
-              <select data-route-id="${route.id}" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
-                ${route.das.map(da => `<option value="${da}">${da}</option>`).join("")}
-              </select>
-            </div>
-          `;
-        })
-        .join("");
-    };
-
-    const setupRouteDetails = (routes) => {
-      routeDetails.innerHTML = routes.map((route) => {
-        const select = daDropdowns.querySelector(`select[data-route-id="${route.id}"]`);
-        const associateInfo = select ? select.value : route.das.join(', ');
-        
-        return `
-          <div style="margin-bottom: 20px; padding: 15px; background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border: 1px solid #edf2f7;">
-            <h4 style="margin: 0 0 10px; font-size: 16px; color: #2c3e50;">${route.id}: ${associateInfo}</h4>
-            <div style="margin-bottom: 15px;">
-              <p style="margin: 0 0 8px; font-weight: 600; color: #2c3e50;">Root Cause:</p>
-              <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px;">
-                <label class="rc-label">
-                  <input type="checkbox" class="rc-checkbox" value="Late Start"> Late Start
-                </label>
-                <label class="rc-label">
-                  <input type="checkbox" class="rc-checkbox" value="Long Breaks"> Long Breaks
-                </label>
-                <label class="rc-label">
-                  <input type="checkbox" class="rc-checkbox" value="System Issues"> System Issues
-                </label>
-                <label class="rc-label">
-                  <input type="checkbox" class="rc-checkbox" value="Other"> Other
-                </label>
-              </div>
-              <input type="text" class="other-input" style="display: none; width: 100%; margin-top: 8px; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" placeholder="Specify other root cause...">
-            </div>
-            <div>
-              <p style="margin: 0 0 8px; font-weight: 600; color: #2c3e50;">Point of Action:</p>
-              <select class="poa-select" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; margin-bottom: 8px;">
-                <option value="">Select POA...</option>
-                <option value="Rescue">Rescue</option>
-                <option value="RTS">RTS</option>
-                <option value="Other">Other</option>
-              </select>
-              <input type="text" class="poa-other-input" style="display: none; width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" placeholder="Specify other POA...">
-            </div>
-          </div>
-        `;
-      }).join("");
-
-      // Add event listeners for Other checkboxes
-      routeDetails.querySelectorAll('.rc-checkbox[value="Other"]').forEach(checkbox => {
-        checkbox.addEventListener('change', (e) => {
-          const otherInput = e.target.closest('div').nextElementSibling;
-          otherInput.style.display = e.target.checked ? 'block' : 'none';
-        });
-      });
-
-      // Add event listeners for POA selects
-      routeDetails.querySelectorAll('.poa-select').forEach(select => {
-        select.addEventListener('change', (e) => {
-          const otherInput = e.target.nextElementSibling;
-          otherInput.style.display = e.target.value === 'Other' ? 'block' : 'none';
-        });
-      });
-    };
 
     // Add download functionality
     const downloadBtn = modal.querySelector("#download-btn");
@@ -465,6 +299,124 @@
       link.download = "behind_routes.txt";
       link.click();
       URL.revokeObjectURL(blobURL);
+    };
+
+    // Add navigation button handlers
+    const daNextBtn = modal.querySelector("#da-next-btn");
+    daNextBtn.addEventListener("click", () => {
+      daSelectionSection.style.display = "none";
+      setupRouteDetails(behindRoutes);
+      routeDetailsSection.style.display = "block";
+    });
+
+    const detailsNextBtn = modal.querySelector("#details-next-btn");
+    detailsNextBtn.addEventListener("click", () => {
+      routeDetailsSection.style.display = "none";
+      dspProgressSection.style.display = "block";
+    });
+
+    // Setup functions
+    const setupDADropdowns = (routes) => {
+      daDropdowns.innerHTML = routes
+        .filter(route => route.das.length > 1)
+        .map((route) => {
+          return `
+            <div style="margin-bottom: 15px; padding: 15px; background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border: 1px solid #edf2f7;">
+              <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #2c3e50;">
+                ${route.id} (${route.progress}):
+              </label>
+              <select data-route-id="${route.id}" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                ${route.das.map(da => `<option value="${da}">${da}</option>`).join("")}
+              </select>
+            </div>
+          `;
+        })
+        .join("");
+    };
+
+    const setupRouteDetails = (routes) => {
+      try {
+        routeDetails.innerHTML = routes.map((route) => {
+          const select = daDropdowns.querySelector(`select[data-route-id="${route.id}"]`);
+          const associateInfo = select ? select.value : route.das.join(', ');
+          
+          return `
+            <div style="margin-bottom: 20px; padding: 15px; background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border: 1px solid #edf2f7;">
+              <h4 style="margin: 0 0 10px; font-size: 16px; color: #2c3e50;">${route.id}: ${associateInfo}</h4>
+              <div style="margin-bottom: 15px;">
+                <p style="margin: 0 0 8px; font-weight: 600; color: #2c3e50;">Root Cause:</p>
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px;">
+                  <label class="rc-label">
+                    <input type="checkbox" class="rc-checkbox" value="Late Start"> Late Start
+                  </label>
+                  <label class="rc-label">
+                    <input type="checkbox" class="rc-checkbox" value="Lunch Break"> Lunch Break
+                  </label>
+                  <label class="rc-label">
+                    <input type="checkbox" class="rc-checkbox" value="System Issues"> System Issues
+                  </label>
+                  <label class="rc-label">
+                    <input type="checkbox" class="rc-checkbox" value="Traffic"> Traffic
+                  </label>
+                  <label class="rc-label">
+                    <input type="checkbox" class="rc-checkbox" value="Weather"> Weather
+                  </label>
+                  <label class="rc-label">
+                    <input type="checkbox" class="rc-checkbox" value="Other"> Other
+                  </label>
+                </div>
+                <input type="text" class="other-input" style="display: none; width: 100%; margin-top: 8px; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" placeholder="Please specify other root cause...">
+              </div>
+              <div style="margin-bottom: 15px;">
+                <p style="margin: 0 0 8px; font-weight: 600; color: #2c3e50;">Point of Action:</p>
+                <select class="poa-select" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                  <option value="">Select Point of Action...</option>
+                  <option value="Called DA">Called DA</option>
+                  <option value="Texted DA">Texted DA</option>
+                  <option value="Monitoring">Monitoring</option>
+                  <option value="Other">Other</option>
+                </select>
+                <input type="text" class="poa-other-input" style="display: none; width: 100%; margin-top: 8px; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" placeholder="Please specify other point of action...">
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        // Add event listeners for Other inputs
+        routeDetails.querySelectorAll('.rc-checkbox[value="Other"]').forEach(checkbox => {
+          const otherInput = checkbox.closest('div').nextElementSibling;
+          checkbox.addEventListener('change', () => {
+            otherInput.style.display = checkbox.checked ? 'block' : 'none';
+          });
+        });
+
+        routeDetails.querySelectorAll('.poa-select').forEach(select => {
+          const otherInput = select.nextElementSibling;
+          select.addEventListener('change', e => {
+            otherInput.style.display = e.target.value === 'Other' ? 'block' : 'none';
+          });
+        });
+      } catch (error) {
+        console.error('Error setting up route details:', error);
+        updateProgress('Error setting up route details: ' + error.message, true, true);
+      }
+    };
+
+    // Update progress with improved error handling
+    const updateProgress = (message, isComplete = false, isError = false) => {
+      const progressText = document.querySelector("#progress-text");
+      if (!progressText) {
+        console.error("Progress text element not found");
+        return;
+      }
+
+      try {
+        progressText.textContent = message;
+        progressText.style.color = isError ? "#dc3545" : (isComplete ? "#28a745" : "#2c3e50");
+        console.log(`Progress Update [${isError ? "ERROR" : (isComplete ? "COMPLETE" : "INFO")}]:`, message);
+      } catch (error) {
+        console.error("Error updating progress:", error);
+      }
     };
 
     // Collect routes function with improved error handling and progress tracking
@@ -589,23 +541,6 @@
       } catch (error) {
         console.error('Error extracting route info:', error);
         return null;
-      }
-    };
-
-    // Update progress with improved error handling
-    const updateProgress = (message, isComplete = false, isError = false) => {
-      const progressElement = document.querySelector("#progress-text");
-      if (!progressElement) {
-        console.error("Progress element not found");
-        return;
-      }
-
-      try {
-        progressElement.textContent = message;
-        progressElement.style.color = isError ? "#dc3545" : (isComplete ? "#28a745" : "#2c3e50");
-        console.log(`Progress Update [${isError ? "ERROR" : (isComplete ? "COMPLETE" : "INFO")}]:`, message);
-      } catch (error) {
-        console.error("Error updating progress:", error);
       }
     };
 
