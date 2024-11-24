@@ -1,5 +1,4 @@
 (async function () {
-  // Function to create a modal for progress and downloading the file
   const createModal = () => {
     const modal = document.createElement("div");
     modal.id = "custom-modal";
@@ -28,84 +27,65 @@
   const downloadBtn = modal.querySelector("#download-btn");
 
   try {
-    // Detect if V1 or V2 is being used
     const isV1 = document.querySelector(".css-hkr77h")?.checked;
 
     const results = [];
 
     if (isV1) {
-  console.log("Using V1 Cortex");
-  const routeContainers = document.querySelectorAll(".routes-list.d-flex.flex-1.flex-column.border-y-list > div");
-  console.log(`Found ${routeContainers.length} route containers`);
+      console.log("Using V1 Cortex");
 
-  routeContainers.forEach((container, index) => {
-    console.log(`Processing container ${index + 1}`);
-    const routeCodeElem = container.querySelector(".left-column.text-sm");
-    const associateContainer = container.querySelector(".ml-lg-4.ml-2.mr-2.mr-lg-auto.normal-white-space");
-    const tooltipElem = associateContainer.nextElementSibling?.classList.contains("af-tooltip")
-      ? associateContainer.nextElementSibling.querySelectorAll("div")
-      : null;
-    const progressElem = container.querySelector(".progress");
+      const observer = new MutationObserver((mutations, obs) => {
+        const routeContainers = document.querySelectorAll(
+          ".routes-list.d-flex.flex-1.flex-column.border-y-list > div"
+        );
+        if (routeContainers.length > 0) {
+          obs.disconnect();
+          console.log(`Found ${routeContainers.length} route containers`);
 
-    console.log({
-      routeCodeElem,
-      associateContainer,
-      tooltipElem,
-      progressElem,
-    });
+          routeContainers.forEach((container, index) => {
+            console.log(`Processing container ${index + 1}`);
+            const routeCodeElem = container.querySelector(".left-column.text-sm");
+            const associateContainer = container.querySelector(".ml-lg-4.ml-2.mr-2.mr-lg-auto.normal-white-space");
+            const tooltipElem = associateContainer.nextElementSibling?.classList.contains("af-tooltip")
+              ? associateContainer.nextElementSibling.querySelectorAll("div")
+              : null;
+            const progressElem = container.querySelector(".progress");
 
-    const routeCode = routeCodeElem?.textContent.trim();
-    const associateNames = tooltipElem
-      ? Array.from(tooltipElem).map((el) => el.textContent.trim()).join(", ")
-      : associateContainer.querySelector(".text-truncate")?.textContent.trim();
-    const progressText = progressElem?.textContent.trim();
+            const routeCode = routeCodeElem?.textContent.trim();
+            const associateNames = tooltipElem
+              ? Array.from(tooltipElem).map((el) => el.textContent.trim()).join(", ")
+              : associateContainer.querySelector(".text-truncate")?.textContent.trim();
+            const progressText = progressElem?.textContent.trim();
 
-    if (routeCode && associateNames && progressText && progressText.includes("behind")) {
-      console.log(`Adding route: ${routeCode}`);
-      results.push(`${routeCode}: ${associateNames} (${progressText})`);
-    }
-  });
-} else {
-      console.log("Using V2 Cortex");
+            console.log({ routeCode, associateNames, progressText });
 
-      // V2 route extraction
-      const routeDivs = document.querySelectorAll(".css-1muusaa");
+            if (routeCode && associateNames && progressText && progressText.includes("behind")) {
+              console.log(`Adding route: ${routeCode}`);
+              results.push(`${routeCode}: ${associateNames} (${progressText})`);
+            }
+          });
 
-      routeDivs.forEach((routeDiv) => {
-        const routeCodeElem = routeDiv.querySelector(".css-1nqzkik");
-        const associateElements = routeDiv.querySelectorAll(".css-1kttr4w");
-        const behindElem = routeDiv.querySelector(".css-1xac89n.font-weight-bold");
+          if (results.length > 0) {
+            const fileContent = results.join("\n");
+            const blob = new Blob([fileContent], { type: "text/plain" });
+            const blobURL = URL.createObjectURL(blob);
 
-        const routeCode = routeCodeElem?.textContent.trim();
-        const associateNames = Array.from(associateElements)
-          .map((el) => el.textContent.trim())
-          .join(", ");
-        const behindText = behindElem?.textContent.trim();
-
-        if (routeCode && associateNames && behindText && behindText.includes("behind")) {
-          results.push(`${routeCode}: ${associateNames} (${behindText})`);
+            downloadBtn.style.display = "block";
+            downloadBtn.textContent = `Download (${results.length} Routes)`;
+            downloadBtn.onclick = () => {
+              const link = document.createElement("a");
+              link.href = blobURL;
+              link.download = "route_data.txt";
+              link.click();
+              URL.revokeObjectURL(blobURL);
+            };
+          } else {
+            modal.innerHTML = "<p>No relevant route data found.</p>";
+          }
         }
       });
-    }
 
-    if (results.length > 0) {
-      // Create a file blob for download
-      const fileContent = results.join("\n");
-      const blob = new Blob([fileContent], { type: "text/plain" });
-      const blobURL = URL.createObjectURL(blob);
-
-      // Enable the download button
-      downloadBtn.style.display = "block";
-      downloadBtn.textContent = `Download (${results.length} Routes)`;
-      downloadBtn.onclick = () => {
-        const link = document.createElement("a");
-        link.href = blobURL;
-        link.download = "route_data.txt";
-        link.click();
-        URL.revokeObjectURL(blobURL); // Clean up the blob URL
-      };
-    } else {
-      modal.innerHTML = "<p>No relevant route data found.</p>";
+      observer.observe(document.body, { childList: true, subtree: true });
     }
   } catch (error) {
     console.error("Error processing route data:", error);
