@@ -75,17 +75,21 @@
     return match ? `${match[1]} behind` : null;
   };
 
+  const cleanAssociateNames = (names) => {
+    return names.replace(/\(Cornerstone Delivery Service\)/g, "").trim();
+  };
+
   const extractAssociates = (container, isV1) => {
     if (!isV1) {
       return Array.from(container.querySelectorAll(".css-1kttr4w"))
-        .map((el) => el.textContent.trim())
+        .map((el) => cleanAssociateNames(el.textContent.trim()))
         .join(", ");
     }
 
     const associateContainer = container.querySelector(".ml-lg-4.ml-2.mr-2.mr-lg-auto.normal-white-space");
     const tooltip = associateContainer?.nextElementSibling?.classList.contains("af-tooltip")
       ? Array.from(associateContainer.nextElementSibling.querySelectorAll("div")).map((el) =>
-          el.textContent.trim()
+          cleanAssociateNames(el.textContent.trim())
         )
       : null;
 
@@ -93,7 +97,7 @@
       return tooltip.join(", ");
     }
 
-    return associateContainer?.textContent.trim() || "No associate info";
+    return cleanAssociateNames(associateContainer?.textContent.trim() || "No associate info");
   };
 
   const collectRoutes = async (selector, uniqueKeys, routes, maxScrolls = 20, scrollDelay = 100, isV1 = false) => {
