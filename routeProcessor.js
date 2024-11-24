@@ -135,12 +135,8 @@
         console.log("Progress:", progress);
 
         if (routeCode && progress) {
-          if (!routes.some(route => route.routeCode === routeCode)) {
-            routes.push({ routeCode, associateInfo, progress });
-            console.log("Added route:", { routeCode, associateInfo, progress });
-          } else {
-            console.log("Skipped duplicate route code:", routeCode);
-          }
+          routes.push({ routeCode, associateInfo, progress });
+          console.log("Added route:", { routeCode, associateInfo, progress });
         } else {
           console.log("Skipped route due to missing code or progress.");
         }
@@ -150,7 +146,7 @@
       await new Promise((resolve) => setTimeout(resolve, scrollDelay));
     }
 
-    updateProgress(`Collected ${routes.length} unique routes so far.`);
+    updateProgress(`Collected ${routes.length} routes so far.`);
     console.log("Completed route collection. Total routes:", routes.length);
   };
 
@@ -181,7 +177,7 @@
     updateProgress("Rechecking routes...");
     await collectRoutes(routeSelector, routes, 20, 100, isV1);
 
-    updateProgress(`Final collection complete. ${routes.length} unique routes found.`);
+    updateProgress(`Final collection complete. ${routes.length} routes found.`);
     console.log("Final routes collected:", routes);
 
     const behindRoutes = routes.filter((route) => route.progress);
