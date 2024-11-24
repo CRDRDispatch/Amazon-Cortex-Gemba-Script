@@ -55,32 +55,17 @@
     }
   };
 
-  const scrollPage = async (selector, maxScrolls = 100, scrollDelay = 500) => {
-    return new Promise((resolve, reject) => {
-      let scrollCount = 0;
-      let lastElementCount = 0;
+  const scrollToBottom = async (maxScrolls = 100, scrollDelay = 500) => {
+    let scrollCount = 0;
+    while (scrollCount < maxScrolls) {
+      window.scrollBy(0, window.innerHeight);
+      scrollCount++;
+      updateProgress(`Scrolling... (${scrollCount}/${maxScrolls})`);
+      console.log(`Scrolling... (${scrollCount}/${maxScrolls})`);
 
-      const interval = setInterval(() => {
-        const elements = document.querySelectorAll(selector);
-        const currentElementCount = elements.length;
-
-        console.log(`Scroll ${scrollCount + 1}: Found ${currentElementCount} elements so far.`);
-        updateProgress(`Scroll ${scrollCount + 1}: Found ${currentElementCount} elements so far.`);
-
-        window.scrollBy(0, window.innerHeight);
-        scrollCount++;
-
-        if (currentElementCount > lastElementCount) {
-          lastElementCount = currentElementCount;
-        }
-
-        // Stop scrolling if maximum scrolls reached or no new elements are loaded
-        if (scrollCount >= maxScrolls || currentElementCount === lastElementCount) {
-          clearInterval(interval);
-          resolve(Array.from(elements));
-        }
-      }, scrollDelay);
-    });
+      await new Promise((resolve) => setTimeout(resolve, scrollDelay));
+    }
+    return document.body.scrollHeight;
   };
 
   const modal = createModal();
@@ -97,13 +82,14 @@
       ? '[class^="af-link routes-list-item p-2 d-flex align-items-center w-100 route-"]'
       : ".css-1muusaa";
 
-    const routeContainers = await scrollPage(routeSelector, 100).catch((err) => {
-      console.error(err);
-      modal.querySelector("#progress-details").innerHTML = `<p>${err}</p>`;
-      return [];
-    });
+    await scrollToBottom(100, 500);
+    updateProgress("Scrolling complete. Collecting elements...");
 
-    if (!routeContainers || routeContainers.length === 0) return;
+    const routeContainers = Array.from(document.querySelectorAll(routeSelector));
+    if (!routeContainers || routeContainers.length === 0) {
+      updateProgress("No routes found after scrolling.");
+      return;
+    }
 
     updateProgress(`Found ${routeContainers.length} routes. Processing...`);
 
