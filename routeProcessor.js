@@ -58,6 +58,26 @@
     }
   };
 
+  const waitForElements = (selector, timeout = 10000) => {
+    return new Promise((resolve, reject) => {
+      const observer = new MutationObserver(() => {
+        const elements = document.querySelectorAll(selector);
+        if (elements.length > 0) {
+          console.log(`Found ${elements.length} elements matching ${selector}`, elements);
+          observer.disconnect();
+          resolve(Array.from(elements));
+        }
+      });
+
+      observer.observe(document.body, { childList: true, subtree: true });
+
+      setTimeout(() => {
+        observer.disconnect();
+        reject(`Timeout: No elements found for selector "${selector}" within ${timeout}ms`);
+      }, timeout);
+    });
+  };
+
   const modal = createModal();
   const downloadBtn = modal.querySelector("#download-btn");
 
@@ -69,46 +89,13 @@
     console.log("Cortex Version:", isV1 ? "V1" : "V2");
     updateProgress(`Detected Cortex Version: ${isV1 ? "V1" : "V2"}`);
 
-    const waitForRoutes = (timeout = 10000, interval = 500) => {
-      return new Promise((resolve, reject) => {
-        let foundRoutes = false;
-        let elapsed = 0;
+    const routeSelector = isV1
+      ? '[class^="af-link routes-list-item p-2 d-flex align-items-center w-100 route-"]'
+      : ".css-1muusaa";
 
-        const intervalCheck = setInterval(() => {
-          const parentContainer = isV1
-            ? document.querySelector(".routes-list.d-flex.flex-1.flex-column.border-y-list")
-            : document.querySelector(".css-1muusaa");
-          console.log("Parent container:", parentContainer);
-
-          if (parentContainer) {
-            const routeContainers = isV1
-              ? Array.from(
-                  parentContainer.querySelectorAll('[class^="af-link routes-list-item p-2 d-flex align-items-center w-100 route-"]')
-                )
-              : Array.from(parentContainer.querySelectorAll(".css-1muusaa"));
-
-            console.log(`Found ${routeContainers.length} valid route containers`, routeContainers);
-
-            if (routeContainers.length > 0) {
-              clearInterval(intervalCheck);
-              foundRoutes = true;
-              resolve(routeContainers);
-            }
-          }
-
-          elapsed += interval;
-          if (elapsed >= timeout) {
-            clearInterval(intervalCheck);
-            console.warn("Timeout reached. No route containers found.");
-            reject("Timeout reached while waiting for routes.");
-          }
-        }, interval);
-      });
-    };
-
-    const routeContainers = await waitForRoutes().catch((err) => {
+    const routeContainers = await waitForElements(routeSelector).catch((err) => {
       console.error(err);
-      modal.querySelector("#progress-details").innerHTML = "<p>Failed to load route data. Please try again later.</p>";
+      modal.querySelector("#progress-details").innerHTML = `<p>${err}</p>`;
       return [];
     });
 
@@ -124,7 +111,9 @@
       const routeCodeElem = isV1
         ? container.querySelector(".left-column.text-sm div:first-child")
         : container.querySelector(".css-1nqzkik");
-      const routeCode = routeCodeElem?.getAttribute("title")?.trim();
+      const routeCode = isV1
+        ? routeCodeElem?.textContent.trim()
+        : routeCodeElem?.getAttribute("title")?.trim();
 
       // Associated Info
       const associateContainers = isV1
