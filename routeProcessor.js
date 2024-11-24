@@ -34,7 +34,10 @@
       </div>
       <h2 style="font-family: Arial, sans-serif; margin-bottom: 20px; border-bottom: 2px solid #eee; padding-bottom: 10px;">Gimme That GEMBA</h2>
       <div id="progress-section" style="margin-bottom: 30px;">
-        <h3 style="font-family: Arial, sans-serif; font-size: 16px; color: #666; margin-bottom: 10px;">Progress</h3>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+          <h3 style="font-family: Arial, sans-serif; font-size: 16px; color: #666; margin: 0;">Progress</h3>
+          <button id="toggle-progress" style="background: none; border: none; color: #666; cursor: pointer; font-size: 14px;">Hide</button>
+        </div>
         <div id="progress-details" style="font-family: Arial, sans-serif; text-align: left; margin-bottom: 20px; padding: 10px; background: #f5f5f5; border-radius: 5px;">
           <p>Initializing...</p>
         </div>
@@ -54,6 +57,19 @@
     modal.querySelector("#close-btn").addEventListener("click", () => {
       modal.remove();
       overlay.remove();
+    });
+
+    // Add toggle functionality for progress section
+    const toggleBtn = modal.querySelector("#toggle-progress");
+    const progressDetails = modal.querySelector("#progress-details");
+    toggleBtn.addEventListener("click", () => {
+      if (progressDetails.style.display === "none") {
+        progressDetails.style.display = "block";
+        toggleBtn.textContent = "Hide";
+      } else {
+        progressDetails.style.display = "none";
+        toggleBtn.textContent = "Show";
+      }
     });
 
     return modal;
@@ -185,11 +201,13 @@
     updateProgress("Rechecking routes...");
     await collectRoutes(routeSelector, routes, 20, 100, isV1);
 
-    updateProgress(`Final collection complete. ${routes.length} unique routes found.`);
+    updateProgress(`Final collection complete. Found ${routes.length} total routes.`);
     console.log("Final routes collected:", routes);
 
     const behindRoutes = routes.filter((route) => route.progress?.includes("behind"));
     console.log("Behind Routes:", behindRoutes);
+
+    updateProgress(`Found ${behindRoutes.length} routes that are behind schedule.`);
 
     if (behindRoutes.length > 0) {
       const daSelectionSection = modal.querySelector("#da-selection-section");
