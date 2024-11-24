@@ -429,7 +429,16 @@
         const fileContent = behindRoutes.map((route) => {
           const select = daDropdowns.querySelector(`select[data-route-code="${route.routeCode}"]`);
           const associateInfo = select ? select.value : route.associateInfo;
-          const container = routeDetails.querySelector(`div:has(h4:contains('${route.routeCode}'))`);
+          
+          // Find the container by iterating through all containers and matching the route code
+          const containers = routeDetails.querySelectorAll('div');
+          const container = Array.from(containers).find(div => {
+            const h4 = div.querySelector('h4');
+            return h4 && h4.textContent.startsWith(route.routeCode);
+          });
+          
+          if (!container) return `${route.routeCode}: ${associateInfo} (${route.progress})\n`;
+          
           const rc = container.querySelector('.rc-input').value || 'N/A';
           const poa = container.querySelector('.poa-input').value || 'N/A';
           
