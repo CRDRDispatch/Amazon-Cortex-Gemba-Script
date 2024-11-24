@@ -24,10 +24,10 @@
     modal.style.webkitPerspective = "1000";
     modal.style.width = "400px";
     modal.style.background = "white";
-    modal.style.border = "1px solid #ccc";
-    modal.style.boxShadow = "0 4px 6px rgba(0, 0, 0, 0.3)";
-    modal.style.padding = "20px";
-    modal.style.borderRadius = "10px";
+    modal.style.border = "none";
+    modal.style.boxShadow = "0 10px 25px rgba(0, 0, 0, 0.2), 0 2px 10px rgba(0, 0, 0, 0.1)";
+    modal.style.padding = "25px";
+    modal.style.borderRadius = "16px";
     modal.style.zIndex = "10000";
     modal.style.textAlign = "center";
     modal.style.maxHeight = "90vh";
@@ -36,32 +36,55 @@
     modal.style.isolation = "isolate";
 
     modal.innerHTML = `
-      <button id="close-btn" style="position: absolute; top: 10px; right: 10px; background: none; border: none; font-size: 16px; cursor: pointer;">✖</button>
-      <div style="margin-bottom: 20px;">
+      <button id="close-btn" style="position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 18px; cursor: pointer; color: #666; transition: color 0.2s ease;">✖</button>
+      <div style="margin-bottom: 25px;">
         <img src="https://crdrdispatch.github.io/GembaScript/Logo.svg" alt="Logo" style="height: 90px; display: block; margin: 0 auto; -webkit-transform: translateZ(0); transform: translateZ(0);">
       </div>
-      <h2 style="font-family: Arial, sans-serif; margin-bottom: 20px; border-bottom: 2px solid #eee; padding-bottom: 10px;">Gimme That GEMBA</h2>
+      <h2 style="font-family: Arial, sans-serif; margin-bottom: 25px; border-bottom: 2px solid #eee; padding-bottom: 15px; color: #2c3e50; font-size: 24px;">Gimme That GEMBA</h2>
       <div id="progress-section" style="margin-bottom: 30px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
           <div style="display: flex; align-items: center; gap: 10px;">
-            <h3 style="font-family: Arial, sans-serif; font-size: 16px; color: #666; margin: 0;">Progress</h3>
-            <span id="progress-status" style="display: none; font-size: 12px; padding: 2px 8px; border-radius: 12px; background-color: #4CAF50; color: white;">Complete</span>
+            <h3 style="font-family: Arial, sans-serif; font-size: 16px; color: #2c3e50; margin: 0; font-weight: 600;">Progress</h3>
+            <span id="progress-status" style="display: none; font-size: 12px; padding: 3px 10px; border-radius: 20px; background-color: #4CAF50; color: white; font-weight: 500; box-shadow: 0 2px 4px rgba(76, 175, 80, 0.2);">Complete</span>
           </div>
-          <button id="toggle-progress" style="background: none; border: none; color: #666; cursor: pointer; font-size: 14px;">Hide</button>
+          <button id="toggle-progress" style="background: none; border: none; color: #666; cursor: pointer; font-size: 14px; padding: 5px 10px; border-radius: 5px; transition: background-color 0.2s ease;">Hide</button>
         </div>
-        <div id="progress-details" style="font-family: Arial, sans-serif; text-align: left; margin-bottom: 20px; padding: 10px; background: #f5f5f5; border-radius: 5px;">
+        <div id="progress-details" style="font-family: Arial, sans-serif; text-align: left; margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 12px; border: 1px solid #edf2f7;">
           <p>Initializing...</p>
         </div>
       </div>
       <div id="da-selection-section" style="display: none; margin-bottom: 30px;">
-        <h3 style="font-family: Arial, sans-serif; font-size: 16px; color: #666; margin-bottom: 10px;">These routes have multiple DAs. Please select the DA assigned to the route.</h3>
-        <div id="da-dropdowns" style="max-height: 400px; overflow-y: auto; padding: 10px; background: #f5f5f5; border-radius: 5px;">
+        <h3 style="font-family: Arial, sans-serif; font-size: 16px; color: #2c3e50; margin-bottom: 12px; font-weight: 600;">These routes have multiple DAs. Please select the DA assigned to the route.</h3>
+        <div id="da-dropdowns" style="max-height: 400px; overflow-y: auto; padding: 15px; background: #f8f9fa; border-radius: 12px; border: 1px solid #edf2f7;">
         </div>
       </div>
-      <div id="download-section" style="display: none; padding-top: 20px; border-top: 2px solid #eee;">
-        <button id="download-btn" style="margin: 0 auto; padding: 10px 20px; background-color: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer; font-family: Arial, sans-serif; box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);">Download File</button>
+      <div id="download-section" style="display: none; padding-top: 25px; border-top: 2px solid #edf2f7;">
+        <button id="download-btn" style="margin: 0 auto; padding: 12px 25px; background-color: #4CAF50; color: white; border: none; border-radius: 8px; cursor: pointer; font-family: Arial, sans-serif; font-weight: 500; font-size: 15px; box-shadow: 0 4px 6px rgba(76, 175, 80, 0.2); transition: all 0.2s ease;">Download File</button>
       </div>
     `;
+
+    // Add hover effects
+    const closeBtn = modal.querySelector("#close-btn");
+    closeBtn.addEventListener("mouseover", () => closeBtn.style.color = "#ff4444");
+    closeBtn.addEventListener("mouseout", () => closeBtn.style.color = "#666");
+
+    const toggleBtn = modal.querySelector("#toggle-progress");
+    toggleBtn.addEventListener("mouseover", () => {
+      toggleBtn.style.backgroundColor = "#f0f0f0";
+    });
+    toggleBtn.addEventListener("mouseout", () => {
+      toggleBtn.style.backgroundColor = "transparent";
+    });
+
+    const downloadBtn = modal.querySelector("#download-btn");
+    downloadBtn.addEventListener("mouseover", () => {
+      downloadBtn.style.backgroundColor = "#45a049";
+      downloadBtn.style.boxShadow = "0 6px 8px rgba(76, 175, 80, 0.3)";
+    });
+    downloadBtn.addEventListener("mouseout", () => {
+      downloadBtn.style.backgroundColor = "#4CAF50";
+      downloadBtn.style.boxShadow = "0 4px 6px rgba(76, 175, 80, 0.2)";
+    });
 
     document.body.appendChild(modal);
 
@@ -244,22 +267,28 @@
         if (das.length > 1) {
           const container = document.createElement("div");
           container.style.marginBottom = "15px";
-          container.style.padding = "10px";
+          container.style.padding = "15px";
           container.style.background = "white";
-          container.style.borderRadius = "5px";
-          container.style.boxShadow = "0 1px 3px rgba(0,0,0,0.1)";
+          container.style.borderRadius = "8px";
+          container.style.boxShadow = "0 2px 4px rgba(0,0,0,0.05)";
+          container.style.border = "1px solid #edf2f7";
           
           const label = document.createElement("label");
           label.textContent = `${route.routeCode} (${route.progress}):`;
           label.style.display = "block";
-          label.style.marginBottom = "5px";
-          label.style.fontWeight = "bold";
+          label.style.marginBottom = "8px";
+          label.style.fontWeight = "600";
+          label.style.color = "#2c3e50";
           
           const select = document.createElement("select");
           select.style.width = "100%";
-          select.style.padding = "5px";
-          select.style.borderRadius = "3px";
+          select.style.padding = "8px 12px";
+          select.style.borderRadius = "6px";
           select.style.border = "1px solid #ddd";
+          select.style.backgroundColor = "#f8f9fa";
+          select.style.cursor = "pointer";
+          select.style.color = "#2c3e50";
+          select.style.fontSize = "14px";
           select.dataset.routeCode = route.routeCode;
           
           das.forEach((da) => {
