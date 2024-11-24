@@ -22,7 +22,7 @@
     await loadScript(logicUrl);
 
     const { createModal, updateProgress, updateDropdowns } = await import(uiUrl);
-    const { collectRoutes, hashString } = await import(logicUrl);
+    const { collectRoutes, extractBehindProgress } = await import(logicUrl);
 
     console.log("Modules loaded successfully. Initializing...");
 
