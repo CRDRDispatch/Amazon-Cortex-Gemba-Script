@@ -59,18 +59,22 @@
     }
   };
 
-  const ensureAllRoutesLoaded = async (selector, maxScrolls = 20, scrollDelay = 100) => {
-    updateProgress("Scrolling to load all routes...", false);
+  const collectRoutes = async (selector, uniqueRoutes, maxScrolls = 20, scrollDelay = 100) => {
     for (let i = 0; i < maxScrolls; i++) {
       const elements = document.querySelectorAll(selector);
-      if (elements.length > 0) {
-        elements[elements.length - 1].scrollIntoView({ behavior: "smooth", block: "end" });
-      }
+
+      elements.forEach((el) => {
+        const id = el.getAttribute("id") || el.getAttribute("data-id") || el.outerHTML;
+        if (!uniqueRoutes.has(id)) {
+          uniqueRoutes.add(id);
+        }
+      });
+
+      elements[elements.length - 1]?.scrollIntoView({ behavior: "smooth", block: "end" });
       await new Promise((resolve) => setTimeout(resolve, scrollDelay));
     }
-    updateProgress("Scrolling back to the top to recheck routes...");
-    window.scrollTo({ top: 0, behavior: "smooth" });
-    await new Promise((resolve) => setTimeout(resolve, 2000)); // Wait after scrolling back
+
+    updateProgress(`Collected ${uniqueRoutes.size} unique routes so far.`);
   };
 
   const modal = createModal();
@@ -87,63 +91,28 @@
       ? '[class^="af-link routes-list-item p-2 d-flex align-items-center w-100 route-"]'
       : ".css-1muusaa";
 
-    await ensureAllRoutesLoaded(routeSelector, 20, 100); // Force load all routes
-    updateProgress("Rechecking all routes after scrolling...", false);
+    const uniqueRoutes = new Set();
 
-    const routeContainers = Array.from(document.querySelectorAll(routeSelector));
-    console.log(`Collected ${routeContainers.length} route containers`, routeContainers);
-    if (!routeContainers || routeContainers.length === 0) {
-      updateProgress("No routes found after scrolling.");
-      return;
-    }
+    updateProgress("Scrolling to collect routes...");
+    await collectRoutes(routeSelector, uniqueRoutes, 20, 100);
 
-    updateProgress(`Found ${routeContainers.length} routes. Processing...`);
+    updateProgress("Scrolling back to the top...");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    await new Promise((resolve) => setTimeout(resolve, 2000)); // Wait for everything to load again
 
-    const results = [];
-    const processedIds = new Set();
+    updateProgress("Rechecking routes...");
+    await collectRoutes(routeSelector, uniqueRoutes, 20, 100);
 
-    routeContainers.forEach((container) => {
-      if (processedIds.has(container)) return;
+    updateProgress(`Final collection complete. ${uniqueRoutes.size} unique routes found.`);
 
-      processedIds.add(container);
-
-      const routeCodeElem = isV1
-        ? container.querySelector(".left-column.text-sm div:first-child")
-        : container.querySelector(".css-1nqzkik");
-      const routeCode = isV1
-        ? routeCodeElem?.textContent.trim()
-        : routeCodeElem?.getAttribute("title")?.trim();
-
-      const associateContainers = isV1
-        ? container.querySelector(".ml-lg-4.ml-2.mr-2.mr-lg-auto.normal-white-space")
-        : container.querySelectorAll(".css-1kttr4w");
-      const associateNames = Array.from(associateContainers || [])
-        .map((el) => el.textContent.trim())
-        .join(", ");
-
-      const progressElem = isV1
-        ? container.querySelector(".progress")
-        : container.querySelector(".css-1xac89n.font-weight-bold");
-      let progressText = progressElem?.textContent.trim();
-
-      const behindMatch = progressText?.match(/(\d+)\s*behind/);
-      progressText = behindMatch ? `${behindMatch[1]} behind` : null;
-
-      if (routeCode && progressText) {
-        results.push(`${routeCode}: ${associateNames || "No associate info"} (${progressText})`);
-      }
-    });
-
-    updateProgress("Processing complete.");
-
-    if (results.length > 0) {
-      updateProgress(`Exporting ${results.length} routes.`);
-      const fileContent = results.join("\n");
+    const routeDetails = Array.from(uniqueRoutes).map((route) => route); // Placeholder for processing each route
+    if (routeDetails.length > 0) {
+      const fileContent = routeDetails.join("\n");
       const blob = new Blob([fileContent], { type: "text/plain" });
       const blobURL = URL.createObjectURL(blob);
 
       downloadBtn.style.display = "block";
-      downloadBtn.textContent = `Download (${results.length} Routes)`;
+      downloadBtn.textContent = `Download (${routeDetails.length} Routes)`;
       downloadBtn.onclick = () => {
         const link = document.createElement("a");
         link.href = blobURL;
@@ -152,10 +121,10 @@
         URL.revokeObjectURL(blobURL);
       };
     } else {
-      modal.querySelector("#progress-details").innerHTML = "<p>No relevant route data found.</p>";
+      updateProgress("No routes found after processing.");
     }
   } catch (error) {
     console.error("Error during route data processing:", error);
-    modal.querySelector("#progress-details").innerHTML = `<p>Error: ${error.message}</p>`;
+    updateProgress(`Error: ${error.message}`);
   }
 })();
