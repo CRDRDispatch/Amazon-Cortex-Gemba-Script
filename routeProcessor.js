@@ -59,7 +59,7 @@
     }
   };
 
-  const scrollToBottom = async (maxScrolls = 20, scrollDelay = 500) => {
+  const scrollToBottom = async (maxScrolls = 20, scrollDelay = 100) => {
     updateProgress("Scrolling...", false);
     for (let scrollCount = 0; scrollCount < maxScrolls; scrollCount++) {
       window.scrollBy(0, window.innerHeight);
@@ -81,7 +81,7 @@
       ? '[class^="af-link routes-list-item p-2 d-flex align-items-center w-100 route-"]'
       : ".css-1muusaa";
 
-    await scrollToBottom(20, 500);
+    await scrollToBottom(20, 100); // Faster scrolling with reduced delay
     updateProgress("Scrolling complete. Collecting elements...", false);
 
     const routeContainers = Array.from(document.querySelectorAll(routeSelector));
