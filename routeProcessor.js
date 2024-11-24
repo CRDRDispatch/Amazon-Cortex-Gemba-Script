@@ -48,7 +48,7 @@
         <div id="da-dropdowns" style="max-height: 400px; overflow-y: auto; padding: 15px; background: #f8f9fa; border-radius: 12px; border: 1px solid #edf2f7;">
         </div>
         <div style="margin-top: 20px; text-align: right;">
-          <button id="next-btn" style="padding: 12px 25px; background-color: #4CAF50; color: white; border: none; border-radius: 8px; cursor: pointer; font-family: Arial, sans-serif; font-weight: 500; font-size: 15px; box-shadow: 0 4px 6px rgba(76, 175, 80, 0.2); transition: all 0.2s ease;">Next</button>
+          <button id="da-next-btn" style="padding: 12px 30px; background-color: #4CAF50; color: white; border: none; border-radius: 8px; cursor: pointer; font-family: Arial, sans-serif; font-weight: 500; font-size: 15px; box-shadow: 0 4px 6px rgba(76, 175, 80, 0.2); transition: all 0.2s ease;">Next</button>
         </div>
       </div>
       <div id="preview-section" style="display: none; margin-bottom: 30px;">
@@ -128,18 +128,17 @@
       }
     });
 
-    const nextBtn = modal.querySelector("#next-btn");
-    const previewSection = modal.querySelector("#preview-section");
-    const daSelectionSection = modal.querySelector("#da-selection-section");
-    const routeDetails = modal.querySelector("#route-details");
-
-    nextBtn.addEventListener("mouseover", () => {
-      nextBtn.style.backgroundColor = "#45a049";
-      nextBtn.style.boxShadow = "0 6px 8px rgba(76, 175, 80, 0.3)";
-    });
-    nextBtn.addEventListener("mouseout", () => {
-      nextBtn.style.backgroundColor = "#4CAF50";
-      nextBtn.style.boxShadow = "0 4px 6px rgba(76, 175, 80, 0.2)";
+    const nextButtons = modal.querySelectorAll("#da-next-btn, #preview-next-btn");
+    nextButtons.forEach(btn => {
+      btn.addEventListener("mouseover", () => {
+        btn.style.backgroundColor = "#45a049";
+        btn.style.boxShadow = "0 6px 8px rgba(76, 175, 80, 0.3)";
+      });
+      
+      btn.addEventListener("mouseout", () => {
+        btn.style.backgroundColor = "#4CAF50";
+        btn.style.boxShadow = "0 4px 6px rgba(76, 175, 80, 0.2)";
+      });
     });
 
     const downloadBtn = modal.querySelector("#download-btn");
@@ -426,7 +425,7 @@
       });
 
       // Add Next button functionality
-      const nextBtn = modal.querySelector("#next-btn");
+      const nextBtn = modal.querySelector("#da-next-btn");
       const previewSection = modal.querySelector("#preview-section");
       const routeDetails = modal.querySelector("#route-details");
 
@@ -597,7 +596,7 @@
           }
           poa = poa || 'N/A';
           
-          return `${route.routeCode}: ${associateInfo} (${route.progress})\nRoot Cause: ${rc}\nPoint of Action: ${poa}\n`;
+          return `**${route.routeCode}** | ${associateInfo} | **${route.progress}**\nRC: ${rc}\nPOA: ${poa}\n`;
         }).join('\n');
 
         const fileContent = header + routeContent;
