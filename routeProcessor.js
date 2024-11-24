@@ -7,7 +7,8 @@
     overlay.style.left = "0";
     overlay.style.width = "100%";
     overlay.style.height = "100%";
-    overlay.style.background = "rgba(0, 0, 0, 0.7)";
+    overlay.style.background = "rgba(0, 0, 0, 0.5)";
+    overlay.style.backdropFilter = "blur(5px)";
     overlay.style.zIndex = "9999";
     document.body.appendChild(overlay);
 
@@ -27,15 +28,15 @@
     modal.style.textAlign = "center";
 
     modal.innerHTML = `
+      <button id="close-btn" style="position: absolute; top: 10px; right: 10px; background: none; border: none; font-size: 16px; cursor: pointer;">✖</button>
       <div style="margin-bottom: 20px;">
-        <img src="https://crdrdispatch.github.io/GembaScript/Logo.svg" alt="Logo" style="height: 50px; display: block; margin: 0 auto;">
+        <img src="https://crdrdispatch.github.io/GembaScript/Logo.svg" alt="Logo" style="height: 70px; display: block; margin: 0 auto;">
       </div>
       <h2 style="font-family: Arial, sans-serif; margin-bottom: 20px;">Gimme That GEMBA</h2>
       <div id="progress-details" style="font-family: Arial, sans-serif; text-align: left; margin-bottom: 20px;">
         <p>Initializing...</p>
       </div>
-      <button id="download-btn" style="display: none; margin: 0 auto; padding: 10px 20px; background-color: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer; font-family: Arial, sans-serif;">Download File</button>
-      <button id="close-btn" style="margin-top: 10px; padding: 10px 20px; background-color: #f44336; color: white; border: none; border-radius: 5px; cursor: pointer; font-family: Arial, sans-serif;">Close</button>
+      <button id="download-btn" style="display: none; margin: 0 auto; padding: 10px 20px; background-color: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer; font-family: Arial, sans-serif; box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);">Download File</button>
     `;
 
     document.body.appendChild(modal);
@@ -105,23 +106,58 @@
 
     updateProgress(`Final collection complete. ${uniqueRoutes.size} unique routes found.`);
 
-    const routeDetails = Array.from(uniqueRoutes).map((route) => route); // Placeholder for processing each route
-    if (routeDetails.length > 0) {
-      const fileContent = routeDetails.join("\n");
+    const results = [];
+    uniqueRoutes.forEach((route) => {
+      // Example placeholder for extracting data for each route
+      const container = document.querySelector(`[data-id="${route}"]`) || document.querySelector(`#${route}`);
+      if (!container) return;
+
+      const progressElem = isV1
+        ? container.querySelector(".progress")
+        : container.querySelector(".css-1xac89n.font-weight-bold");
+      let progressText = progressElem?.textContent.trim();
+
+      const behindMatch = progressText?.match(/(\d+)\s*behind/);
+      progressText = behindMatch ? `${behindMatch[1]} behind` : null;
+
+      // Only export routes with "behind" progress
+      if (progressText) {
+        const routeCodeElem = isV1
+          ? container.querySelector(".left-column.text-sm div:first-child")
+          : container.querySelector(".css-1nqzkik");
+        const routeCode = isV1
+          ? routeCodeElem?.textContent.trim()
+          : routeCodeElem?.getAttribute("title")?.trim();
+
+        const associateContainers = isV1
+          ? container.querySelector(".ml-lg-4.ml-2.mr-2.mr-lg-auto.normal-white-space")
+          : container.querySelectorAll(".css-1kttr4w");
+        const associateNames = Array.from(associateContainers || [])
+          .map((el) => el.textContent.trim())
+          .join(", ");
+
+        results.push(`${routeCode}: ${associateNames || "No associate info"} (${progressText})`);
+      }
+    });
+
+    if (results.length > 0) {
+      const fileContent = results.join("\n");
       const blob = new Blob([fileContent], { type: "text/plain" });
       const blobURL = URL.createObjectURL(blob);
 
       downloadBtn.style.display = "block";
-      downloadBtn.textContent = `Download (${routeDetails.length} Routes)`;
+      downloadBtn.textContent = `Download (${results.length} Routes)`;
       downloadBtn.onclick = () => {
         const link = document.createElement("a");
         link.href = blobURL;
-        link.download = "route_data.txt";
+        link.download = "behind_routes.txt";
         link.click();
         URL.revokeObjectURL(blobURL);
       };
+
+      updateProgress(`Exporting ${results.length} behind routes.`);
     } else {
-      updateProgress("No routes found after processing.");
+      updateProgress("No behind routes found.");
     }
   } catch (error) {
     console.error("Error during route data processing:", error);
