@@ -106,37 +106,42 @@
   };
 
   const collectRoutes = async (selector, uniqueKeys, routes, routesWithDropdowns, maxScrolls = 20, scrollDelay = 200) => {
-    let totalRoutes = 0;
+    updateProgress("Scrolling to collect routes...");
 
-    // Scroll down to collect routes
     for (let i = 0; i < maxScrolls; i++) {
       const elements = document.querySelectorAll(selector);
 
       elements.forEach((el) => {
         const routeCodeElem = el.querySelector(".css-1nqzkik") || el.querySelector(".left-column.text-sm div:first-child");
         const progressElem = el.querySelector(".css-1xac89n.font-weight-bold");
-
         const routeCode = routeCodeElem?.textContent.trim() || routeCodeElem?.getAttribute("title");
         const progress = extractBehindProgress(progressElem?.textContent.trim());
 
-        const uniqueKey = hashString(`${routeCode}-${progress}`);
-        if (!uniqueKeys.has(uniqueKey) && progress) {
-          uniqueKeys.add(uniqueKey);
-          routes.push({ routeCode, progress });
+        if (routeCode && progress) {
+          const associates = Array.from(el.querySelectorAll(".css-1kttr4w")).map((a) => a.textContent.trim());
+          const uniqueKey = hashString(`${routeCode}-${associates.join(",")}-${progress}`);
+
+          if (!uniqueKeys.has(uniqueKey)) {
+            uniqueKeys.add(uniqueKey);
+
+            if (associates.length > 1) {
+              routesWithDropdowns.push({ routeCode, associates, progress });
+            } else {
+              routes.push({ routeCode, associate: associates[0], progress });
+            }
+          }
         }
       });
 
-      totalRoutes = uniqueKeys.size;
-      updateProgress(`Step ${i + 1}/${maxScrolls}: Found ${totalRoutes} routes.`);
       document.documentElement.scrollBy(0, 500);
       await new Promise((resolve) => setTimeout(resolve, scrollDelay));
     }
 
-    // Scroll back to the top and recheck
     updateProgress("Rechecking for missed routes...");
     document.documentElement.scrollTo(0, 0);
     await new Promise((resolve) => setTimeout(resolve, 2000));
-    updateProgress("Rechecking complete.");
+
+    updateProgress("Route collection complete.");
   };
 
   try {
@@ -145,15 +150,26 @@
 
     const uniqueKeys = new Set();
     const routes = [];
+    const routesWithDropdowns = [];
     const selector = ".css-1muusaa";
 
-    await collectRoutes(selector, uniqueKeys, routes);
+    await collectRoutes(selector, uniqueKeys, routes, routesWithDropdowns);
 
-    updateProgress(`All routes collected. Found ${routes.length} unique routes.`);
+    updateProgress(`Found ${routes.length + routesWithDropdowns.length} routes.`);
+    if (routesWithDropdowns.length > 0) {
+      updateDropdowns(routesWithDropdowns);
+    }
+
     const downloadBtn = document.getElementById("download-btn");
     downloadBtn.style.display = "block";
     downloadBtn.addEventListener("click", () => {
-      const fileContent = routes.map((r) => `${r.routeCode}: ${r.progress}`).join("\n");
+      routesWithDropdowns.forEach((route, index) => {
+        const dropdown = document.getElementById(`route-select-${index}`);
+        const selectedAssociate = dropdown?.value || "No associate info";
+        routes.push({ routeCode: route.routeCode, associate: selectedAssociate, progress: route.progress });
+      });
+
+      const fileContent = routes.map((r) => `${r.routeCode}: ${r.associate} (${r.progress})`).join("\n");
       const blob = new Blob([fileContent], { type: "text/plain" });
       const link = document.createElement("a");
       link.href = URL.createObjectURL(blob);
