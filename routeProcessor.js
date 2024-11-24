@@ -33,10 +33,13 @@
         <img src="https://crdrdispatch.github.io/GembaScript/Logo.svg" alt="Logo" style="height: 70px; display: block; margin: 0 auto;">
       </div>
       <h2 style="font-family: Arial, sans-serif; margin-bottom: 20px;">Gimme That GEMBA</h2>
-      <div id="progress-details" style="font-family: Arial, sans-serif; text-align: left; margin-bottom: 20px;">
+      <div id="progress-details" style="font-family: Arial, sans-serif; text-align: left; margin-bottom: 20px; border-bottom: 1px solid #ddd; padding-bottom: 10px;">
         <p>Initializing...</p>
       </div>
-      <button id="download-btn" style="display: none; margin: 0 auto; padding: 10px 20px; background-color: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer; font-family: Arial, sans-serif; box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);">Download File</button>
+      <div id="route-dropdowns" style="font-family: Arial, sans-serif; text-align: left; margin-bottom: 20px; border-bottom: 1px solid #ddd; padding-bottom: 10px; display: none;">
+        <h3 style="margin-bottom: 10px; font-size: 16px;">These routes have multiple DAs. Please choose the DA assigned to the route:</h3>
+      </div>
+      <button id="download-btn" style="display: none; margin: 20px auto 0; padding: 10px 20px; background-color: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer; font-family: Arial, sans-serif; box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);">Download File</button>
     `;
 
     document.body.appendChild(modal);
@@ -88,16 +91,15 @@
 
       if (tooltip) {
         console.log("Extracted associates from tooltip (V1):", tooltip.join(", "));
-        return tooltip.join(", ");
+        return tooltip;
       }
 
       const associateInfo = cleanAssociateNames(associateContainer?.querySelector(".text-truncate")?.textContent.trim() || "No associate info");
       console.log("Extracted associates (V1):", associateInfo);
-      return associateInfo;
+      return [associateInfo];
     } else {
       const associates = Array.from(container.querySelectorAll(".css-1kttr4w"))
-        .map((el) => cleanAssociateNames(el.textContent.trim()))
-        .join(", ");
+        .map((el) => cleanAssociateNames(el.textContent.trim()));
       console.log("Extracted associates (V2):", associates);
       return associates;
     }
@@ -120,19 +122,19 @@
           : el.querySelector(".css-1xac89n.font-weight-bold");
 
         const routeCode = routeCodeElem?.textContent.trim() || routeCodeElem?.getAttribute("title");
-        const associateInfo = extractAssociates(el, isV1);
+        const associates = extractAssociates(el, isV1);
         const progressRaw = progressElem?.textContent.trim();
         const progress = extractBehindProgress(progressRaw); // Extract only "X behind"
 
         console.log("Route Code:", routeCode);
-        console.log("Associate Info:", associateInfo);
+        console.log("Associate Info:", associates);
         console.log("Progress:", progress);
 
         if (routeCode) {
           const existingRouteIndex = routes.findIndex(route => route.routeCode === routeCode);
           if (existingRouteIndex === -1) {
-            routes.push({ routeCode, associateInfo, progress });
-            console.log("Added route:", { routeCode, associateInfo, progress });
+            routes.push({ routeCode, associates, progress });
+            console.log("Added route:", { routeCode, associates, progress });
           } else {
             console.log("Skipped duplicate route with code:", routeCode);
           }
@@ -151,6 +153,21 @@
 
   const modal = createModal();
   const downloadBtn = modal.querySelector("#download-btn");
+  const dropdownContainer = document.getElementById("route-dropdowns");
+
+  const createDropdownsForRoutes = (routesWithMultipleAssociates) => {
+    dropdownContainer.innerHTML = routesWithMultipleAssociates
+      .map((route, index) => `
+        <div style="margin-bottom: 15px;">
+          <label for="route-select-${index}" style="display: block; font-weight: bold;">${route.routeCode}:</label>
+          <select id="route-select-${index}" style="width: 100%; padding: 5px; border: 1px solid #ccc; border-radius: 5px;">
+            ${route.associates.map((associate) => `<option value="${associate}">${associate}</option>`).join("")}
+          </select>
+        </div>`
+      )
+      .join("");
+    dropdownContainer.style.display = "block";
+  };
 
   try {
     console.log("Script started");
@@ -182,29 +199,14 @@
     console.log("Behind Routes:", behindRoutes);
 
     if (behindRoutes.length > 0) {
-      const fileContent = behindRoutes
-        .map((route) => `${route.routeCode}: ${route.associateInfo} (${route.progress})`)
-        .join("\n");
-
-      const blob = new Blob([fileContent], { type: "text/plain" });
-      const blobURL = URL.createObjectURL(blob);
+      const routesWithMultipleAssociates = behindRoutes.filter(route => route.associates.length > 1);
+      if (routesWithMultipleAssociates.length > 0) {
+        createDropdownsForRoutes(routesWithMultipleAssociates);
+      }
 
       downloadBtn.style.display = "block";
       downloadBtn.textContent = `Download (${behindRoutes.length} Routes)`;
       downloadBtn.onclick = () => {
-        const link = document.createElement("a");
-        link.href = blobURL;
-        link.download = "behind_routes.txt";
-        link.click();
-        URL.revokeObjectURL(blobURL);
-      };
-
-      updateProgress(`Exporting ${behindRoutes.length} behind routes.`);
-    } else {
-      updateProgress("No behind routes found.");
-    }
-  } catch (error) {
-    console.error("Error during route data processing:", error);
-    updateProgress(`Error: ${error.message}`);
-  }
-})();
+        const selectedRoutes = behindRoutes.map((route, index) => {
+          if (route.associates.length > 1) {
+            const dropdown = document.get
