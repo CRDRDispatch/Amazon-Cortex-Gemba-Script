@@ -1,5 +1,5 @@
 (async function () {
-  // Update progress in the modal
+  // Helper function: Update progress in the modal
   const updateProgress = (message, append = true) => {
     const progressDetails = document.getElementById("progress-details");
     if (progressDetails) {
@@ -11,7 +11,28 @@
     }
   };
 
-  // Create the modal
+  // Helper function: Update dropdowns for routes with multiple associates
+  const updateDropdowns = (routesWithDropdowns) => {
+    const dropdownContainer = document.getElementById("route-dropdowns");
+    if (!dropdownContainer) return;
+
+    dropdownContainer.innerHTML = routesWithDropdowns
+      .map(
+        (route, index) => `
+          <div style="margin-bottom: 15px;">
+            <label for="route-select-${index}" style="display: block; font-weight: bold;">${route.routeCode}:</label>
+            <select id="route-select-${index}" style="width: 100%; padding: 5px; border: 1px solid #ccc; border-radius: 5px;">
+              ${route.associates.map((associate) => `<option value="${associate}">${associate}</option>`).join("")}
+            </select>
+          </div>`
+      )
+      .join("");
+
+    // Make the dropdowns section visible
+    dropdownContainer.style.display = "block";
+  };
+
+  // Helper function: Create the modal
   const createModal = () => {
     const overlay = document.createElement("div");
     overlay.id = "custom-overlay";
@@ -54,6 +75,9 @@
       <div id="progress-details" style="font-family: Arial, sans-serif; text-align: left; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid #ddd;">
         <p>Initializing...</p>
       </div>
+      <div id="route-dropdowns" style="font-family: Arial, sans-serif; text-align: left; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid #ddd; display: none;">
+        <h3 style="margin-bottom: 10px; font-size: 16px;">These routes have multiple DAs. Please choose the DA assigned to the route:</h3>
+      </div>
       <button id="download-btn" style="display: none; margin: 20px auto 0; padding: 10px 20px; background-color: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer; font-family: Arial, sans-serif; box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);">Download File</button>
     `;
     document.body.appendChild(modal);
@@ -66,25 +90,50 @@
     return modal;
   };
 
-  const collectRoutes = async (selector, routeCodeSelector, uniqueKeys, routes, maxScrolls = 20, scrollDelay = 200) => {
-    let totalRoutes = 0;
+  const hashString = (str) => {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      const char = str.charCodeAt(i);
+      hash = (hash << 5) - hash + char;
+      hash |= 0; // Convert to 32-bit integer
+    }
+    return hash;
+  };
+
+  const extractBehindProgress = (progressText) => {
+    const match = progressText?.match(/(\d+)\s*behind/);
+    return match ? `${match[1]} behind` : null;
+  };
+
+  const collectRoutes = async (selector, uniqueKeys, routes, routesWithDropdowns, maxScrolls = 20, scrollDelay = 200) => {
     updateProgress("Scrolling to collect routes...");
 
     for (let i = 0; i < maxScrolls; i++) {
       const elements = document.querySelectorAll(selector);
 
       elements.forEach((el) => {
-        const routeCodeElem = el.querySelector(routeCodeSelector);
-        const routeCode = routeCodeElem?.textContent.trim() || routeCodeElem?.getAttribute("title");
+        const routeCodeElem = el.querySelector(".css-1nqzkik") || el.querySelector(".left-column.text-sm div:first-child");
+        const progressElem = el.querySelector(".css-1xac89n.font-weight-bold");
 
-        if (routeCode && !uniqueKeys.has(routeCode)) {
-          uniqueKeys.add(routeCode);
-          routes.push(routeCode);
+        const routeCode = routeCodeElem?.textContent.trim() || routeCodeElem?.getAttribute("title");
+        const progress = extractBehindProgress(progressElem?.textContent.trim());
+
+        if (routeCode && progress) {
+          const associates = Array.from(el.querySelectorAll(".css-1kttr4w")).map((a) => a.textContent.trim());
+          const uniqueKey = hashString(`${routeCode}-${associates.join(",")}-${progress}`);
+
+          if (!uniqueKeys.has(uniqueKey)) {
+            uniqueKeys.add(uniqueKey);
+
+            if (associates.length > 1) {
+              routesWithDropdowns.push({ routeCode, associates, progress });
+            } else {
+              routes.push({ routeCode, associate: associates[0], progress });
+            }
+          }
         }
       });
 
-      totalRoutes = uniqueKeys.size;
-      updateProgress(`Found ${totalRoutes} routes so far...`, false);
       document.documentElement.scrollBy(0, 500);
       await new Promise((resolve) => setTimeout(resolve, scrollDelay));
     }
@@ -102,27 +151,33 @@
 
     const uniqueKeys = new Set();
     const routes = [];
+    const routesWithDropdowns = [];
+    const selector = ".css-1muusaa";
 
-    // Check version and set selectors accordingly
-    const isV1 = document.querySelector(".css-hkr77h")?.checked;
-    const selector = isV1
-      ? '[class^="af-link routes-list-item p-2 d-flex align-items-center w-100 route-"]'
-      : ".css-1muusaa";
-    const routeCodeSelector = isV1 ? ".left-column.text-sm div:first-child" : ".css-1nqzkik";
+    await collectRoutes(selector, uniqueKeys, routes, routesWithDropdowns);
 
-    updateProgress(`Collecting routes for ${isV1 ? "V1" : "V2"}...`);
+    // Filter behind routes
+    const behindRoutes = routes.filter((route) => route.progress.includes("behind"));
+    updateProgress(`Found ${behindRoutes.length} behind routes.`);
 
-    await collectRoutes(selector, routeCodeSelector, uniqueKeys, routes);
+    if (routesWithDropdowns.length > 0) {
+      updateDropdowns(routesWithDropdowns);
+    }
 
-    updateProgress(`Found ${routes.length} unique routes.`);
     const downloadBtn = document.getElementById("download-btn");
     downloadBtn.style.display = "block";
     downloadBtn.addEventListener("click", () => {
-      const fileContent = routes.join("\n");
+      routesWithDropdowns.forEach((route, index) => {
+        const dropdown = document.getElementById(`route-select-${index}`);
+        const selectedAssociate = dropdown?.value || "No associate info";
+        behindRoutes.push({ routeCode: route.routeCode, associate: selectedAssociate, progress: route.progress });
+      });
+
+      const fileContent = behindRoutes.map((r) => `${r.routeCode}: ${r.associate} (${r.progress})`).join("\n");
       const blob = new Blob([fileContent], { type: "text/plain" });
       const link = document.createElement("a");
       link.href = URL.createObjectURL(blob);
-      link.download = "routes.txt";
+      link.download = "behind_routes.txt";
       link.click();
     });
   } catch (error) {
