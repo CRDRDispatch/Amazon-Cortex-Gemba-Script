@@ -65,26 +65,6 @@
     }
   };
 
-  const updateDropdowns = (routesWithDropdowns) => {
-    const dropdownContainer = document.getElementById("route-dropdowns");
-    if (!dropdownContainer) return;
-
-    dropdownContainer.innerHTML += routesWithDropdowns
-      .map(
-        (route, index) => `
-      <div style="margin-bottom: 15px;">
-        <label for="route-select-${index}" style="display: block; font-weight: bold;">${route.routeCode}:</label>
-        <select id="route-select-${index}" style="width: 100%; padding: 5px; border: 1px solid #ccc; border-radius: 5px;">
-          ${route.associates.map((associate) => `<option value="${associate}">${associate}</option>`).join("")}
-        </select>
-      </div>`
-      )
-      .join("");
-
-    // Make the dropdowns section visible
-    dropdownContainer.style.display = "block";
-  };
-
   const hashString = (str) => {
     let hash = 0;
     for (let i = 0; i < str.length; i++) {
@@ -153,6 +133,10 @@
       updateProgress(`Scrolling... Step ${i + 1} of ${maxScrolls}`, false);
       await new Promise((resolve) => setTimeout(resolve, scrollDelay));
     }
+    updateProgress(`Finished scrolling. Found ${routes.length + routesWithDropdowns.length} total routes. Rechecking...`);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+    updateProgress("Rechecking complete. Processing routes...");
   };
 
   const modal = createModal();
