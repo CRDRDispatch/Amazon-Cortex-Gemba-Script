@@ -1,58 +1,54 @@
 (async function () {
-  // Load external script dynamically
   const loadScript = async (src) => {
     return new Promise((resolve, reject) => {
       const script = document.createElement("script");
       script.src = src;
       script.type = "module";
-      script.onload = resolve;
-      script.onerror = reject;
+      script.onload = () => {
+        console.log(`Loaded script: ${src}`);
+        resolve();
+      };
+      script.onerror = () => reject(new Error(`Failed to load script: ${src}`));
       document.head.appendChild(script);
     });
   };
 
-  // URLs for the external files
   const uiUrl = "https://crdrdispatch.github.io/GembaScript/ui.js";
   const logicUrl = "https://crdrdispatch.github.io/GembaScript/logic.js";
 
   try {
-    // Load both scripts
     console.log("Loading external modules...");
     await loadScript(uiUrl);
     await loadScript(logicUrl);
 
-    // Import modules dynamically
     const { createModal, updateProgress, updateDropdowns } = await import(uiUrl);
-    const { collectRoutes, hashString, extractBehindProgress } = await import(logicUrl);
+    const { collectRoutes, hashString } = await import(logicUrl);
 
-    // Initialize the modal
+    console.log("Modules loaded successfully. Initializing...");
+
     const modal = createModal();
     updateProgress("Starting...");
 
-    // Initialize route data structures
     const uniqueKeys = new Set();
     const routes = [];
     const routesWithDropdowns = [];
 
-    // Collect routes
-    await collectRoutes(
-      ".css-1muusaa",
-      uniqueKeys,
-      routes,
-      routesWithDropdowns,
-      20,
-      200
-    );
+    // Debugging: Log selector and container details
+    const selector = ".css-1muusaa";
+    console.log(`Using selector: ${selector}`);
+    const routeContainers = document.querySelectorAll(selector);
+    console.log(`Found ${routeContainers.length} initial route containers`);
 
-    // Update progress
+    await collectRoutes(selector, uniqueKeys, routes, routesWithDropdowns, 20, 200);
+
+    console.log(`Routes collected: ${routes.length}`);
+    console.log(`Routes with dropdowns: ${routesWithDropdowns.length}`);
+
     updateProgress(`Found ${routes.length + routesWithDropdowns.length} routes.`);
-
-    // Display dropdowns if there are multiple associates
     if (routesWithDropdowns.length > 0) {
       updateDropdowns(routesWithDropdowns);
     }
 
-    // Add download functionality
     const downloadBtn = document.getElementById("download-btn");
     downloadBtn.style.display = "block";
     downloadBtn.addEventListener("click", () => {
@@ -68,7 +64,7 @@
 
     updateProgress("Export ready. Click the button to download.");
   } catch (error) {
-    console.error("Error loading external scripts:", error);
-    alert(`Failed to load external scripts: ${error.message}`);
+    console.error("Error loading external scripts or processing routes:", error);
+    alert(`Error: ${error.message}`);
   }
 })();
