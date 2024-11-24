@@ -1,6 +1,9 @@
-(async function() {
-  // Create a modal for progress and downloading the file
+(async function () {
+  console.log("Script started...");
+
+  // Create a modal for progress
   const createModal = () => {
+    console.log("Creating modal...");
     const modal = document.createElement("div");
     modal.id = "custom-modal";
     modal.style.position = "fixed";
@@ -20,7 +23,6 @@
     `;
 
     document.body.appendChild(modal);
-
     return modal;
   };
 
@@ -28,11 +30,22 @@
   const downloadBtn = modal.querySelector("#download-btn");
 
   try {
-    // Query route elements
+    // Find route elements
+    console.log("Searching for route elements...");
     const routeDivs = document.querySelectorAll(".css-1muusaa");
+
+    if (routeDivs.length === 0) {
+      console.warn("No route elements found. Exiting...");
+      modal.innerHTML = "<p>No relevant route data found.</p>";
+      return;
+    }
+
+    console.log(`Found ${routeDivs.length} route elements.`);
     const results = [];
 
-    routeDivs.forEach(routeDiv => {
+    // Extract data from each route div
+    routeDivs.forEach((routeDiv, index) => {
+      console.log(`Processing route ${index + 1}...`);
       const routeCodeElem = routeDiv.querySelector(".css-1nqzkik");
       const associateNameElems = routeDiv.querySelectorAll(".css-1kttr4w");
       const behindElem = routeDiv.querySelector(".css-1xac89n.font-weight-bold");
@@ -43,10 +56,14 @@
         : null;
       const behindText = behindElem ? behindElem.textContent.trim() : null;
 
+      console.log({ routeCode, associateNames, behindText });
+
       if (routeCode && associateNames && behindText && behindText.includes("behind")) {
         results.push(`${routeCode}: ${associateNames} (${behindText})`);
       }
     });
+
+    console.log("Route processing complete:", results);
 
     if (results.length > 0) {
       // Create a file blob for download
