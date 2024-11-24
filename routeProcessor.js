@@ -85,7 +85,7 @@
               ? Array.from(
                   parentContainer.querySelectorAll('[class^="af-link routes-list-item p-2 d-flex align-items-center w-100 route-"]')
                 )
-              : Array.from(parentContainer.querySelectorAll(".css-1nqzkik"));
+              : Array.from(parentContainer.querySelectorAll(".css-1muusaa"));
 
             console.log(`Found ${routeContainers.length} valid route containers`, routeContainers);
 
@@ -127,23 +127,15 @@
       const routeCode = routeCodeElem?.textContent.trim();
 
       // Associated Info
-      const associateContainer = isV1
+      const associateContainers = isV1
         ? container.querySelector(".ml-lg-4.ml-2.mr-2.mr-lg-auto.normal-white-space")
-        : container.querySelector(".css-1kttr4w");
-      const tooltipElem = associateContainer?.nextElementSibling?.classList.contains("af-tooltip")
-        ? associateContainer.nextElementSibling.querySelectorAll("div")
-        : null;
-      let associateNames = tooltipElem
-        ? Array.from(tooltipElem).map((el) => el.textContent.trim()).join(", ")
-        : associateContainer?.textContent.trim();
-
-      // Remove "(Cornerstone Delivery Service)"
-      if (associateNames) {
-        associateNames = associateNames.replace(/\(Cornerstone Delivery Service\)/g, "").trim();
-      }
+        : container.querySelectorAll(".css-1kttr4w");
+      const associateNames = Array.from(associateContainers || []).map((el) => el.textContent.trim()).join(", ");
 
       // Route Progress
-      const progressElem = container.querySelector(".progress");
+      const progressElem = isV1
+        ? container.querySelector(".progress")
+        : container.querySelector(".css-1xac89n.font-weight-bold");
       let progressText = progressElem?.textContent.trim();
 
       // Extract number before "behind" and filter routes
