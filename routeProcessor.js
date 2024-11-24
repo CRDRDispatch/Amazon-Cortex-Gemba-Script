@@ -1,4 +1,38 @@
 (async function () {
+  // Helper function: Update progress in the modal
+  const updateProgress = (message, append = true) => {
+    const progressDetails = document.getElementById("progress-details");
+    if (progressDetails) {
+      if (append) {
+        progressDetails.innerHTML += `<p>${message}</p>`;
+      } else {
+        progressDetails.innerHTML = `<p>${message}</p>`;
+      }
+    }
+  };
+
+  // Helper function: Update dropdowns for routes with multiple associates
+  const updateDropdowns = (routesWithDropdowns) => {
+    const dropdownContainer = document.getElementById("route-dropdowns");
+    if (!dropdownContainer) return;
+
+    dropdownContainer.innerHTML = routesWithDropdowns
+      .map(
+        (route, index) => `
+          <div style="margin-bottom: 15px;">
+            <label for="route-select-${index}" style="display: block; font-weight: bold;">${route.routeCode}:</label>
+            <select id="route-select-${index}" style="width: 100%; padding: 5px; border: 1px solid #ccc; border-radius: 5px;">
+              ${route.associates.map((associate) => `<option value="${associate}">${associate}</option>`).join("")}
+            </select>
+          </div>`
+      )
+      .join("");
+
+    // Make the dropdowns section visible
+    dropdownContainer.style.display = "block";
+  };
+
+  // Helper function: Create the modal
   const createModal = () => {
     const overlay = document.createElement("div");
     overlay.id = "custom-overlay";
@@ -33,16 +67,18 @@
       text-align: center;
     `;
     modal.innerHTML = `
-      <button id="close-btn" style="position: absolute; top: 10px; right: 10px; border: none; background: none; font-size: 16px; cursor: pointer;">✖</button>
-      <div>
-        <img src="https://crdrdispatch.github.io/GembaScript/Logo.svg" alt="Logo" style="height: 70px;">
+      <button id="close-btn" style="position: absolute; top: 10px; right: 10px; background: none; border: none; font-size: 16px; cursor: pointer;">✖</button>
+      <div style="margin-bottom: 20px;">
+        <img src="https://crdrdispatch.github.io/GembaScript/Logo.svg" alt="Logo" style="height: 70px; display: block; margin: 0 auto;">
       </div>
-      <h2>Gimme That GEMBA</h2>
-      <div id="progress-details"></div>
-      <div id="route-dropdowns" style="display: none;">
-        <h3>These routes have multiple DAs. Choose one:</h3>
+      <h2 style="font-family: Arial, sans-serif; margin-bottom: 20px; border-bottom: 1px solid #ddd; padding-bottom: 10px;">Gimme That GEMBA</h2>
+      <div id="progress-details" style="font-family: Arial, sans-serif; text-align: left; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid #ddd;">
+        <p>Initializing...</p>
       </div>
-      <button id="download-btn" style="display: none;">Download</button>
+      <div id="route-dropdowns" style="font-family: Arial, sans-serif; text-align: left; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid #ddd; display: none;">
+        <h3 style="margin-bottom: 10px; font-size: 16px;">These routes have multiple DAs. Please choose the DA assigned to the route:</h3>
+      </div>
+      <button id="download-btn" style="display: none; margin: 20px auto 0; padding: 10px 20px; background-color: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer; font-family: Arial, sans-serif; box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);">Download File</button>
     `;
     document.body.appendChild(modal);
 
@@ -54,122 +90,78 @@
     return modal;
   };
 
-  const updateProgress = (message, append = true) => {
-    const progressDetails = document.getElementById("progress-details");
-    if (progressDetails) {
-      progressDetails.innerHTML = append
-        ? progressDetails.innerHTML + `<p>${message}</p>`
-        : `<p>${message}</p>`;
-    }
-  };
-
-  const updateDropdowns = (routesWithDropdowns) => {
-    const dropdownContainer = document.getElementById("route-dropdowns");
-    dropdownContainer.innerHTML = routesWithDropdowns
-      .map(
-        (route, index) => `
-          <div>
-            <label>${route.routeCode}:</label>
-            <select id="route-select-${index}">
-              ${route.associates.map((a) => `<option>${a}</option>`).join("")}
-            </select>
-          </div>
-        `
-      )
-      .join("");
-    dropdownContainer.style.display = "block";
-  };
-
   const hashString = (str) => {
     let hash = 0;
     for (let i = 0; i < str.length; i++) {
-      hash = (hash << 5) - hash + str.charCodeAt(i);
-      hash |= 0;
+      const char = str.charCodeAt(i);
+      hash = (hash << 5) - hash + char;
+      hash |= 0; // Convert to 32-bit integer
     }
     return hash;
   };
 
-  const extractBehindProgress = (text) => {
-    if (!text || typeof text !== "string") {
-      return null; // Safeguard against undefined or non-string inputs
-    }
-    const match = text.match(/(\d+)\s*behind/);
+  const extractBehindProgress = (progressText) => {
+    const match = progressText?.match(/(\d+)\s*behind/);
     return match ? `${match[1]} behind` : null;
   };
 
-  const collectRoutes = async (selector, uniqueKeys, routes, routesWithDropdowns, maxScrolls = 20, delay = 200) => {
-    let totalRoutesFound = 0;
+  const collectRoutes = async (selector, uniqueKeys, routes, routesWithDropdowns, maxScrolls = 20, scrollDelay = 200) => {
+    let totalRoutes = 0;
 
+    // Scroll down to collect routes
     for (let i = 0; i < maxScrolls; i++) {
       const elements = document.querySelectorAll(selector);
+
       elements.forEach((el) => {
         const routeCodeElem = el.querySelector(".css-1nqzkik") || el.querySelector(".left-column.text-sm div:first-child");
         const progressElem = el.querySelector(".css-1xac89n.font-weight-bold");
-        const routeCode = routeCodeElem?.textContent.trim() || routeCodeElem?.getAttribute("title");
-        const associates = Array.from(el.querySelectorAll(".css-1kttr4w")).map((a) => a.textContent.trim());
-        const progressRaw = progressElem?.textContent.trim();
-        const progress = extractBehindProgress(progressRaw);
 
-        const uniqueKey = hashString(`${routeCode}-${associates.join(",")}-${progress}`);
+        const routeCode = routeCodeElem?.textContent.trim() || routeCodeElem?.getAttribute("title");
+        const progress = extractBehindProgress(progressElem?.textContent.trim());
+
+        const uniqueKey = hashString(`${routeCode}-${progress}`);
         if (!uniqueKeys.has(uniqueKey) && progress) {
           uniqueKeys.add(uniqueKey);
-
-          if (associates.length > 1) {
-            routesWithDropdowns.push({ routeCode, associates, progress });
-          } else {
-            routes.push({ routeCode, associate: associates[0], progress });
-          }
+          routes.push({ routeCode, progress });
         }
       });
 
-      totalRoutesFound = uniqueKeys.size;
-      updateProgress(`Scrolling... Step ${i + 1} of ${maxScrolls} - Found ${totalRoutesFound} routes.`, false);
+      totalRoutes = uniqueKeys.size;
+      updateProgress(`Step ${i + 1}/${maxScrolls}: Found ${totalRoutes} routes.`);
       document.documentElement.scrollBy(0, 500);
-      await new Promise((resolve) => setTimeout(resolve, delay));
+      await new Promise((resolve) => setTimeout(resolve, scrollDelay));
     }
 
-    updateProgress(`Scrolling complete. Found ${totalRoutesFound} routes. Rechecking...`);
+    // Scroll back to the top and recheck
+    updateProgress("Rechecking for missed routes...");
     document.documentElement.scrollTo(0, 0);
-
     await new Promise((resolve) => setTimeout(resolve, 2000));
+    updateProgress("Rechecking complete.");
   };
 
   try {
-    console.log("Script started");
-
     const modal = createModal();
-    updateProgress("Starting...");
+    updateProgress("Script started...");
 
     const uniqueKeys = new Set();
     const routes = [];
-    const routesWithDropdowns = [];
-
     const selector = ".css-1muusaa";
-    updateProgress(`Using selector: ${selector}`);
 
-    await collectRoutes(selector, uniqueKeys, routes, routesWithDropdowns, 20, 200);
+    await collectRoutes(selector, uniqueKeys, routes);
 
-    updateProgress(`Found ${routes.length + routesWithDropdowns.length} routes.`);
-    if (routesWithDropdowns.length > 0) {
-      updateDropdowns(routesWithDropdowns);
-    }
-
+    updateProgress(`All routes collected. Found ${routes.length} unique routes.`);
     const downloadBtn = document.getElementById("download-btn");
     downloadBtn.style.display = "block";
     downloadBtn.addEventListener("click", () => {
-      const fileContent = routes
-        .map((r) => `${r.routeCode}: ${r.associate} (${r.progress})`)
-        .join("\n");
+      const fileContent = routes.map((r) => `${r.routeCode}: ${r.progress}`).join("\n");
       const blob = new Blob([fileContent], { type: "text/plain" });
       const link = document.createElement("a");
       link.href = URL.createObjectURL(blob);
       link.download = "routes.txt";
       link.click();
     });
-
-    updateProgress("Export ready. Click the button to download.");
   } catch (error) {
     console.error("Error during route processing:", error);
-    alert(`Error: ${error.message}`);
+    updateProgress(`Error: ${error.message}`);
   }
 })();
