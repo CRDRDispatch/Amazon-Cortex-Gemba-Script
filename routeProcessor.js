@@ -144,6 +144,187 @@
 
     document.body.appendChild(modal);
 
+    // Add section navigation handlers
+    const initialSection = modal.querySelector("#initial-section");
+    const daSelectionSection = modal.querySelector("#da-selection-section");
+    const routeDetailsSection = modal.querySelector("#route-details-section");
+    const dspProgressSection = modal.querySelector("#dsp-progress-section");
+    const routeDetails = modal.querySelector("#route-details");
+    const daDropdowns = modal.querySelector("#da-dropdowns");
+
+    // Add hover effects for buttons
+    const buttons = modal.querySelectorAll("button");
+    buttons.forEach(button => {
+      if (button.id !== "close-btn") {
+        button.addEventListener("mouseover", () => {
+          button.style.backgroundColor = "#45a049";
+          button.style.boxShadow = "0 6px 8px rgba(76, 175, 80, 0.3)";
+        });
+        button.addEventListener("mouseout", () => {
+          button.style.backgroundColor = "#4CAF50";
+          button.style.boxShadow = "0 4px 6px rgba(76, 175, 80, 0.2)";
+        });
+      }
+    });
+
+    // Add close button handler
+    closeBtn.addEventListener("click", () => {
+      modal.remove();
+    });
+
+    // Add scan button handler
+    const scanBtn = modal.querySelector("#scan-btn");
+    scanBtn.addEventListener("click", async () => {
+      try {
+        initialSection.style.display = "none";
+        
+        const isV1 = document.querySelector(".css-hkr77h")?.checked;
+        updateProgress(`Detected Cortex Version: ${isV1 ? "V1" : "V2"}`);
+        console.log(`Cortex Version: ${isV1 ? "V1" : "V2"}`);
+
+        const routeSelector = isV1
+          ? '[class^="af-link routes-list-item p-2 d-flex align-items-center w-100 route-"]'
+          : ".css-1muusaa";
+        const routes = [];
+
+        updateProgress("Scrolling to collect routes...");
+        await collectRoutes(routeSelector, routes, 20, 100, isV1);
+
+        updateProgress("Scrolling back to the top...");
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+
+        updateProgress("Rechecking routes...");
+        await collectRoutes(routeSelector, routes, 20, 100, isV1);
+
+        updateProgress(`Final collection complete. Found ${routes.length} total routes.`);
+        console.log("Final routes collected:", routes);
+
+        const behindRoutes = routes.filter((route) => route.progress?.includes("behind"));
+        console.log("Behind Routes:", behindRoutes);
+
+        updateProgress(`Found ${behindRoutes.length} routes that are behind schedule.`, true, true);
+
+        if (behindRoutes.length > 0) {
+          // Set up DA dropdowns if needed
+          const hasMultipleDAs = behindRoutes.some(route => route.associateInfo.includes(","));
+          if (hasMultipleDAs) {
+            setupDADropdowns(behindRoutes);
+            daSelectionSection.style.display = "block";
+          } else {
+            setupRouteDetails(behindRoutes);
+            routeDetailsSection.style.display = "block";
+          }
+        }
+      } catch (error) {
+        console.error("Error during route scanning:", error);
+        updateProgress(`Error: ${error.message}`);
+      }
+    });
+
+    // Add navigation button handlers
+    const nextBtn = modal.querySelector("#next-btn");
+    nextBtn.addEventListener("click", () => {
+      daSelectionSection.style.display = "none";
+      setupRouteDetails(behindRoutes);
+      routeDetailsSection.style.display = "block";
+    });
+
+    const backBtn = modal.querySelector("#back-btn");
+    backBtn.addEventListener("click", () => {
+      routeDetailsSection.style.display = "none";
+      daSelectionSection.style.display = "block";
+    });
+
+    const nextToProgressBtn = modal.querySelector("#next-to-progress-btn");
+    nextToProgressBtn.addEventListener("click", () => {
+      routeDetailsSection.style.display = "none";
+      dspProgressSection.style.display = "block";
+    });
+
+    const backToRoutesBtn = modal.querySelector("#back-to-routes-btn");
+    backToRoutesBtn.addEventListener("click", () => {
+      dspProgressSection.style.display = "none";
+      routeDetailsSection.style.display = "block";
+    });
+
+    // Setup functions
+    const setupDADropdowns = (routes) => {
+      daDropdowns.innerHTML = routes
+        .filter(route => route.associateInfo.includes(","))
+        .map((route) => {
+          const das = route.associateInfo.split(", ");
+          return `
+            <div style="margin-bottom: 15px; padding: 15px; background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border: 1px solid #edf2f7;">
+              <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #2c3e50;">
+                ${route.routeCode} (${route.progress}):
+              </label>
+              <select data-route-code="${route.routeCode}" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                ${das.map(da => `<option value="${da}">${da}</option>`).join("")}
+              </select>
+            </div>
+          `;
+        })
+        .join("");
+    };
+
+    const setupRouteDetails = (routes) => {
+      routeDetails.innerHTML = routes.map((route) => {
+        const select = daDropdowns.querySelector(`select[data-route-code="${route.routeCode}"]`);
+        const associateInfo = select ? select.value : route.associateInfo;
+        
+        return `
+          <div style="margin-bottom: 20px; padding: 15px; background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border: 1px solid #edf2f7;">
+            <h4 style="margin: 0 0 10px; font-size: 16px; color: #2c3e50;">${route.routeCode}: ${associateInfo}</h4>
+            <div style="margin-bottom: 15px;">
+              <p style="margin: 0 0 8px; font-weight: 600; color: #2c3e50;">Root Cause:</p>
+              <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px;">
+                <label class="rc-label">
+                  <input type="checkbox" class="rc-checkbox" value="Late Start"> Late Start
+                </label>
+                <label class="rc-label">
+                  <input type="checkbox" class="rc-checkbox" value="Long Breaks"> Long Breaks
+                </label>
+                <label class="rc-label">
+                  <input type="checkbox" class="rc-checkbox" value="System Issues"> System Issues
+                </label>
+                <label class="rc-label">
+                  <input type="checkbox" class="rc-checkbox" value="Other"> Other
+                </label>
+              </div>
+              <input type="text" class="other-input" style="display: none; width: 100%; margin-top: 8px; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" placeholder="Specify other root cause...">
+            </div>
+            <div>
+              <p style="margin: 0 0 8px; font-weight: 600; color: #2c3e50;">Point of Action:</p>
+              <select class="poa-select" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; margin-bottom: 8px;">
+                <option value="">Select POA...</option>
+                <option value="Rescue">Rescue</option>
+                <option value="RTS">RTS</option>
+                <option value="Other">Other</option>
+              </select>
+              <input type="text" class="poa-other-input" style="display: none; width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" placeholder="Specify other POA...">
+            </div>
+          </div>
+        `;
+      }).join("");
+
+      // Add event listeners for Other checkboxes
+      routeDetails.querySelectorAll('.rc-checkbox[value="Other"]').forEach(checkbox => {
+        checkbox.addEventListener('change', (e) => {
+          const otherInput = e.target.closest('div').nextElementSibling;
+          otherInput.style.display = e.target.checked ? 'block' : 'none';
+        });
+      });
+
+      // Add event listeners for POA selects
+      routeDetails.querySelectorAll('.poa-select').forEach(select => {
+        select.addEventListener('change', (e) => {
+          const otherInput = e.target.nextElementSibling;
+          otherInput.style.display = e.target.value === 'Other' ? 'block' : 'none';
+        });
+      });
+    };
+
     // Make modal draggable
     let isDragging = false;
     let startX;
@@ -151,7 +332,7 @@
     let modalRect;
 
     const dragStart = (e) => {
-      if (e.target.closest('button') || e.target.closest('select')) return;  // Don't drag when clicking buttons or dropdowns
+      if (e.target.closest('button') || e.target.closest('select')) return;
 
       isDragging = true;
       modalRect = modal.getBoundingClientRect();
@@ -185,149 +366,91 @@
         y = e.clientY - startY;
       }
 
-      // Keep modal within viewport bounds
-      const modalWidth = modalRect.width;
-      const modalHeight = modalRect.height;
-      const maxX = window.innerWidth - modalWidth;
-      const maxY = window.innerHeight - modalHeight;
-
+      const maxX = window.innerWidth - modal.offsetWidth;
+      const maxY = window.innerHeight - modal.offsetHeight;
+      
       x = Math.max(0, Math.min(x, maxX));
       y = Math.max(0, Math.min(y, maxY));
 
       modal.style.left = x + 'px';
       modal.style.top = y + 'px';
       modal.style.transform = 'none';
-      modal.style.webkitTransform = 'none';
     };
 
-    // Add passive event listeners for better performance
-    modal.addEventListener("touchstart", dragStart, { passive: false });
-    modal.addEventListener("touchend", dragEnd);
-    modal.addEventListener("touchmove", drag, { passive: false });
-    document.addEventListener("mousedown", (e) => {
-      if (modal.contains(e.target)) dragStart(e);
-    });
-    document.addEventListener("mouseup", dragEnd);
-    document.addEventListener("mousemove", drag);
+    modal.addEventListener('mousedown', dragStart);
+    modal.addEventListener('touchstart', dragStart);
+    document.addEventListener('mousemove', drag);
+    document.addEventListener('touchmove', drag);
+    document.addEventListener('mouseup', dragEnd);
+    document.addEventListener('touchend', dragEnd);
 
-    // Clean up event listeners when modal is closed
-    modal.querySelector("#close-btn").addEventListener("click", () => {
-      document.removeEventListener("mousedown", dragStart);
-      document.removeEventListener("mouseup", dragEnd);
-      document.removeEventListener("mousemove", drag);
-      modal.remove();
-    });
+    // Add download functionality
+    const downloadBtn = modal.querySelector("#download-btn");
+    downloadBtn.onclick = () => {
+      const now = new Date();
+      const month = (now.getMonth() + 1).toString().padStart(2, '0');
+      const day = now.getDate().toString().padStart(2, '0');
+      const year = now.getFullYear().toString().slice(-2);
+      const hour = now.getHours();
+      const formattedHour = hour > 12 ? `${hour-12}PM` : `${hour}AM`;
+      
+      const inProgress = document.getElementById('in-progress-input').value.padStart(2, '0') || '00';
+      const atRisk = document.getElementById('at-risk-input').value.padStart(2, '0') || '00';
+      const behind = document.getElementById('behind-input').value.padStart(2, '0') || '00';
+      const packageProgress = document.getElementById('package-progress-input').value || '0';
 
-    // Initialize sections
-    const initialSection = modal.querySelector("#initial-section");
-    const daSelectionSection = modal.querySelector("#da-selection-section");
-    const routeDetailsSection = modal.querySelector("#route-details-section");
-    const dspProgressSection = modal.querySelector("#dsp-progress-section");
+      const header = `@\n## CRDR UPDATE - ${month}/${day}/${year} ${formattedHour}\n\n` +
+                    `**IN PROGRESS: ${inProgress}**\n` +
+                    `**AT RISK: ${atRisk}**\n` +
+                    `**BEHIND: ${behind}**\n` +
+                    `**PACKAGE PROGRESS: ${packageProgress}%**\n\n` +
+                    `---\n\n`;
 
-    // Set initial visibility
-    initialSection.style.display = "block";
-    daSelectionSection.style.display = "none";
-    routeDetailsSection.style.display = "none";
-    dspProgressSection.style.display = "none";
-
-    // Navigation event handlers
-    const scanBtn = modal.querySelector("#scan-btn");
-    scanBtn.addEventListener("click", async () => {
-      initialSection.style.display = "none";
-      daSelectionSection.style.display = "block";
-    });
-
-    const nextBtn = modal.querySelector("#next-btn");
-    nextBtn.addEventListener("click", () => {
-      daSelectionSection.style.display = "none";
-      routeDetailsSection.style.display = "block";
-    });
-
-    const backBtn = modal.querySelector("#back-btn");
-    backBtn.addEventListener("click", () => {
-      routeDetailsSection.style.display = "none";
-      daSelectionSection.style.display = "block";
-    });
-
-    const nextToProgressBtn = modal.querySelector("#next-to-progress-btn");
-    nextToProgressBtn.addEventListener("click", () => {
-      routeDetailsSection.style.display = "none";
-      dspProgressSection.style.display = "block";
-    });
-
-    const backToRoutesBtn = modal.querySelector("#back-to-routes-btn");
-    backToRoutesBtn.addEventListener("click", () => {
-      dspProgressSection.style.display = "none";
-      routeDetailsSection.style.display = "block";
-    });
-
-    const closeBtn = modal.querySelector("#close-btn");
-    closeBtn.addEventListener("click", () => {
-      modal.remove();
-    });
-
-    const setupRouteDetails = (routes) => {
-      const routeDetails = modal.querySelector("#route-details");
-      routeDetails.innerHTML = routes.map((route) => `
-        <div style="margin-bottom: 20px; padding: 15px; background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border: 1px solid #edf2f7;">
-          <h4 style="margin: 0 0 10px; font-size: 16px; color: #2c3e50;">${route.routeCode}: ${route.associateInfo}</h4>
-          <div style="margin-bottom: 15px;">
-            <p style="margin: 0 0 8px; font-weight: 600; color: #2c3e50;">Root Cause:</p>
-            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px;">
-              <label class="rc-label">
-                <input type="checkbox" class="rc-checkbox" value="Late Start"> Late Start
-              </label>
-              <label class="rc-label">
-                <input type="checkbox" class="rc-checkbox" value="Long Breaks"> Long Breaks
-              </label>
-              <label class="rc-label">
-                <input type="checkbox" class="rc-checkbox" value="System Issues"> System Issues
-              </label>
-              <label class="rc-label">
-                <input type="checkbox" class="rc-checkbox" value="Other"> Other
-              </label>
-            </div>
-            <input type="text" class="other-input" style="display: none; width: 100%; margin-top: 8px; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" placeholder="Specify other root cause...">
-          </div>
-          <div>
-            <p style="margin: 0 0 8px; font-weight: 600; color: #2c3e50;">Point of Action:</p>
-            <select class="poa-select" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; margin-bottom: 8px;">
-              <option value="">Select POA...</option>
-              <option value="Rescue">Rescue</option>
-              <option value="RTS">RTS</option>
-              <option value="Other">Other</option>
-            </select>
-            <input type="text" class="poa-other-input" style="display: none; width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" placeholder="Specify other POA...">
-          </div>
-        </div>
-      `).join("");
-
-      // Add event listeners for Other checkboxes
-      routeDetails.querySelectorAll('.rc-checkbox[value="Other"]').forEach(checkbox => {
-        checkbox.addEventListener('change', (e) => {
-          const otherInput = e.target.closest('div').nextElementSibling;
-          otherInput.style.display = e.target.checked ? 'block' : 'none';
+      const routeContent = behindRoutes.map((route) => {
+        const select = daDropdowns.querySelector(`select[data-route-code="${route.routeCode}"]`);
+        const associateInfo = select ? select.value : route.associateInfo;
+        
+        const containers = routeDetails.querySelectorAll('div');
+        const container = Array.from(containers).find(div => {
+          const h4 = div.querySelector('h4');
+          return h4 && h4.textContent.startsWith(route.routeCode);
         });
-      });
-
-      // Add event listeners for POA selects
-      routeDetails.querySelectorAll('.poa-select').forEach(select => {
-        select.addEventListener('change', (e) => {
-          const otherInput = e.target.nextElementSibling;
-          otherInput.style.display = e.target.value === 'Other' ? 'block' : 'none';
+        
+        if (!container) return `${route.routeCode}: ${associateInfo} (${route.progress})\n`;
+        
+        const checkedBoxes = container.querySelectorAll('.rc-checkbox:checked');
+        const rootCauses = Array.from(checkedBoxes).map(checkbox => {
+          if (checkbox.value === 'Other') {
+            const otherInput = container.querySelector('.other-input');
+            return otherInput.value.trim() || 'Other (unspecified)';
+          }
+          return checkbox.value;
         });
-      });
+        
+        const rc = rootCauses.length > 0 ? rootCauses.join(', ') : 'N/A';
+        
+        const poaSelect = container.querySelector('.poa-select');
+        let poa = poaSelect.value;
+        if (poa === 'Other') {
+          const poaOtherInput = container.querySelector('.poa-other-input');
+          poa = poaOtherInput.value.trim() || 'Other (unspecified)';
+        }
+        poa = poa || 'N/A';
+        
+        return `${route.routeCode}: ${associateInfo} (${route.progress})\nRoot Cause: ${rc}\nPoint of Action: ${poa}\n`;
+      }).join('\n');
+
+      const fileContent = header + routeContent;
+
+      const blob = new Blob([fileContent], { type: "text/plain" });
+      const blobURL = URL.createObjectURL(blob);
+
+      const link = document.createElement("a");
+      link.href = blobURL;
+      link.download = "behind_routes.txt";
+      link.click();
+      URL.revokeObjectURL(blobURL);
     };
-
-    const scanBtn = modal.querySelector("#scan-btn");
-    scanBtn.addEventListener("click", async () => {
-      initialSection.style.display = "none";
-      if (document.querySelectorAll('.rc-checkbox[value="Other"]:checked').length > 0) {
-        daSelectionSection.style.display = "block";
-      } else {
-        routeDetailsSection.style.display = "block";
-      }
-    });
   };
 
   createModal();
@@ -497,8 +620,8 @@
           
           const select = document.createElement("select");
           select.style.width = "100%";
-          select.style.padding = "8px 12px";
-          select.style.borderRadius = "6px";
+          select.style.padding = "8px";
+          select.style.borderRadius = "4px";
           select.style.border = "1px solid #ddd";
           select.style.backgroundColor = "#f8f9fa";
           select.style.cursor = "pointer";
