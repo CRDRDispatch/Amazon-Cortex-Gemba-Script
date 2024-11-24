@@ -1,5 +1,4 @@
 (async function () {
-  // Create a modal for progress and downloading the file
   const createModal = () => {
     const modal = document.createElement("div");
     modal.id = "custom-modal";
@@ -43,9 +42,14 @@
           console.log("Parent container found:", !!parentContainer);
 
           if (parentContainer) {
-            const routeContainers = parentContainer.querySelectorAll("div");
+            const routeContainers = Array.from(
+              parentContainer.querySelectorAll("div")
+            ).filter((container) =>
+              container.classList.contains("routes-list-item")
+            );
+
             if (routeContainers.length > 0) {
-              console.log(`Found ${routeContainers.length} route containers`);
+              console.log(`Found ${routeContainers.length} valid route containers`);
               clearInterval(intervalCheck);
               foundRoutes = true;
               resolve(routeContainers);
@@ -55,7 +59,7 @@
           elapsed += interval;
           if (elapsed >= timeout) {
             clearInterval(intervalCheck);
-            console.warn("Timeout reached. No route containers found.");
+            console.warn("Timeout reached. No valid route containers found.");
             reject("Timeout reached while waiting for routes.");
           }
         }, interval);
@@ -95,23 +99,15 @@
         progressText,
       });
 
-      results.push({
-        routeCode: routeCode || "No route code",
-        associateNames: associateNames || "No associate names",
-        progressText: progressText || "No progress text",
-      });
+      if (routeCode && associateNames && progressText) {
+        results.push(`${routeCode}: ${associateNames} (${progressText})`);
+      }
     });
 
-    console.log("All Routes Processed:", results);
+    console.log("All Valid Routes Processed:", results);
 
     if (results.length > 0) {
-      const fileContent = results
-        .map(
-          (route) =>
-            `${route.routeCode}: ${route.associateNames} (${route.progressText})`
-        )
-        .join("\n");
-
+      const fileContent = results.join("\n");
       const blob = new Blob([fileContent], { type: "text/plain" });
       const blobURL = URL.createObjectURL(blob);
 
