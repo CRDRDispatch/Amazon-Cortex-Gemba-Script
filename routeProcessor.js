@@ -33,8 +33,10 @@
         <img src="https://crdrdispatch.github.io/GembaScript/Logo.svg" alt="Logo" style="height: 50px; display: block; margin: 0 auto;">
       </div>
       <h2 style="font-family: Arial, sans-serif; margin-bottom: 20px;">Gimme That GEMBA</h2>
-      <p id="modal-content" style="font-family: Arial, sans-serif; margin-bottom: 20px;">Processing route data...</p>
-      <button id="download-btn" style="display: none; padding: 10px 20px; background-color: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer; font-family: Arial, sans-serif;">Download File</button>
+      <div id="progress-details" style="font-family: Arial, sans-serif; text-align: left; margin-bottom: 20px;">
+        <p>Initializing...</p>
+      </div>
+      <button id="download-btn" style="display: none; margin: 0 auto; padding: 10px 20px; background-color: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer; font-family: Arial, sans-serif;">Download File</button>
       <button id="close-btn" style="margin-top: 10px; padding: 10px 20px; background-color: #f44336; color: white; border: none; border-radius: 5px; cursor: pointer; font-family: Arial, sans-serif;">Close</button>
     `;
 
@@ -49,14 +51,23 @@
     return modal;
   };
 
+  const updateProgress = (message) => {
+    const progressDetails = document.getElementById("progress-details");
+    if (progressDetails) {
+      progressDetails.innerHTML += `<p>${message}</p>`;
+    }
+  };
+
   const modal = createModal();
   const downloadBtn = modal.querySelector("#download-btn");
 
   try {
     console.log("Script started");
+    updateProgress("Script started...");
 
     const isV1 = document.querySelector(".css-hkr77h")?.checked;
     console.log("Cortex Version:", isV1 ? "V1" : "V2");
+    updateProgress(`Detected Cortex Version: ${isV1 ? "V1" : "V2"}`);
 
     const waitForRoutes = (timeout = 10000, interval = 500) => {
       return new Promise((resolve, reject) => {
@@ -64,13 +75,17 @@
         let elapsed = 0;
 
         const intervalCheck = setInterval(() => {
-          const parentContainer = document.querySelector(".routes-list.d-flex.flex-1.flex-column.border-y-list");
+          const parentContainer = isV1
+            ? document.querySelector(".routes-list.d-flex.flex-1.flex-column.border-y-list")
+            : document.querySelector(".css-1muusaa");
           console.log("Parent container:", parentContainer);
 
           if (parentContainer) {
-            const routeContainers = Array.from(
-              parentContainer.querySelectorAll('[class^="af-link routes-list-item p-2 d-flex align-items-center w-100 route-"]')
-            );
+            const routeContainers = isV1
+              ? Array.from(
+                  parentContainer.querySelectorAll('[class^="af-link routes-list-item p-2 d-flex align-items-center w-100 route-"]')
+                )
+              : Array.from(parentContainer.querySelectorAll(".css-1nqzkik"));
 
             console.log(`Found ${routeContainers.length} valid route containers`, routeContainers);
 
@@ -93,28 +108,34 @@
 
     const routeContainers = await waitForRoutes().catch((err) => {
       console.error(err);
-      modal.querySelector("#modal-content").textContent = "Failed to load route data. Please try again later.";
+      modal.querySelector("#progress-details").innerHTML = "<p>Failed to load route data. Please try again later.</p>";
       return [];
     });
 
     if (!routeContainers || routeContainers.length === 0) return;
+
+    updateProgress(`Found ${routeContainers.length} routes. Processing...`);
 
     const results = [];
     routeContainers.forEach((container, index) => {
       console.log(`Processing container ${index + 1}`);
 
       // Route Code
-      const routeCodeElem = container.querySelector(".left-column.text-sm div:first-child");
+      const routeCodeElem = isV1
+        ? container.querySelector(".left-column.text-sm div:first-child")
+        : container.querySelector(".css-1nqzkik");
       const routeCode = routeCodeElem?.textContent.trim();
 
       // Associated Info
-      const associateContainer = container.querySelector(".ml-lg-4.ml-2.mr-2.mr-lg-auto.normal-white-space");
+      const associateContainer = isV1
+        ? container.querySelector(".ml-lg-4.ml-2.mr-2.mr-lg-auto.normal-white-space")
+        : container.querySelector(".css-1kttr4w");
       const tooltipElem = associateContainer?.nextElementSibling?.classList.contains("af-tooltip")
         ? associateContainer.nextElementSibling.querySelectorAll("div")
         : null;
       let associateNames = tooltipElem
         ? Array.from(tooltipElem).map((el) => el.textContent.trim()).join(", ")
-        : associateContainer?.querySelector(".text-truncate")?.textContent.trim();
+        : associateContainer?.textContent.trim();
 
       // Remove "(Cornerstone Delivery Service)"
       if (associateNames) {
@@ -141,9 +162,10 @@
       }
     });
 
-    console.log("All Valid Routes Processed:", results);
+    updateProgress("Processing complete.");
 
     if (results.length > 0) {
+      updateProgress(`Exporting ${results.length} routes.`);
       const fileContent = results.join("\n");
       const blob = new Blob([fileContent], { type: "text/plain" });
       const blobURL = URL.createObjectURL(blob);
@@ -158,10 +180,10 @@
         URL.revokeObjectURL(blobURL);
       };
     } else {
-      modal.querySelector("#modal-content").textContent = "No relevant route data found.";
+      modal.querySelector("#progress-details").innerHTML = "<p>No relevant route data found.</p>";
     }
   } catch (error) {
     console.error("Error during route data processing:", error);
-    modal.querySelector("#modal-content").textContent = `Error: ${error.message}`;
+    modal.querySelector("#progress-details").innerHTML = `<p>Error: ${error.message}</p>`;
   }
 })();
