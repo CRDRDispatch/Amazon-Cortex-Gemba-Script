@@ -31,8 +31,10 @@
     const isV1 = document.querySelector(".css-hkr77h")?.checked;
     console.log("Cortex Version:", isV1 ? "V1" : "V2");
 
-    const waitForRoutes = () => {
-      return new Promise((resolve) => {
+    const waitForRoutes = (timeout = 10000) => {
+      return new Promise((resolve, reject) => {
+        let foundRoutes = false;
+
         const observer = new MutationObserver(() => {
           const routeContainers = document.querySelectorAll(
             ".routes-list.d-flex.flex-1.flex-column.border-y-list > div"
@@ -40,17 +42,33 @@
           if (routeContainers.length > 0) {
             console.log(`Found ${routeContainers.length} route containers`);
             observer.disconnect();
+            foundRoutes = true;
             resolve(routeContainers);
           }
         });
 
         observer.observe(document.body, { childList: true, subtree: true });
+
+        // Timeout fallback
+        setTimeout(() => {
+          if (!foundRoutes) {
+            observer.disconnect();
+            console.warn("Timeout reached. No route containers found.");
+            reject("Timeout reached while waiting for routes.");
+          }
+        }, timeout);
       });
     };
 
-    const routeContainers = await waitForRoutes();
-    const results = [];
+    const routeContainers = await waitForRoutes().catch((err) => {
+      console.error(err);
+      modal.innerHTML = "<p>Failed to load route data. Please try again later.</p>";
+      return [];
+    });
 
+    if (!routeContainers || routeContainers.length === 0) return;
+
+    const results = [];
     routeContainers.forEach((container, index) => {
       console.log(`Processing container ${index + 1}`);
 
