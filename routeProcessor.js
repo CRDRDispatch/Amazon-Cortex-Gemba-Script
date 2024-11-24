@@ -65,9 +65,8 @@
       const elements = document.querySelectorAll(selector);
 
       elements.forEach((el) => {
-        const id = el.getAttribute("id") || el.getAttribute("data-id") || el.outerHTML;
-        if (!uniqueRoutes.has(id)) {
-          uniqueRoutes.add(id);
+        if (!uniqueRoutes.has(el)) {
+          uniqueRoutes.add(el); // Store the element reference directly
         }
       });
 
@@ -107,11 +106,7 @@
     updateProgress(`Final collection complete. ${uniqueRoutes.size} unique routes found.`);
 
     const results = [];
-    uniqueRoutes.forEach((route) => {
-      // Example placeholder for extracting data for each route
-      const container = document.querySelector(`[data-id="${route}"]`) || document.querySelector(`#${route}`);
-      if (!container) return;
-
+    uniqueRoutes.forEach((container) => {
       const progressElem = isV1
         ? container.querySelector(".progress")
         : container.querySelector(".css-1xac89n.font-weight-bold");
@@ -120,7 +115,6 @@
       const behindMatch = progressText?.match(/(\d+)\s*behind/);
       progressText = behindMatch ? `${behindMatch[1]} behind` : null;
 
-      // Only export routes with "behind" progress
       if (progressText) {
         const routeCodeElem = isV1
           ? container.querySelector(".left-column.text-sm div:first-child")
