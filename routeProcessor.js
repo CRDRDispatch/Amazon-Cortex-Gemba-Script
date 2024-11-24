@@ -1,4 +1,4 @@
-(async function () {
+(() => {
   console.log("Script started...");
 
   // Create a modal for progress
@@ -26,66 +26,77 @@
     return modal;
   };
 
+  const waitForElements = (selector, timeout = 5000) => {
+    return new Promise((resolve, reject) => {
+      const startTime = Date.now();
+      const interval = setInterval(() => {
+        const elements = document.querySelectorAll(selector);
+        if (elements.length > 0) {
+          clearInterval(interval);
+          resolve(elements);
+        } else if (Date.now() - startTime > timeout) {
+          clearInterval(interval);
+          reject(new Error(`Timeout: No elements found for selector "${selector}"`));
+        }
+      }, 100);
+    });
+  };
+
   const modal = createModal();
   const downloadBtn = modal.querySelector("#download-btn");
 
-  try {
-    // Find route elements
-    console.log("Searching for route elements...");
-    const routeDivs = document.querySelectorAll(".css-1muusaa");
+  (async function () {
+    try {
+      console.log("Waiting for route elements...");
+      const routeDivs = await waitForElements(".css-1muusaa");
 
-    if (routeDivs.length === 0) {
-      console.warn("No route elements found. Exiting...");
-      modal.innerHTML = "<p>No relevant route data found.</p>";
-      return;
-    }
+      console.log(`Found ${routeDivs.length} route elements.`);
+      const results = [];
 
-    console.log(`Found ${routeDivs.length} route elements.`);
-    const results = [];
+      // Extract data from each route div
+      routeDivs.forEach((routeDiv, index) => {
+        console.log(`Processing route ${index + 1}...`);
+        const routeCodeElem = routeDiv.querySelector(".css-1nqzkik");
+        const associateNameElems = routeDiv.querySelectorAll(".css-1kttr4w");
+        const behindElem = routeDiv.querySelector(".css-1xac89n.font-weight-bold");
 
-    // Extract data from each route div
-    routeDivs.forEach((routeDiv, index) => {
-      console.log(`Processing route ${index + 1}...`);
-      const routeCodeElem = routeDiv.querySelector(".css-1nqzkik");
-      const associateNameElems = routeDiv.querySelectorAll(".css-1kttr4w");
-      const behindElem = routeDiv.querySelector(".css-1xac89n.font-weight-bold");
+        const routeCode = routeCodeElem ? routeCodeElem.textContent.trim() : null;
+        const associateNames = associateNameElems
+          ? Array.from(associateNameElems).map(el => el.textContent.trim()).join(", ")
+          : null;
+        const behindText = behindElem ? behindElem.textContent.trim() : null;
 
-      const routeCode = routeCodeElem ? routeCodeElem.textContent.trim() : null;
-      const associateNames = associateNameElems
-        ? Array.from(associateNameElems).map(el => el.textContent.trim()).join(", ")
-        : null;
-      const behindText = behindElem ? behindElem.textContent.trim() : null;
+        console.log({ routeCode, associateNames, behindText });
 
-      console.log({ routeCode, associateNames, behindText });
+        if (routeCode && associateNames && behindText && behindText.includes("behind")) {
+          results.push(`${routeCode}: ${associateNames} (${behindText})`);
+        }
+      });
 
-      if (routeCode && associateNames && behindText && behindText.includes("behind")) {
-        results.push(`${routeCode}: ${associateNames} (${behindText})`);
+      console.log("Route processing complete:", results);
+
+      if (results.length > 0) {
+        // Create a file blob for download
+        const fileContent = results.join("\n");
+        const blob = new Blob([fileContent], { type: "text/plain" });
+        const blobURL = URL.createObjectURL(blob);
+
+        // Enable the download button
+        downloadBtn.style.display = "block";
+        downloadBtn.textContent = `Download (${results.length} Routes)`;
+        downloadBtn.onclick = () => {
+          const link = document.createElement("a");
+          link.href = blobURL;
+          link.download = "route_data.txt";
+          link.click();
+          URL.revokeObjectURL(blobURL); // Clean up the blob URL
+        };
+      } else {
+        modal.innerHTML = "<p>No relevant route data found.</p>";
       }
-    });
-
-    console.log("Route processing complete:", results);
-
-    if (results.length > 0) {
-      // Create a file blob for download
-      const fileContent = results.join("\n");
-      const blob = new Blob([fileContent], { type: "text/plain" });
-      const blobURL = URL.createObjectURL(blob);
-
-      // Enable the download button
-      downloadBtn.style.display = "block";
-      downloadBtn.textContent = `Download (${results.length} Routes)`;
-      downloadBtn.onclick = () => {
-        const link = document.createElement("a");
-        link.href = blobURL;
-        link.download = "route_data.txt";
-        link.click();
-        URL.revokeObjectURL(blobURL); // Clean up the blob URL
-      };
-    } else {
-      modal.innerHTML = "<p>No relevant route data found.</p>";
+    } catch (error) {
+      console.error("Error processing route data:", error);
+      modal.innerHTML = `<p>Error: ${error.message}</p>`;
     }
-  } catch (error) {
-    console.error("Error processing route data:", error);
-    modal.innerHTML = `<p>Error: ${error.message}</p>`;
-  }
+  })();
 })();
