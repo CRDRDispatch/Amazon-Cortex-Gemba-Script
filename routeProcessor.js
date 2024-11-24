@@ -47,9 +47,17 @@
         <h3 style="font-family: Arial, sans-serif; font-size: 16px; color: #2c3e50; margin-bottom: 12px; font-weight: 600;">These routes have multiple DAs. Please select the DA assigned to the route.</h3>
         <div id="da-dropdowns" style="max-height: 400px; overflow-y: auto; padding: 15px; background: #f8f9fa; border-radius: 12px; border: 1px solid #edf2f7;">
         </div>
+        <div style="margin-top: 20px; text-align: right;">
+          <button id="next-btn" style="padding: 12px 25px; background-color: #4CAF50; color: white; border: none; border-radius: 8px; cursor: pointer; font-family: Arial, sans-serif; font-weight: 500; font-size: 15px; box-shadow: 0 4px 6px rgba(76, 175, 80, 0.2); transition: all 0.2s ease;">Next</button>
+        </div>
       </div>
-      <div id="download-section" style="display: none; padding-top: 25px; border-top: 2px solid #edf2f7;">
-        <button id="download-btn" style="margin: 0 auto; padding: 12px 25px; background-color: #4CAF50; color: white; border: none; border-radius: 8px; cursor: pointer; font-family: Arial, sans-serif; font-weight: 500; font-size: 15px; box-shadow: 0 4px 6px rgba(76, 175, 80, 0.2); transition: all 0.2s ease;">Download File</button>
+      <div id="preview-section" style="display: none; margin-bottom: 30px;">
+        <h3 style="font-family: Arial, sans-serif; font-size: 16px; color: #2c3e50; margin-bottom: 12px; font-weight: 600;">Route Details</h3>
+        <div id="route-details" style="max-height: 400px; overflow-y: auto; padding: 15px; background: #f8f9fa; border-radius: 12px; border: 1px solid #edf2f7;">
+        </div>
+        <div style="margin-top: 20px; text-align: right;">
+          <button id="download-btn" style="padding: 12px 25px; background-color: #4CAF50; color: white; border: none; border-radius: 8px; cursor: pointer; font-family: Arial, sans-serif; font-weight: 500; font-size: 15px; box-shadow: 0 4px 6px rgba(76, 175, 80, 0.2); transition: all 0.2s ease;">Download File</button>
+        </div>
       </div>
     `;
 
@@ -77,6 +85,20 @@
         progressDetails.style.display = "none";
         modalToggleBtn.textContent = "Show";
       }
+    });
+
+    const nextBtn = modal.querySelector("#next-btn");
+    const previewSection = modal.querySelector("#preview-section");
+    const daSelectionSection = modal.querySelector("#da-selection-section");
+    const routeDetails = modal.querySelector("#route-details");
+
+    nextBtn.addEventListener("mouseover", () => {
+      nextBtn.style.backgroundColor = "#45a049";
+      nextBtn.style.boxShadow = "0 6px 8px rgba(76, 175, 80, 0.3)";
+    });
+    nextBtn.addEventListener("mouseout", () => {
+      nextBtn.style.backgroundColor = "#4CAF50";
+      nextBtn.style.boxShadow = "0 4px 6px rgba(76, 175, 80, 0.2)";
     });
 
     const downloadBtn = modal.querySelector("#download-btn");
@@ -315,8 +337,7 @@
     if (behindRoutes.length > 0) {
       const daSelectionSection = modal.querySelector("#da-selection-section");
       const daDropdowns = modal.querySelector("#da-dropdowns");
-      const downloadSection = modal.querySelector("#download-section");
-
+      
       // Show the DA selection section
       daSelectionSection.style.display = "block";
 
@@ -331,14 +352,14 @@
           container.style.borderRadius = "8px";
           container.style.boxShadow = "0 2px 4px rgba(0,0,0,0.05)";
           container.style.border = "1px solid #edf2f7";
-
+          
           const label = document.createElement("label");
           label.textContent = `${route.routeCode} (${route.progress}):`;
           label.style.display = "block";
           label.style.marginBottom = "8px";
           label.style.fontWeight = "600";
           label.style.color = "#2c3e50";
-
+          
           const select = document.createElement("select");
           select.style.width = "100%";
           select.style.padding = "8px 12px";
@@ -349,32 +370,71 @@
           select.style.color = "#2c3e50";
           select.style.fontSize = "14px";
           select.dataset.routeCode = route.routeCode;
-
+          
           das.forEach((da) => {
             const option = document.createElement("option");
             option.value = da;
             option.textContent = da;
             select.appendChild(option);
           });
-
+          
           container.appendChild(label);
           container.appendChild(select);
           daDropdowns.appendChild(container);
         }
       });
 
-      // Show download section
-      downloadSection.style.display = "block";
-      const downloadBtn = modal.querySelector("#download-btn");
-      downloadBtn.textContent = `Download (${behindRoutes.length} Routes)`;
+      // Add Next button functionality
+      const nextBtn = modal.querySelector("#next-btn");
+      const previewSection = modal.querySelector("#preview-section");
+      const routeDetails = modal.querySelector("#route-details");
 
+      nextBtn.addEventListener("click", () => {
+        daSelectionSection.style.display = "none";
+        previewSection.style.display = "block";
+
+        // Create route detail inputs
+        behindRoutes.forEach((route) => {
+          const select = daDropdowns.querySelector(`select[data-route-code="${route.routeCode}"]`);
+          const associateInfo = select ? select.value : route.associateInfo;
+
+          const container = document.createElement("div");
+          container.style.marginBottom = "20px";
+          container.style.padding = "15px";
+          container.style.background = "white";
+          container.style.borderRadius = "8px";
+          container.style.boxShadow = "0 2px 4px rgba(0,0,0,0.05)";
+          container.style.border = "1px solid #edf2f7";
+
+          container.innerHTML = `
+            <div style="margin-bottom: 15px;">
+              <h4 style="margin: 0 0 10px 0; color: #2c3e50; font-size: 16px;">${route.routeCode}: ${associateInfo} (${route.progress})</h4>
+              <div style="margin-bottom: 10px;">
+                <label style="display: block; margin-bottom: 5px; color: #2c3e50; font-weight: 600;">Root Cause:</label>
+                <input type="text" class="rc-input" style="width: 100%; padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px;" placeholder="Enter root cause...">
+              </div>
+              <div>
+                <label style="display: block; margin-bottom: 5px; color: #2c3e50; font-weight: 600;">Point of Action:</label>
+                <input type="text" class="poa-input" style="width: 100%; padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px;" placeholder="Enter point of action...">
+              </div>
+            </div>
+          `;
+
+          routeDetails.appendChild(container);
+        });
+      });
+
+      // Update download functionality to include RC and POA
       downloadBtn.onclick = () => {
-        // Create file content with selected DAs
         const fileContent = behindRoutes.map((route) => {
           const select = daDropdowns.querySelector(`select[data-route-code="${route.routeCode}"]`);
           const associateInfo = select ? select.value : route.associateInfo;
-          return `${route.routeCode}: ${associateInfo} (${route.progress})`;
-        }).join("\n");
+          const container = routeDetails.querySelector(`div:has(h4:contains('${route.routeCode}'))`);
+          const rc = container.querySelector('.rc-input').value || 'N/A';
+          const poa = container.querySelector('.poa-input').value || 'N/A';
+          
+          return `${route.routeCode}: ${associateInfo} (${route.progress})\nRoot Cause: ${rc}\nPoint of Action: ${poa}\n`;
+        }).join('\n');
 
         const blob = new Blob([fileContent], { type: "text/plain" });
         const blobURL = URL.createObjectURL(blob);
