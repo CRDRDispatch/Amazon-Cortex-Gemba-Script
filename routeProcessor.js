@@ -17,7 +17,11 @@
     modal.style.top = "50%";
     modal.style.left = "50%";
     modal.style.transform = "translate(-50%, -50%) translateZ(0)";
+    modal.style.webkitTransform = "translate(-50%, -50%) translateZ(0)";
     modal.style.backfaceVisibility = "hidden";
+    modal.style.webkitBackfaceVisibility = "hidden";
+    modal.style.perspective = "1000";
+    modal.style.webkitPerspective = "1000";
     modal.style.width = "400px";
     modal.style.background = "white";
     modal.style.border = "1px solid #ccc";
@@ -28,11 +32,13 @@
     modal.style.textAlign = "center";
     modal.style.maxHeight = "90vh";
     modal.style.overflowY = "auto";
+    modal.style.willChange = "transform";
+    modal.style.isolation = "isolate";
 
     modal.innerHTML = `
       <button id="close-btn" style="position: absolute; top: 10px; right: 10px; background: none; border: none; font-size: 16px; cursor: pointer;">✖</button>
       <div style="margin-bottom: 20px;">
-        <img src="https://crdrdispatch.github.io/GembaScript/Logo.svg" alt="Logo" style="height: 70px; display: block; margin: 0 auto;">
+        <img src="https://crdrdispatch.github.io/GembaScript/Logo.svg" alt="Logo" style="height: 90px; display: block; margin: 0 auto; -webkit-transform: translateZ(0); transform: translateZ(0);">
       </div>
       <h2 style="font-family: Arial, sans-serif; margin-bottom: 20px; border-bottom: 2px solid #eee; padding-bottom: 10px;">Gimme That GEMBA</h2>
       <div id="progress-section" style="margin-bottom: 30px;">
