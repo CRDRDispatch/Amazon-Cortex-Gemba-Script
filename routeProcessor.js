@@ -32,14 +32,21 @@
       <div style="margin-bottom: 20px;">
         <img src="https://crdrdispatch.github.io/GembaScript/Logo.svg" alt="Logo" style="height: 70px; display: block; margin: 0 auto;">
       </div>
-      <h2 style="font-family: Arial, sans-serif; margin-bottom: 20px;">Gimme That GEMBA</h2>
-      <div id="progress-details" style="font-family: Arial, sans-serif; text-align: left; margin-bottom: 20px; border-bottom: 1px solid #ddd; padding-bottom: 10px;">
-        <p>Initializing...</p>
+      <h2 style="font-family: Arial, sans-serif; margin-bottom: 20px; border-bottom: 2px solid #eee; padding-bottom: 10px;">Gimme That GEMBA</h2>
+      <div id="progress-section" style="margin-bottom: 30px;">
+        <h3 style="font-family: Arial, sans-serif; font-size: 16px; color: #666; margin-bottom: 10px;">Progress</h3>
+        <div id="progress-details" style="font-family: Arial, sans-serif; text-align: left; margin-bottom: 20px; padding: 10px; background: #f5f5f5; border-radius: 5px;">
+          <p>Initializing...</p>
+        </div>
       </div>
-      <div id="route-dropdowns" style="font-family: Arial, sans-serif; text-align: left; margin-bottom: 20px; border-bottom: 1px solid #ddd; padding-bottom: 10px; display: none;">
-        <h3 style="margin-bottom: 10px; font-size: 16px;">These routes have multiple DAs. Please choose the DA assigned to the route:</h3>
+      <div id="da-selection-section" style="display: none; margin-bottom: 30px;">
+        <h3 style="font-family: Arial, sans-serif; font-size: 16px; color: #666; margin-bottom: 10px;">Select Delivery Associates</h3>
+        <div id="da-dropdowns" style="max-height: 300px; overflow-y: auto; padding: 10px; background: #f5f5f5; border-radius: 5px;">
+        </div>
       </div>
-      <button id="download-btn" style="display: none; margin: 20px auto 0; padding: 10px 20px; background-color: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer; font-family: Arial, sans-serif; box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);">Download File</button>
+      <div id="download-section" style="display: none; padding-top: 20px; border-top: 2px solid #eee;">
+        <button id="download-btn" style="margin: 0 auto; padding: 10px 20px; background-color: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer; font-family: Arial, sans-serif; box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);">Download File</button>
+      </div>
     `;
 
     document.body.appendChild(modal);
@@ -91,15 +98,16 @@
 
       if (tooltip) {
         console.log("Extracted associates from tooltip (V1):", tooltip.join(", "));
-        return tooltip;
+        return tooltip.join(", ");
       }
 
       const associateInfo = cleanAssociateNames(associateContainer?.querySelector(".text-truncate")?.textContent.trim() || "No associate info");
       console.log("Extracted associates (V1):", associateInfo);
-      return [associateInfo];
+      return associateInfo;
     } else {
       const associates = Array.from(container.querySelectorAll(".css-1kttr4w"))
-        .map((el) => cleanAssociateNames(el.textContent.trim()));
+        .map((el) => cleanAssociateNames(el.textContent.trim()))
+        .join(", ");
       console.log("Extracted associates (V2):", associates);
       return associates;
     }
@@ -122,19 +130,19 @@
           : el.querySelector(".css-1xac89n.font-weight-bold");
 
         const routeCode = routeCodeElem?.textContent.trim() || routeCodeElem?.getAttribute("title");
-        const associates = extractAssociates(el, isV1);
+        const associateInfo = extractAssociates(el, isV1);
         const progressRaw = progressElem?.textContent.trim();
         const progress = extractBehindProgress(progressRaw); // Extract only "X behind"
 
         console.log("Route Code:", routeCode);
-        console.log("Associate Info:", associates);
+        console.log("Associate Info:", associateInfo);
         console.log("Progress:", progress);
 
         if (routeCode) {
           const existingRouteIndex = routes.findIndex(route => route.routeCode === routeCode);
           if (existingRouteIndex === -1) {
-            routes.push({ routeCode, associates, progress });
-            console.log("Added route:", { routeCode, associates, progress });
+            routes.push({ routeCode, associateInfo, progress });
+            console.log("Added route:", { routeCode, associateInfo, progress });
           } else {
             console.log("Skipped duplicate route with code:", routeCode);
           }
@@ -153,21 +161,6 @@
 
   const modal = createModal();
   const downloadBtn = modal.querySelector("#download-btn");
-  const dropdownContainer = document.getElementById("route-dropdowns");
-
-  const createDropdownsForRoutes = (routesWithMultipleAssociates) => {
-    dropdownContainer.innerHTML = routesWithMultipleAssociates
-      .map((route, index) => `
-        <div style="margin-bottom: 15px;">
-          <label for="route-select-${index}" style="display: block; font-weight: bold;">${route.routeCode}:</label>
-          <select id="route-select-${index}" style="width: 100%; padding: 5px; border: 1px solid #ccc; border-radius: 5px;">
-            ${route.associates.map((associate) => `<option value="${associate}">${associate}</option>`).join("")}
-          </select>
-        </div>`
-      )
-      .join("");
-    dropdownContainer.style.display = "block";
-  };
 
   try {
     console.log("Script started");
@@ -199,14 +192,75 @@
     console.log("Behind Routes:", behindRoutes);
 
     if (behindRoutes.length > 0) {
-      const routesWithMultipleAssociates = behindRoutes.filter(route => route.associates.length > 1);
-      if (routesWithMultipleAssociates.length > 0) {
-        createDropdownsForRoutes(routesWithMultipleAssociates);
-      }
+      const daSelectionSection = modal.querySelector("#da-selection-section");
+      const daDropdowns = modal.querySelector("#da-dropdowns");
+      const downloadSection = modal.querySelector("#download-section");
+      
+      // Show the DA selection section
+      daSelectionSection.style.display = "block";
+      
+      // Create dropdowns for routes with multiple DAs
+      behindRoutes.forEach((route) => {
+        const das = route.associateInfo.split(", ");
+        if (das.length > 1) {
+          const container = document.createElement("div");
+          container.style.marginBottom = "15px";
+          container.style.padding = "10px";
+          container.style.background = "white";
+          container.style.borderRadius = "5px";
+          container.style.boxShadow = "0 1px 3px rgba(0,0,0,0.1)";
+          
+          const label = document.createElement("label");
+          label.textContent = `${route.routeCode} (${route.progress}):`;
+          label.style.display = "block";
+          label.style.marginBottom = "5px";
+          label.style.fontWeight = "bold";
+          
+          const select = document.createElement("select");
+          select.style.width = "100%";
+          select.style.padding = "5px";
+          select.style.borderRadius = "3px";
+          select.style.border = "1px solid #ddd";
+          select.dataset.routeCode = route.routeCode;
+          
+          das.forEach((da) => {
+            const option = document.createElement("option");
+            option.value = da;
+            option.textContent = da;
+            select.appendChild(option);
+          });
+          
+          container.appendChild(label);
+          container.appendChild(select);
+          daDropdowns.appendChild(container);
+        }
+      });
 
-      downloadBtn.style.display = "block";
+      // Show download section
+      downloadSection.style.display = "block";
+      const downloadBtn = modal.querySelector("#download-btn");
       downloadBtn.textContent = `Download (${behindRoutes.length} Routes)`;
+      
       downloadBtn.onclick = () => {
-        const selectedRoutes = behindRoutes.map((route, index) => {
-          if (route.associates.length > 1) {
-            const dropdown = document.get
+        // Create file content with selected DAs
+        const fileContent = behindRoutes.map((route) => {
+          const select = daDropdowns.querySelector(`select[data-route-code="${route.routeCode}"]`);
+          const associateInfo = select ? select.value : route.associateInfo;
+          return `${route.routeCode}: ${associateInfo} (${route.progress})`;
+        }).join("\n");
+
+        const blob = new Blob([fileContent], { type: "text/plain" });
+        const blobURL = URL.createObjectURL(blob);
+
+        const link = document.createElement("a");
+        link.href = blobURL;
+        link.download = "behind_routes.txt";
+        link.click();
+        URL.revokeObjectURL(blobURL);
+      };
+    }
+  } catch (error) {
+    console.error("Error during route data processing:", error);
+    updateProgress(`Error: ${error.message}`);
+  }
+})();
