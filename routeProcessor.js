@@ -68,12 +68,12 @@
     closeBtn.addEventListener("mouseover", () => closeBtn.style.color = "#ff4444");
     closeBtn.addEventListener("mouseout", () => closeBtn.style.color = "#666");
 
-    const toggleBtn = modal.querySelector("#toggle-progress");
-    toggleBtn.addEventListener("mouseover", () => {
-      toggleBtn.style.backgroundColor = "#f0f0f0";
+    const modalToggleBtn = modal.querySelector("#toggle-progress");
+    modalToggleBtn.addEventListener("mouseover", () => {
+      modalToggleBtn.style.backgroundColor = "#f0f0f0";
     });
-    toggleBtn.addEventListener("mouseout", () => {
-      toggleBtn.style.backgroundColor = "transparent";
+    modalToggleBtn.addEventListener("mouseout", () => {
+      modalToggleBtn.style.backgroundColor = "transparent";
     });
 
     const downloadBtn = modal.querySelector("#download-btn");
@@ -94,15 +94,14 @@
     });
 
     // Add toggle functionality for progress section
-    const toggleBtn = modal.querySelector("#toggle-progress");
     const progressDetails = modal.querySelector("#progress-details");
-    toggleBtn.addEventListener("click", () => {
+    modalToggleBtn.addEventListener("click", () => {
       if (progressDetails.style.display === "none") {
         progressDetails.style.display = "block";
-        toggleBtn.textContent = "Hide";
+        modalToggleBtn.textContent = "Hide";
       } else {
         progressDetails.style.display = "none";
-        toggleBtn.textContent = "Show";
+        modalToggleBtn.textContent = "Show";
       }
     });
 
