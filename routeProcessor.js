@@ -1,4 +1,5 @@
 (async function () {
+  // Create a modal for progress and downloading the file
   const createModal = () => {
     const modal = document.createElement("div");
     modal.id = "custom-modal";
@@ -28,82 +29,91 @@
   try {
     console.log("Script started");
 
-    // Detect Cortex version
     const isV1 = document.querySelector(".css-hkr77h")?.checked;
     console.log("Cortex Version:", isV1 ? "V1" : "V2");
 
-    const results = [];
+    // Use MutationObserver to wait for routes to load dynamically
+    const waitForRoutes = () => {
+      return new Promise((resolve) => {
+        const observer = new MutationObserver(() => {
+          const routeContainers = document.querySelectorAll(
+            isV1
+              ? ".routes-list.d-flex.flex-1.flex-column.border-y-list > div"
+              : ".css-1muusaa"
+          );
+          if (routeContainers.length > 0) {
+            console.log(`Found ${routeContainers.length} route containers`);
+            observer.disconnect();
+            resolve(routeContainers);
+          }
+        });
 
-    if (isV1) {
-      console.log("Processing V1 Cortex");
+        observer.observe(document.body, { childList: true, subtree: true });
+      });
+    };
 
-      const routeContainers = document.querySelectorAll(
-        ".routes-list.d-flex.flex-1.flex-column.border-y-list > div"
-      );
-      console.log(`Found ${routeContainers.length} route containers`);
+    const routeContainers = await waitForRoutes();
+    const allRoutes = [];
 
-      routeContainers.forEach((container, index) => {
-        console.log(`Processing container ${index + 1}`);
-        const routeCodeElem = container.querySelector(".left-column.text-sm");
-        const associateContainer = container.querySelector(
-          ".ml-lg-4.ml-2.mr-2.mr-lg-auto.normal-white-space"
-        );
-        const tooltipElem = associateContainer.nextElementSibling?.classList.contains(
-          "af-tooltip"
-        )
+    routeContainers.forEach((container, index) => {
+      const routeCode = isV1
+        ? container.querySelector(".left-column.text-sm")?.textContent.trim()
+        : container.querySelector(".css-1nqzkik")?.textContent.trim();
+
+      const associateContainer = isV1
+        ? container.querySelector(".ml-lg-4.ml-2.mr-2.mr-lg-auto.normal-white-space")
+        : container.querySelectorAll(".css-1kttr4w");
+
+      const tooltipElem = isV1
+        ? associateContainer.nextElementSibling?.classList.contains("af-tooltip")
           ? associateContainer.nextElementSibling.querySelectorAll("div")
-          : null;
-        const progressElem = container.querySelector(".progress");
+          : null
+        : null;
 
-        const routeCode = routeCodeElem?.textContent.trim();
-        const associateNames = tooltipElem
+      const associateNames = isV1
+        ? tooltipElem
           ? Array.from(tooltipElem).map((el) => el.textContent.trim()).join(", ")
-          : associateContainer.querySelector(".text-truncate")?.textContent.trim();
-        const progressText = progressElem?.textContent.trim();
+          : associateContainer.querySelector(".text-truncate")?.textContent.trim()
+        : Array.from(associateContainer).map((el) => el.textContent.trim()).join(", ");
 
-        console.log({ routeCode, associateNames, progressText });
+      const progressElem = isV1
+        ? container.querySelector(".progress")
+        : container.querySelector(".css-1xac89n.font-weight-bold");
 
-        if (routeCode && associateNames && progressText && progressText.includes("behind")) {
-          console.log(`Adding route: ${routeCode}`);
-          results.push(`${routeCode}: ${associateNames} (${progressText})`);
-        }
+      const progressText = progressElem?.textContent.trim();
+
+      allRoutes.push({
+        routeCode,
+        associateNames,
+        progressText,
       });
-    } else {
-      console.log("Processing V2 Cortex");
 
-      const routeDivs = document.querySelectorAll(".css-1muusaa");
-      console.log(`Found ${routeDivs.length} route divs`);
-
-      routeDivs.forEach((routeDiv, index) => {
-        console.log(`Processing route div ${index + 1}`);
-        const routeCodeElem = routeDiv.querySelector(".css-1nqzkik");
-        const associateElements = routeDiv.querySelectorAll(".css-1kttr4w");
-        const behindElem = routeDiv.querySelector(".css-1xac89n.font-weight-bold");
-
-        const routeCode = routeCodeElem?.textContent.trim();
-        const associateNames = Array.from(associateElements)
-          .map((el) => el.textContent.trim())
-          .join(", ");
-        const behindText = behindElem?.textContent.trim();
-
-        console.log({ routeCode, associateNames, behindText });
-
-        if (routeCode && associateNames && behindText && behindText.includes("behind")) {
-          console.log(`Adding route: ${routeCode}`);
-          results.push(`${routeCode}: ${associateNames} (${behindText})`);
-        }
+      console.log(`Processed Route ${index + 1}:`, {
+        routeCode,
+        associateNames,
+        progressText,
       });
-    }
+    });
 
-    console.log("Processing complete. Results:", results);
+    console.log("All Routes Gathered:", allRoutes);
 
-    if (results.length > 0) {
-      const fileContent = results.join("\n");
+    // Filter for routes that are "behind"
+    const behindRoutes = allRoutes.filter(
+      (route) => route.progressText && route.progressText.includes("behind")
+    );
+
+    console.log("Filtered Routes (Behind):", behindRoutes);
+
+    if (behindRoutes.length > 0) {
+      const fileContent = behindRoutes
+        .map((route) => `${route.routeCode}: ${route.associateNames} (${route.progressText})`)
+        .join("\n");
+
       const blob = new Blob([fileContent], { type: "text/plain" });
       const blobURL = URL.createObjectURL(blob);
 
       downloadBtn.style.display = "block";
-      downloadBtn.textContent = `Download (${results.length} Routes)`;
+      downloadBtn.textContent = `Download (${behindRoutes.length} Routes)`;
       downloadBtn.onclick = () => {
         const link = document.createElement("a");
         link.href = blobURL;
