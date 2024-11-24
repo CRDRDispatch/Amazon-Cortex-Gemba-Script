@@ -61,7 +61,9 @@
         </div>
         <div id="route-details" style="max-height: 400px; overflow-y: auto; padding: 15px; background: #f8f9fa; border-radius: 12px; border: 1px solid #edf2f7; scrollbar-width: thin; scrollbar-color: #cbd5e0 #f8f9fa;">
         </div>
-        <button id="preview-next-btn" style="padding: 12px 30px; background-color: #4CAF50; color: white; border: none; border-radius: 8px; cursor: pointer; font-family: Arial, sans-serif; font-weight: 500; font-size: 15px; box-shadow: 0 4px 6px rgba(76, 175, 80, 0.2); transition: all 0.2s ease; margin-top: 20px;">Next</button>
+        <div style="display: flex; justify-content: flex-end; margin-top: 20px;">
+          <button id="preview-next-btn" style="padding: 12px 30px; background-color: #4CAF50; color: white; border: none; border-radius: 8px; cursor: pointer; font-family: Arial, sans-serif; font-weight: 500; font-size: 15px; box-shadow: 0 4px 6px rgba(76, 175, 80, 0.2); transition: all 0.2s ease;">Next</button>
+        </div>
       </div>
       <div id="dsp-progress-section" style="display: none;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
@@ -566,32 +568,32 @@
           const associateInfo = select ? select.value : route.associateInfo;
           
           // Find the container by iterating through all containers and matching the route code
-          const containers = routeDetails.querySelectorAll('div');
+          const containers = document.querySelectorAll('#route-details > div');
           const container = Array.from(containers).find(div => {
-            const h4 = div.querySelector('h4');
-            return h4 && h4.textContent.startsWith(route.routeCode);
+            const h4 = div.querySelector('h4 span');
+            return h4 && h4.textContent.includes(route.routeCode);
           });
           
           if (!container) return `${route.routeCode}: ${associateInfo} (${route.progress})\n`;
           
           // Get all checked root causes
-          const checkedBoxes = container.querySelectorAll('.rc-checkbox:checked');
+          const checkedBoxes = container.querySelectorAll('input[type="checkbox"]:checked');
           const rootCauses = Array.from(checkedBoxes).map(checkbox => {
-            if (checkbox.value === 'Other') {
+            if (checkbox.classList.contains('other-checkbox') && checkbox.checked) {
               const otherInput = container.querySelector('.other-input');
               return otherInput.value.trim() || 'Other (unspecified)';
             }
             return checkbox.value;
-          });
+          }).filter(Boolean); // Remove any empty values
           
           const rc = rootCauses.length > 0 ? rootCauses.join(', ') : 'N/A';
           
           // Get POA value
           const poaSelect = container.querySelector('.poa-select');
-          let poa = poaSelect.value;
+          let poa = poaSelect ? poaSelect.value : 'N/A';
           if (poa === 'Other') {
             const poaOtherInput = container.querySelector('.poa-other-input');
-            poa = poaOtherInput.value.trim() || 'Other (unspecified)';
+            poa = poaOtherInput && poaOtherInput.value.trim() || 'Other (unspecified)';
           }
           poa = poa || 'N/A';
           
