@@ -1,23 +1,6 @@
-(() => {
-  console.log("Script started...");
-
-  // Create the modal for progress
+(async function () {
+  // Function to create a modal for progress and downloading the file
   const createModal = () => {
-    console.log("Creating modal...");
-
-    // Create overlay
-    const overlay = document.createElement("div");
-    overlay.id = "custom-overlay";
-    overlay.style.position = "fixed";
-    overlay.style.top = 0;
-    overlay.style.left = 0;
-    overlay.style.width = "100%";
-    overlay.style.height = "100%";
-    overlay.style.backgroundColor = "rgba(0, 0, 0, 0.5)";
-    overlay.style.zIndex = 9999;
-    document.body.appendChild(overlay);
-
-    // Create modal container
     const modal = document.createElement("div");
     modal.id = "custom-modal";
     modal.style.position = "fixed";
@@ -27,132 +10,105 @@
     modal.style.background = "white";
     modal.style.border = "1px solid #ccc";
     modal.style.boxShadow = "0 4px 6px rgba(0, 0, 0, 0.1)";
-    modal.style.borderRadius = "8px";
     modal.style.padding = "20px";
-    modal.style.width = "400px"; // Adjust modal size
-    modal.style.textAlign = "center"; // Center align text and elements
     modal.style.zIndex = 10000;
+    modal.style.textAlign = "center";
 
-    // Add logo
-    const logo = document.createElement("img");
-    logo.src = "https://crdrdispatch.github.io/GembaScript/Logo.svg";
-    logo.alt = "Company Logo";
-    logo.style.width = "150px";
-    logo.style.marginBottom = "20px";
-    modal.appendChild(logo);
-
-    // Add text
-    const message = document.createElement("p");
-    message.textContent = "Processing route data...";
-    modal.appendChild(message);
-
-    // Add close button
-    const closeButton = document.createElement("button");
-    closeButton.textContent = "Close";
-    closeButton.style.marginTop = "20px";
-    closeButton.style.backgroundColor = "#007bff";
-    closeButton.style.color = "white";
-    closeButton.style.border = "none";
-    closeButton.style.padding = "10px 20px";
-    closeButton.style.borderRadius = "5px";
-    closeButton.style.cursor = "pointer";
-    closeButton.style.marginRight = "10px";
-    closeButton.onclick = () => {
-      document.body.removeChild(modal);
-      document.body.removeChild(overlay);
-    };
-    modal.appendChild(closeButton);
-
-    // Add download button (initially hidden)
-    const downloadBtn = document.createElement("button");
-    downloadBtn.id = "download-btn";
-    downloadBtn.style.display = "none";
-    downloadBtn.style.marginTop = "10px";
-    downloadBtn.style.marginLeft = "auto";
-    downloadBtn.style.marginRight = "auto";
-    downloadBtn.style.backgroundColor = "#28a745";
-    downloadBtn.style.color = "white";
-    downloadBtn.style.border = "none";
-    downloadBtn.style.padding = "10px 20px";
-    downloadBtn.style.borderRadius = "5px";
-    downloadBtn.style.cursor = "pointer";
-    modal.appendChild(downloadBtn);
+    modal.innerHTML = `
+      <p>Processing route data...</p>
+      <button id="download-btn" style="display: none; margin-top: 10px;">Download File</button>
+    `;
 
     document.body.appendChild(modal);
 
-    return { modal, downloadBtn };
+    return modal;
   };
 
-  const waitForElements = (selector, timeout = 5000) => {
-    return new Promise((resolve, reject) => {
-      const startTime = Date.now();
-      const interval = setInterval(() => {
-        const elements = document.querySelectorAll(selector);
-        if (elements.length > 0) {
-          clearInterval(interval);
-          resolve(elements);
-        } else if (Date.now() - startTime > timeout) {
-          clearInterval(interval);
-          reject(new Error(`Timeout: No elements found for selector "${selector}"`));
+  const modal = createModal();
+  const downloadBtn = modal.querySelector("#download-btn");
+
+  try {
+    // Detect if V1 or V2 is being used
+    const isV1 = document.querySelector(".css-hkr77h")?.checked;
+
+    const results = [];
+
+    if (isV1) {
+      console.log("Using V1 Cortex");
+
+      // V1 route extraction
+      const routeContainers = document.querySelectorAll(
+        ".routes-list.d-flex.flex-1.flex-column.border-y-list > div"
+      );
+
+      routeContainers.forEach((container) => {
+        const routeCodeElem = container.querySelector(
+          ".left-column.text-sm"
+        );
+        const associateContainer = container.querySelector(
+          ".ml-lg-4.ml-2.mr-2.mr-lg-auto.normal-white-space"
+        );
+        const tooltipElem = associateContainer.nextElementSibling?.classList.contains(
+          "af-tooltip"
+        )
+          ? associateContainer.nextElementSibling.querySelectorAll("div")
+          : null;
+        const progressElem = container.querySelector(".progress");
+
+        const routeCode = routeCodeElem?.textContent.trim();
+        const associateNames = tooltipElem
+          ? Array.from(tooltipElem).map((el) => el.textContent.trim()).join(", ")
+          : associateContainer.querySelector(".text-truncate")?.textContent.trim();
+        const progressText = progressElem?.textContent.trim();
+
+        if (routeCode && associateNames && progressText && progressText.includes("behind")) {
+          results.push(`${routeCode}: ${associateNames} (${progressText})`);
         }
-      }, 100);
-    });
-  };
+      });
+    } else {
+      console.log("Using V2 Cortex");
 
-  const { modal, downloadBtn } = createModal();
+      // V2 route extraction
+      const routeDivs = document.querySelectorAll(".css-1muusaa");
 
-  (async function () {
-    try {
-      console.log("Waiting for route elements...");
-      const routeDivs = await waitForElements(".css-1muusaa");
-
-      console.log(`Found ${routeDivs.length} route elements.`);
-      const results = [];
-
-      // Extract data from each route div
-      routeDivs.forEach((routeDiv, index) => {
-        console.log(`Processing route ${index + 1}...`);
+      routeDivs.forEach((routeDiv) => {
         const routeCodeElem = routeDiv.querySelector(".css-1nqzkik");
-        const associateNameElems = routeDiv.querySelectorAll(".css-1kttr4w");
+        const associateElements = routeDiv.querySelectorAll(".css-1kttr4w");
         const behindElem = routeDiv.querySelector(".css-1xac89n.font-weight-bold");
 
-        const routeCode = routeCodeElem ? routeCodeElem.textContent.trim() : null;
-        const associateNames = associateNameElems
-          ? Array.from(associateNameElems).map(el => el.textContent.trim()).join(", ")
-          : null;
-        const behindText = behindElem ? behindElem.textContent.trim() : null;
-
-        console.log({ routeCode, associateNames, behindText });
+        const routeCode = routeCodeElem?.textContent.trim();
+        const associateNames = Array.from(associateElements)
+          .map((el) => el.textContent.trim())
+          .join(", ");
+        const behindText = behindElem?.textContent.trim();
 
         if (routeCode && associateNames && behindText && behindText.includes("behind")) {
           results.push(`${routeCode}: ${associateNames} (${behindText})`);
         }
       });
-
-      console.log("Route processing complete:", results);
-
-      if (results.length > 0) {
-        // Create a file blob for download
-        const fileContent = results.join("\n");
-        const blob = new Blob([fileContent], { type: "text/plain" });
-        const blobURL = URL.createObjectURL(blob);
-
-        // Enable the download button
-        downloadBtn.style.display = "block";
-        downloadBtn.textContent = `Download (${results.length} Routes)`;
-        downloadBtn.onclick = () => {
-          const link = document.createElement("a");
-          link.href = blobURL;
-          link.download = "route_data.txt";
-          link.click();
-          URL.revokeObjectURL(blobURL); // Clean up the blob URL
-        };
-      } else {
-        modal.querySelector("p").textContent = "No relevant route data found.";
-      }
-    } catch (error) {
-      console.error("Error processing route data:", error);
-      modal.querySelector("p").textContent = `Error: ${error.message}`;
     }
-  })();
+
+    if (results.length > 0) {
+      // Create a file blob for download
+      const fileContent = results.join("\n");
+      const blob = new Blob([fileContent], { type: "text/plain" });
+      const blobURL = URL.createObjectURL(blob);
+
+      // Enable the download button
+      downloadBtn.style.display = "block";
+      downloadBtn.textContent = `Download (${results.length} Routes)`;
+      downloadBtn.onclick = () => {
+        const link = document.createElement("a");
+        link.href = blobURL;
+        link.download = "route_data.txt";
+        link.click();
+        URL.revokeObjectURL(blobURL); // Clean up the blob URL
+      };
+    } else {
+      modal.innerHTML = "<p>No relevant route data found.</p>";
+    }
+  } catch (error) {
+    console.error("Error processing route data:", error);
+    modal.innerHTML = `<p>Error: ${error.message}</p>`;
+  }
 })();
