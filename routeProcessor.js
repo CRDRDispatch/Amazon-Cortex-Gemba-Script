@@ -68,7 +68,9 @@
       }
       await new Promise((resolve) => setTimeout(resolve, scrollDelay));
     }
-    await new Promise((resolve) => setTimeout(resolve, 2000)); // Wait for any delayed content
+    updateProgress("Scrolling back to the top to recheck routes...");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    await new Promise((resolve) => setTimeout(resolve, 2000)); // Wait after scrolling back
   };
 
   const modal = createModal();
@@ -86,7 +88,7 @@
       : ".css-1muusaa";
 
     await ensureAllRoutesLoaded(routeSelector, 20, 100); // Force load all routes
-    updateProgress("Scrolling complete. Collecting elements...", false);
+    updateProgress("Rechecking all routes after scrolling...", false);
 
     const routeContainers = Array.from(document.querySelectorAll(routeSelector));
     console.log(`Collected ${routeContainers.length} route containers`, routeContainers);
