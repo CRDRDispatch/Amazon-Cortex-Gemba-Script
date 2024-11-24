@@ -59,11 +59,24 @@
     closeBtn.addEventListener("mouseout", () => closeBtn.style.color = "#666");
 
     const modalToggleBtn = modal.querySelector("#toggle-progress");
+    const progressDetails = modal.querySelector("#progress-details");
+    
     modalToggleBtn.addEventListener("mouseover", () => {
       modalToggleBtn.style.backgroundColor = "#f0f0f0";
     });
     modalToggleBtn.addEventListener("mouseout", () => {
       modalToggleBtn.style.backgroundColor = "transparent";
+    });
+    
+    // Add toggle functionality
+    modalToggleBtn.addEventListener("click", () => {
+      if (progressDetails.style.display === "none") {
+        progressDetails.style.display = "block";
+        modalToggleBtn.textContent = "Hide";
+      } else {
+        progressDetails.style.display = "none";
+        modalToggleBtn.textContent = "Show";
+      }
     });
 
     const downloadBtn = modal.querySelector("#download-btn");
