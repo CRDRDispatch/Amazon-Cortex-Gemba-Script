@@ -52,11 +52,41 @@
         </div>
       </div>
       <div id="preview-section" style="display: none; margin-bottom: 30px;">
-        <h3 style="font-family: Arial, sans-serif; font-size: 16px; color: #2c3e50; margin-bottom: 12px; font-weight: 600;">Route Details</h3>
-        <div id="route-details" style="max-height: 400px; overflow-y: auto; padding: 15px; background: #f8f9fa; border-radius: 12px; border: 1px solid #edf2f7;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <button id="back-btn" style="padding: 8px 16px; background-color: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer; font-family: Arial, sans-serif; font-weight: 500; font-size: 14px; box-shadow: 0 2px 4px rgba(108, 117, 125, 0.2); transition: all 0.2s ease; display: flex; align-items: center; gap: 6px;">
+            <span style="font-size: 18px;">←</span> Back
+          </button>
+          <h3 style="font-family: Arial, sans-serif; font-size: 16px; color: #2c3e50; margin: 0; font-weight: 600;">Route Details</h3>
+          <div style="width: 80px;"></div>
+        </div>
+        <div id="route-details" style="max-height: 400px; overflow-y: auto; padding: 15px; background: #f8f9fa; border-radius: 12px; border: 1px solid #edf2f7; scrollbar-width: thin; scrollbar-color: #cbd5e0 #f8f9fa;">
         </div>
         <div style="margin-top: 20px; text-align: center;">
-          <button id="download-btn" style="padding: 12px 25px; background-color: #4CAF50; color: white; border: none; border-radius: 8px; cursor: pointer; font-family: Arial, sans-serif; font-weight: 500; font-size: 15px; box-shadow: 0 4px 6px rgba(76, 175, 80, 0.2); transition: all 0.2s ease;">Download File</button>
+          <button id="download-btn" style="padding: 12px 30px; background-color: #4CAF50; color: white; border: none; border-radius: 8px; cursor: pointer; font-family: Arial, sans-serif; font-weight: 500; font-size: 15px; box-shadow: 0 4px 6px rgba(76, 175, 80, 0.2); transition: all 0.2s ease; display: inline-flex; align-items: center; gap: 8px;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" style="margin-right: 4px;">
+              <path d="M8 0a8 8 0 0 1 8 8 8 8 0 0 1-8 8A8 8 0 0 1 0 8a8 8 0 0 1 8-8zM4.5 7.5a.5.5 0 0 0 0 1h5.793l-2.147 2.146a.5.5 0 0 0 .708.708l3-3a.5.5 0 0 0 0-.708l-3-3a.5.5 0 1 0-.708.708L10.293 7.5H4.5z"/>
+            </svg>
+            Download File
+          </button>
+        </div>
+      </div>
+      <div id="preview-section" style="display: none; margin-bottom: 30px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <button id="back-btn" style="padding: 8px 16px; background-color: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer; font-family: Arial, sans-serif; font-weight: 500; font-size: 14px; box-shadow: 0 2px 4px rgba(108, 117, 125, 0.2); transition: all 0.2s ease; display: flex; align-items: center; gap: 6px;">
+            <span style="font-size: 18px;">←</span> Back
+          </button>
+          <h3 style="font-family: Arial, sans-serif; font-size: 16px; color: #2c3e50; margin: 0; font-weight: 600;">Route Details</h3>
+          <div style="width: 80px;"></div>
+        </div>
+        <div id="route-details" style="max-height: 400px; overflow-y: auto; padding: 15px; background: #f8f9fa; border-radius: 12px; border: 1px solid #edf2f7; scrollbar-width: thin; scrollbar-color: #cbd5e0 #f8f9fa;">
+        </div>
+        <div style="margin-top: 20px; text-align: center;">
+          <button id="download-btn" style="padding: 12px 30px; background-color: #4CAF50; color: white; border: none; border-radius: 8px; cursor: pointer; font-family: Arial, sans-serif; font-weight: 500; font-size: 15px; box-shadow: 0 4px 6px rgba(76, 175, 80, 0.2); transition: all 0.2s ease; display: inline-flex; align-items: center; gap: 8px;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" style="margin-right: 4px;">
+              <path d="M8 0a8 8 0 0 1 8 8 8 8 0 0 1-8 8A8 8 0 0 1 0 8a8 8 0 0 1 8-8zM4.5 7.5a.5.5 0 0 0 0 1h5.793l-2.147 2.146a.5.5 0 0 0 .708.708l3-3a.5.5 0 0 0 0-.708l-3-3a.5.5 0 1 0-.708.708L10.293 7.5H4.5z"/>
+            </svg>
+            Download File
+          </button>
         </div>
       </div>
     `;
@@ -402,51 +432,55 @@
           container.style.marginBottom = "20px";
           container.style.padding = "15px";
           container.style.background = "white";
-          container.style.borderRadius = "8px";
+          container.style.borderRadius = "12px";
           container.style.boxShadow = "0 2px 4px rgba(0,0,0,0.05)";
           container.style.border = "1px solid #edf2f7";
-          
-          // Store the route code as a data attribute for easier reference
+          container.style.overflow = "hidden";
           container.dataset.routeCode = route.routeCode;
 
           container.innerHTML = `
-            <div style="margin-bottom: 15px;">
-              <h4 style="margin: 0 0 10px 0; color: #2c3e50; font-size: 16px;">${route.routeCode}: ${associateInfo} (${route.progress})</h4>
-              <div style="margin-bottom: 10px;">
-                <label style="display: block; margin-bottom: 5px; color: #2c3e50; font-weight: 600;">Root Cause:</label>
-                <div class="rc-checkboxes" style="display: flex; flex-direction: column; gap: 8px;">
-                  <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                    <input type="checkbox" class="rc-checkbox" value="Route is spread out" style="cursor: pointer;">
-                    <span style="color: #2c3e50;">Route is spread out</span>
+            <div style="padding: 15px; border-bottom: 1px solid #edf2f7; background: #f8fafc;">
+              <h4 style="margin: 0; color: #2c3e50; font-size: 16px; display: flex; justify-content: space-between; align-items: center;">
+                <span>${route.routeCode}: ${associateInfo}</span>
+                <span style="font-size: 14px; padding: 4px 8px; background: #ebf5ff; color: #3182ce; border-radius: 6px;">${route.progress}</span>
+              </h4>
+            </div>
+            <div style="padding: 15px;">
+              <div style="margin-bottom: 15px;">
+                <label style="display: block; margin-bottom: 8px; color: #2c3e50; font-weight: 600; font-size: 14px;">Root Cause:</label>
+                <div class="rc-checkboxes" style="display: flex; flex-direction: column; gap: 10px;">
+                  <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 8px; border-radius: 6px; transition: background-color 0.2s; hover:background-color: #f7fafc;">
+                    <input type="checkbox" class="rc-checkbox" value="Route is spread out" style="cursor: pointer; width: 16px; height: 16px;">
+                    <span style="color: #2c3e50; font-size: 14px;">Route is spread out</span>
                   </label>
-                  <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                    <input type="checkbox" class="rc-checkbox" value="DA is working at a slow pace" style="cursor: pointer;">
-                    <span style="color: #2c3e50;">DA is working at a slow pace</span>
+                  <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 8px; border-radius: 6px; transition: background-color 0.2s; hover:background-color: #f7fafc;">
+                    <input type="checkbox" class="rc-checkbox" value="DA is working at a slow pace" style="cursor: pointer; width: 16px; height: 16px;">
+                    <span style="color: #2c3e50; font-size: 14px;">DA is working at a slow pace</span>
                   </label>
-                  <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                    <input type="checkbox" class="rc-checkbox" value="DA is having connection issues" style="cursor: pointer;">
-                    <span style="color: #2c3e50;">DA is having connection issues</span>
+                  <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 8px; border-radius: 6px; transition: background-color 0.2s; hover:background-color: #f7fafc;">
+                    <input type="checkbox" class="rc-checkbox" value="DA is having connection issues" style="cursor: pointer; width: 16px; height: 16px;">
+                    <span style="color: #2c3e50; font-size: 14px;">DA is having connection issues</span>
                   </label>
-                  <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                    <input type="checkbox" class="rc-checkbox" value="High Package Count" style="cursor: pointer;">
-                    <span style="color: #2c3e50;">High Package Count</span>
+                  <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 8px; border-radius: 6px; transition: background-color 0.2s; hover:background-color: #f7fafc;">
+                    <input type="checkbox" class="rc-checkbox" value="High Package Count" style="cursor: pointer; width: 16px; height: 16px;">
+                    <span style="color: #2c3e50; font-size: 14px;">High Package Count</span>
                   </label>
-                  <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                    <input type="checkbox" class="rc-checkbox" value="High Stop Count" style="cursor: pointer;">
-                    <span style="color: #2c3e50;">High Stop Count</span>
+                  <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 8px; border-radius: 6px; transition: background-color 0.2s; hover:background-color: #f7fafc;">
+                    <input type="checkbox" class="rc-checkbox" value="High Stop Count" style="cursor: pointer; width: 16px; height: 16px;">
+                    <span style="color: #2c3e50; font-size: 14px;">High Stop Count</span>
                   </label>
-                  <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                    <input type="checkbox" class="rc-checkbox other-checkbox" value="Other" style="cursor: pointer;">
-                    <span style="color: #2c3e50;">Other</span>
+                  <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 8px; border-radius: 6px; transition: background-color 0.2s; hover:background-color: #f7fafc;">
+                    <input type="checkbox" class="rc-checkbox other-checkbox" value="Other" style="cursor: pointer; width: 16px; height: 16px;">
+                    <span style="color: #2c3e50; font-size: 14px;">Other</span>
                   </label>
-                  <div class="other-input-container" style="display: none; margin-left: 24px;">
-                    <input type="text" class="other-input" style="width: calc(100% - 24px); padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px;" placeholder="Enter other root cause...">
+                  <div class="other-input-container" style="display: none; margin-left: 32px;">
+                    <input type="text" class="other-input" style="width: calc(100% - 16px); padding: 8px 12px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px; background: #f8fafc;" placeholder="Enter other root cause...">
                   </div>
                 </div>
               </div>
               <div>
-                <label style="display: block; margin-bottom: 5px; color: #2c3e50; font-weight: 600;">Point of Action:</label>
-                <select class="poa-select" style="width: 100%; padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; background-color: white; cursor: pointer; color: #2c3e50;">
+                <label style="display: block; margin-bottom: 8px; color: #2c3e50; font-weight: 600; font-size: 14px;">Point of Action:</label>
+                <select class="poa-select" style="width: 100%; padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px; background-color: white; cursor: pointer; color: #2c3e50; appearance: none; background-image: url('data:image/svg+xml;charset=US-ASCII,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%232c3e50" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>'); background-repeat: no-repeat; background-position: right 12px center; background-size: 16px;">
                   <option value="">Select a point of action...</option>
                   <option value="Rescue Planned">Rescue Planned</option>
                   <option value="Rescue Sent">Rescue Sent</option>
@@ -456,7 +490,7 @@
                   <option value="Other">Other</option>
                 </select>
                 <div class="poa-other-container" style="display: none; margin-top: 8px;">
-                  <input type="text" class="poa-other-input" style="width: 100%; padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px;" placeholder="Enter other point of action...">
+                  <input type="text" class="poa-other-input" style="width: 100%; padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px; background: #f8fafc;" placeholder="Enter other point of action...">
                 </div>
               </div>
             </div>
@@ -549,4 +583,22 @@
     console.error("Error during route data processing:", error);
     updateProgress(`Error: ${error.message}`);
   }
+
+  // Add back button functionality
+  const backBtn = modal.querySelector("#back-btn");
+  backBtn.addEventListener("click", () => {
+    const previewSection = modal.querySelector("#preview-section");
+    const daSelectionSection = modal.querySelector("#da-selection-section");
+    previewSection.style.display = "none";
+    daSelectionSection.style.display = "block";
+  });
+
+  backBtn.addEventListener("mouseover", () => {
+    backBtn.style.backgroundColor = "#5a6268";
+    backBtn.style.boxShadow = "0 4px 6px rgba(108, 117, 125, 0.3)";
+  });
+  backBtn.addEventListener("mouseout", () => {
+    backBtn.style.backgroundColor = "#6c757d";
+    backBtn.style.boxShadow = "0 2px 4px rgba(108, 117, 125, 0.2)";
+  });
 })();
