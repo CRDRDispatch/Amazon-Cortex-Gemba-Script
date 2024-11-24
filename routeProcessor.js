@@ -237,87 +237,10 @@
       daSelectionSection.style.display = "block";
     });
 
+    const nextBtn = modal.querySelector("#next-btn");
     nextBtn.addEventListener("click", () => {
       daSelectionSection.style.display = "none";
       routeDetailsSection.style.display = "block";
-      
-      // Update route details content
-      if (behindRoutes && behindRoutes.length) {
-        const routeDetails = modal.querySelector("#route-details");
-        routeDetails.innerHTML = behindRoutes.map((route) => {
-          const select = daDropdowns.querySelector(`select[data-route-code="${route.routeCode}"]`);
-          const associateInfo = select ? select.value : route.associateInfo;
-          
-          return `
-            <div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-              <h4 style="margin: 0 0 15px 0; color: #2c3e50; font-family: Arial, sans-serif; font-size: 16px; display: flex; justify-content: space-between;">
-                <span>${route.routeCode}: ${associateInfo}</span>
-                <span style="color: #e74c3c;">${route.progress}</span>
-              </h4>
-              
-              <div style="margin-bottom: 20px;">
-                <p style="margin: 0 0 10px 0; font-weight: 600; color: #2c3e50;">Root Cause:</p>
-                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px;">
-                  <label style="display: flex; align-items: center; gap: 8px;">
-                    <input type="checkbox" class="rc-checkbox" value="Route is spread out" style="width: 16px; height: 16px;">
-                    Route is spread out
-                  </label>
-                  <label style="display: flex; align-items: center; gap: 8px;">
-                    <input type="checkbox" class="rc-checkbox" value="DA is working at a slow pace" style="width: 16px; height: 16px;">
-                    DA is working at a slow pace
-                  </label>
-                  <label style="display: flex; align-items: center; gap: 8px;">
-                    <input type="checkbox" class="rc-checkbox" value="DA is having connection issues" style="width: 16px; height: 16px;">
-                    DA is having connection issues
-                  </label>
-                  <label style="display: flex; align-items: center; gap: 8px;">
-                    <input type="checkbox" class="rc-checkbox" value="High Package Count" style="width: 16px; height: 16px;">
-                    High Package Count
-                  </label>
-                  <label style="display: flex; align-items: center; gap: 8px;">
-                    <input type="checkbox" class="rc-checkbox" value="High Stop Count" style="width: 16px; height: 16px;">
-                    High Stop Count
-                  </label>
-                  <label style="display: flex; align-items: center; gap: 8px;">
-                    <input type="checkbox" class="rc-checkbox" value="Other" style="width: 16px; height: 16px;">
-                    Other
-                  </label>
-                </div>
-                <input type="text" class="other-input" placeholder="Specify other root cause..." style="margin-top: 10px; width: calc(100% - 24px); padding: 8px 12px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px; display: none;">
-              </div>
-              
-              <div>
-                <p style="margin: 0 0 10px 0; font-weight: 600; color: #2c3e50;">Point of Action:</p>
-                <select class="poa-select" style="width: 100%; padding: 8px 12px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px; margin-bottom: 10px;">
-                  <option value="">Select point of action...</option>
-                  <option value="Rescue Planned">Rescue Planned</option>
-                  <option value="Rescue Sent">Rescue Sent</option>
-                  <option value="Rescue on the way">Rescue on the way</option>
-                  <option value="Monitoring progress">Monitoring progress</option>
-                  <option value="Route Complete">Route Complete</option>
-                  <option value="Other">Other</option>
-                </select>
-                <input type="text" class="poa-other-input" placeholder="Specify other point of action..." style="width: calc(100% - 24px); padding: 8px 12px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px; display: none;">
-              </div>
-            </div>
-          `;
-        }).join('');
-
-        // Add event listeners for "Other" options
-        routeDetails.querySelectorAll('.rc-checkbox[value="Other"]').forEach(checkbox => {
-          const otherInput = checkbox.closest('div').nextElementSibling;
-          checkbox.addEventListener('change', () => {
-            otherInput.style.display = checkbox.checked ? 'block' : 'none';
-          });
-        });
-
-        routeDetails.querySelectorAll('.poa-select').forEach(select => {
-          const otherInput = select.nextElementSibling;
-          select.addEventListener('change', () => {
-            otherInput.style.display = select.value === 'Other' ? 'block' : 'none';
-          });
-        });
-      }
     });
 
     const backBtn = modal.querySelector("#back-btn");
@@ -336,6 +259,74 @@
     backToRoutesBtn.addEventListener("click", () => {
       dspProgressSection.style.display = "none";
       routeDetailsSection.style.display = "block";
+    });
+
+    const closeBtn = modal.querySelector("#close-btn");
+    closeBtn.addEventListener("click", () => {
+      modal.remove();
+    });
+
+    const setupRouteDetails = (routes) => {
+      const routeDetails = modal.querySelector("#route-details");
+      routeDetails.innerHTML = routes.map((route) => `
+        <div style="margin-bottom: 20px; padding: 15px; background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border: 1px solid #edf2f7;">
+          <h4 style="margin: 0 0 10px; font-size: 16px; color: #2c3e50;">${route.routeCode}: ${route.associateInfo}</h4>
+          <div style="margin-bottom: 15px;">
+            <p style="margin: 0 0 8px; font-weight: 600; color: #2c3e50;">Root Cause:</p>
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px;">
+              <label class="rc-label">
+                <input type="checkbox" class="rc-checkbox" value="Late Start"> Late Start
+              </label>
+              <label class="rc-label">
+                <input type="checkbox" class="rc-checkbox" value="Long Breaks"> Long Breaks
+              </label>
+              <label class="rc-label">
+                <input type="checkbox" class="rc-checkbox" value="System Issues"> System Issues
+              </label>
+              <label class="rc-label">
+                <input type="checkbox" class="rc-checkbox" value="Other"> Other
+              </label>
+            </div>
+            <input type="text" class="other-input" style="display: none; width: 100%; margin-top: 8px; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" placeholder="Specify other root cause...">
+          </div>
+          <div>
+            <p style="margin: 0 0 8px; font-weight: 600; color: #2c3e50;">Point of Action:</p>
+            <select class="poa-select" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; margin-bottom: 8px;">
+              <option value="">Select POA...</option>
+              <option value="Rescue">Rescue</option>
+              <option value="RTS">RTS</option>
+              <option value="Other">Other</option>
+            </select>
+            <input type="text" class="poa-other-input" style="display: none; width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" placeholder="Specify other POA...">
+          </div>
+        </div>
+      `).join("");
+
+      // Add event listeners for Other checkboxes
+      routeDetails.querySelectorAll('.rc-checkbox[value="Other"]').forEach(checkbox => {
+        checkbox.addEventListener('change', (e) => {
+          const otherInput = e.target.closest('div').nextElementSibling;
+          otherInput.style.display = e.target.checked ? 'block' : 'none';
+        });
+      });
+
+      // Add event listeners for POA selects
+      routeDetails.querySelectorAll('.poa-select').forEach(select => {
+        select.addEventListener('change', (e) => {
+          const otherInput = e.target.nextElementSibling;
+          otherInput.style.display = e.target.value === 'Other' ? 'block' : 'none';
+        });
+      });
+    };
+
+    const scanBtn = modal.querySelector("#scan-btn");
+    scanBtn.addEventListener("click", async () => {
+      initialSection.style.display = "none";
+      if (document.querySelectorAll('.rc-checkbox[value="Other"]:checked').length > 0) {
+        daSelectionSection.style.display = "block";
+      } else {
+        routeDetailsSection.style.display = "block";
+      }
     });
   };
 
