@@ -91,7 +91,11 @@
 
       // Route Progress
       const progressElem = container.querySelector(".progress");
-      const progressText = progressElem?.textContent.trim();
+      let progressText = progressElem?.textContent.trim();
+
+      // Extract number before "behind" and filter routes
+      const behindMatch = progressText?.match(/(\d+)\s*behind/);
+      progressText = behindMatch ? `${behindMatch[1]} behind` : null;
 
       console.log({
         routeCode,
@@ -99,8 +103,9 @@
         progressText,
       });
 
-      if (routeCode) {
-        results.push(`${routeCode}: ${associateNames || "No associate info"} (${progressText || "No progress info"})`);
+      // Only include routes with "behind" progress info
+      if (routeCode && progressText) {
+        results.push(`${routeCode}: ${associateNames || "No associate info"} (${progressText})`);
       }
     });
 
