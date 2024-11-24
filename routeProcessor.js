@@ -76,13 +76,31 @@
     routeContainers.forEach((container, index) => {
       console.log(`Processing container ${index + 1}`);
 
+      // Route Code
       const routeCodeElem = container.querySelector(".left-column.text-sm div:first-child");
       const routeCode = routeCodeElem?.textContent.trim();
 
-      console.log({ routeCode });
+      // Associated Info
+      const associateContainer = container.querySelector(".ml-lg-4.ml-2.mr-2.mr-lg-auto.normal-white-space");
+      const tooltipElem = associateContainer?.nextElementSibling?.classList.contains("af-tooltip")
+        ? associateContainer.nextElementSibling.querySelectorAll("div")
+        : null;
+      const associateNames = tooltipElem
+        ? Array.from(tooltipElem).map((el) => el.textContent.trim()).join(", ")
+        : associateContainer?.querySelector(".text-truncate")?.textContent.trim();
+
+      // Route Progress
+      const progressElem = container.querySelector(".progress");
+      const progressText = progressElem?.textContent.trim();
+
+      console.log({
+        routeCode,
+        associateNames,
+        progressText,
+      });
 
       if (routeCode) {
-        results.push(routeCode);
+        results.push(`${routeCode}: ${associateNames || "No associate info"} (${progressText || "No progress info"})`);
       }
     });
 
