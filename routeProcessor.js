@@ -62,23 +62,36 @@
         <div id="route-details" style="max-height: 400px; overflow-y: auto; padding: 15px; background: #f8f9fa; border-radius: 12px; border: 1px solid #edf2f7; scrollbar-width: thin; scrollbar-color: #cbd5e0 #f8f9fa;">
         </div>
         <div style="margin-top: 20px; text-align: center;">
-          <button id="download-btn" style="padding: 12px 30px; background-color: #4CAF50; color: white; border: none; border-radius: 8px; cursor: pointer; font-family: Arial, sans-serif; font-weight: 500; font-size: 15px; box-shadow: 0 4px 6px rgba(76, 175, 80, 0.2); transition: all 0.2s ease; display: inline-flex; align-items: center; gap: 8px;">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" style="margin-right: 4px;">
-              <path d="M8 0a8 8 0 0 1 8 8 8 8 0 0 1-8 8A8 8 0 0 1 0 8a8 8 0 0 1 8-8zM4.5 7.5a.5.5 0 0 0 0 1h5.793l-2.147 2.146a.5.5 0 0 0 .708.708l3-3a.5.5 0 0 0 0-.708l-3-3a.5.5 0 1 0-.708.708L10.293 7.5H4.5z"/>
-            </svg>
-            Download File
-          </button>
+          <button id="next-to-progress-btn" style="padding: 12px 30px; background-color: #4CAF50; color: white; border: none; border-radius: 8px; cursor: pointer; font-family: Arial, sans-serif; font-weight: 500; font-size: 15px; box-shadow: 0 4px 6px rgba(76, 175, 80, 0.2); transition: all 0.2s ease;">Next</button>
         </div>
       </div>
-      <div id="preview-section" style="display: none; margin-bottom: 30px;">
+      <div id="dsp-progress-section" style="display: none; margin-bottom: 30px;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-          <button id="back-btn" style="padding: 8px 16px; background-color: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer; font-family: Arial, sans-serif; font-weight: 500; font-size: 14px; box-shadow: 0 2px 4px rgba(108, 117, 125, 0.2); transition: all 0.2s ease; display: flex; align-items: center; gap: 6px;">
+          <button id="back-to-routes-btn" style="padding: 8px 16px; background-color: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer; font-family: Arial, sans-serif; font-weight: 500; font-size: 14px; box-shadow: 0 2px 4px rgba(108, 117, 125, 0.2); transition: all 0.2s ease; display: flex; align-items: center; gap: 6px;">
             <span style="font-size: 18px;">←</span> Back
           </button>
-          <h3 style="font-family: Arial, sans-serif; font-size: 16px; color: #2c3e50; margin: 0; font-weight: 600;">Route Details</h3>
+          <h3 style="font-family: Arial, sans-serif; font-size: 16px; color: #2c3e50; margin: 0; font-weight: 600;">DSP Total Progress</h3>
           <div style="width: 80px;"></div>
         </div>
-        <div id="route-details" style="max-height: 400px; overflow-y: auto; padding: 15px; background: #f8f9fa; border-radius: 12px; border: 1px solid #edf2f7; scrollbar-width: thin; scrollbar-color: #cbd5e0 #f8f9fa;">
+        <div style="padding: 20px; background: white; border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border: 1px solid #edf2f7;">
+          <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px;">
+            <div>
+              <label style="display: block; margin-bottom: 8px; color: #2c3e50; font-weight: 600; font-size: 14px;">In Progress:</label>
+              <input type="number" id="in-progress-input" style="width: 100%; padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px; background: #f8fafc;" placeholder="Enter number...">
+            </div>
+            <div>
+              <label style="display: block; margin-bottom: 8px; color: #2c3e50; font-weight: 600; font-size: 14px;">At Risk:</label>
+              <input type="number" id="at-risk-input" style="width: 100%; padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px; background: #f8fafc;" placeholder="Enter number...">
+            </div>
+            <div>
+              <label style="display: block; margin-bottom: 8px; color: #2c3e50; font-weight: 600; font-size: 14px;">Behind:</label>
+              <input type="number" id="behind-input" style="width: 100%; padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px; background: #f8fafc;" placeholder="Enter number...">
+            </div>
+            <div>
+              <label style="display: block; margin-bottom: 8px; color: #2c3e50; font-weight: 600; font-size: 14px;">Package Progress:</label>
+              <input type="number" id="package-progress-input" style="width: 100%; padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px; background: #f8fafc;" placeholder="Enter percentage...">
+            </div>
+          </div>
         </div>
         <div style="margin-top: 20px; text-align: center;">
           <button id="download-btn" style="padding: 12px 30px; background-color: #4CAF50; color: white; border: none; border-radius: 8px; cursor: pointer; font-family: Arial, sans-serif; font-weight: 500; font-size: 15px; box-shadow: 0 4px 6px rgba(76, 175, 80, 0.2); transition: all 0.2s ease; display: inline-flex; align-items: center; gap: 8px;">
@@ -601,4 +614,105 @@
     backBtn.style.backgroundColor = "#6c757d";
     backBtn.style.boxShadow = "0 2px 4px rgba(108, 117, 125, 0.2)";
   });
+
+  // Add navigation between sections
+  const nextToProgressBtn = modal.querySelector("#next-to-progress-btn");
+  const backToRoutesBtn = modal.querySelector("#back-to-routes-btn");
+  const dspProgressSection = modal.querySelector("#dsp-progress-section");
+  
+  nextToProgressBtn.addEventListener("click", () => {
+    previewSection.style.display = "none";
+    dspProgressSection.style.display = "block";
+  });
+  
+  backToRoutesBtn.addEventListener("click", () => {
+    dspProgressSection.style.display = "none";
+    previewSection.style.display = "block";
+  });
+
+  // Add hover effects for new buttons
+  nextToProgressBtn.addEventListener("mouseover", () => {
+    nextToProgressBtn.style.backgroundColor = "#45a049";
+    nextToProgressBtn.style.boxShadow = "0 6px 8px rgba(76, 175, 80, 0.3)";
+  });
+  nextToProgressBtn.addEventListener("mouseout", () => {
+    nextToProgressBtn.style.backgroundColor = "#4CAF50";
+    nextToProgressBtn.style.boxShadow = "0 4px 6px rgba(76, 175, 80, 0.2)";
+  });
+
+  backToRoutesBtn.addEventListener("mouseover", () => {
+    backToRoutesBtn.style.backgroundColor = "#5a6268";
+    backToRoutesBtn.style.boxShadow = "0 4px 6px rgba(108, 117, 125, 0.3)";
+  });
+  backToRoutesBtn.addEventListener("mouseout", () => {
+    backToRoutesBtn.style.backgroundColor = "#6c757d";
+    backToRoutesBtn.style.boxShadow = "0 2px 4px rgba(108, 117, 125, 0.2)";
+  });
+
+  // Update download functionality to include header
+  downloadBtn.onclick = () => {
+    const now = new Date();
+    const month = (now.getMonth() + 1).toString().padStart(2, '0');
+    const day = now.getDate().toString().padStart(2, '0');
+    const year = now.getFullYear().toString().slice(-2);
+    const hour = now.getHours();
+    const formattedHour = hour > 12 ? `${hour-12}PM` : `${hour}AM`;
+    
+    const inProgress = document.getElementById('in-progress-input').value.padStart(2, '0') || '00';
+    const atRisk = document.getElementById('at-risk-input').value.padStart(2, '0') || '00';
+    const behind = document.getElementById('behind-input').value.padStart(2, '0') || '00';
+    const packageProgress = document.getElementById('package-progress-input').value || '0';
+
+    const header = `@\n## CRDR UPDATE - ${month}/${day}/${year} ${formattedHour}\n\n` +
+                  `**IN PROGRESS: ${inProgress}**\n` +
+                  `**AT RISK: ${atRisk}**\n` +
+                  `**BEHIND: ${behind}**\n` +
+                  `**PACKAGE PROGRESS: ${packageProgress}%**\n\n` +
+                  `---\n\n`;
+
+    const routeContent = behindRoutes.map((route) => {
+      const select = daDropdowns.querySelector(`select[data-route-code="${route.routeCode}"]`);
+      const associateInfo = select ? select.value : route.associateInfo;
+      
+      const containers = routeDetails.querySelectorAll('div');
+      const container = Array.from(containers).find(div => {
+        const h4 = div.querySelector('h4');
+        return h4 && h4.textContent.startsWith(route.routeCode);
+      });
+      
+      if (!container) return `${route.routeCode}: ${associateInfo} (${route.progress})\n`;
+      
+      const checkedBoxes = container.querySelectorAll('.rc-checkbox:checked');
+      const rootCauses = Array.from(checkedBoxes).map(checkbox => {
+        if (checkbox.value === 'Other') {
+          const otherInput = container.querySelector('.other-input');
+          return otherInput.value.trim() || 'Other (unspecified)';
+        }
+        return checkbox.value;
+      });
+      
+      const rc = rootCauses.length > 0 ? rootCauses.join(', ') : 'N/A';
+      
+      const poaSelect = container.querySelector('.poa-select');
+      let poa = poaSelect.value;
+      if (poa === 'Other') {
+        const poaOtherInput = container.querySelector('.poa-other-input');
+        poa = poaOtherInput.value.trim() || 'Other (unspecified)';
+      }
+      poa = poa || 'N/A';
+      
+      return `${route.routeCode}: ${associateInfo} (${route.progress})\nRoot Cause: ${rc}\nPoint of Action: ${poa}\n`;
+    }).join('\n');
+
+    const fileContent = header + routeContent;
+
+    const blob = new Blob([fileContent], { type: "text/plain" });
+    const blobURL = URL.createObjectURL(blob);
+
+    const link = document.createElement("a");
+    link.href = blobURL;
+    link.download = "behind_routes.txt";
+    link.click();
+    URL.revokeObjectURL(blobURL);
+  };
 })();
