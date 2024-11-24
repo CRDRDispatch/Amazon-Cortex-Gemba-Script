@@ -30,7 +30,7 @@
     modal.style.borderRadius = "8px";
     modal.style.padding = "20px";
     modal.style.width = "400px"; // Adjust modal size
-    modal.style.textAlign = "center";
+    modal.style.textAlign = "center"; // Center align text and elements
     modal.style.zIndex = 10000;
 
     // Add logo
@@ -56,6 +56,7 @@
     closeButton.style.padding = "10px 20px";
     closeButton.style.borderRadius = "5px";
     closeButton.style.cursor = "pointer";
+    closeButton.style.marginRight = "10px";
     closeButton.onclick = () => {
       document.body.removeChild(modal);
       document.body.removeChild(overlay);
@@ -67,6 +68,8 @@
     downloadBtn.id = "download-btn";
     downloadBtn.style.display = "none";
     downloadBtn.style.marginTop = "10px";
+    downloadBtn.style.marginLeft = "auto";
+    downloadBtn.style.marginRight = "auto";
     downloadBtn.style.backgroundColor = "#28a745";
     downloadBtn.style.color = "white";
     downloadBtn.style.border = "none";
