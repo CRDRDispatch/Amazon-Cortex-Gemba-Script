@@ -123,7 +123,7 @@
       elements.forEach((el, index) => {
         console.log(`Processing element ${index + 1} of ${elements.length}`);
         const routeCodeElem = isV1
-          ? el.querySelector(".left-column.text-sm")
+          ? el.querySelector(".left-column.text-sm")?.firstElementChild
           : el.querySelector(".css-1nqzkik");
         const progressElem = isV1
           ? el.querySelector(".complete.h-100.d-flex.justify-content-center.align-items-center.progressStatusBar")
