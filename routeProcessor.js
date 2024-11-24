@@ -59,12 +59,16 @@
     }
   };
 
-  const scrollToBottom = async (maxScrolls = 20, scrollDelay = 100) => {
-    updateProgress("Scrolling...", false);
-    for (let scrollCount = 0; scrollCount < maxScrolls; scrollCount++) {
-      window.scrollBy(0, window.innerHeight);
+  const ensureAllRoutesLoaded = async (selector, maxScrolls = 20, scrollDelay = 100) => {
+    updateProgress("Scrolling to load all routes...", false);
+    for (let i = 0; i < maxScrolls; i++) {
+      const elements = document.querySelectorAll(selector);
+      if (elements.length > 0) {
+        elements[elements.length - 1].scrollIntoView({ behavior: "smooth", block: "end" });
+      }
       await new Promise((resolve) => setTimeout(resolve, scrollDelay));
     }
+    await new Promise((resolve) => setTimeout(resolve, 2000)); // Wait for any delayed content
   };
 
   const modal = createModal();
@@ -81,10 +85,11 @@
       ? '[class^="af-link routes-list-item p-2 d-flex align-items-center w-100 route-"]'
       : ".css-1muusaa";
 
-    await scrollToBottom(20, 100); // Faster scrolling with reduced delay
+    await ensureAllRoutesLoaded(routeSelector, 20, 100); // Force load all routes
     updateProgress("Scrolling complete. Collecting elements...", false);
 
     const routeContainers = Array.from(document.querySelectorAll(routeSelector));
+    console.log(`Collected ${routeContainers.length} route containers`, routeContainers);
     if (!routeContainers || routeContainers.length === 0) {
       updateProgress("No routes found after scrolling.");
       return;
