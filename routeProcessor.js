@@ -41,7 +41,6 @@
           console.log("Parent container:", parentContainer);
 
           if (parentContainer) {
-            // Select route containers using the partial class selector
             const routeContainers = Array.from(
               parentContainer.querySelectorAll('[class^="af-link routes-list-item p-2 d-flex align-items-center w-100 route-"]')
             );
@@ -77,7 +76,7 @@
     routeContainers.forEach((container, index) => {
       console.log(`Processing container ${index + 1}`);
 
-      const routeCodeElem = container.querySelector(".left-column.text-sm");
+      const routeCodeElem = container.querySelector(".left-column.text-sm div:first-child");
       const routeCode = routeCodeElem?.textContent.trim();
 
       console.log({ routeCode });
