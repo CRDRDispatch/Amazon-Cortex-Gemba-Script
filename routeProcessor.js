@@ -75,24 +75,44 @@
     return match ? `${match[1]} behind` : null;
   };
 
-  const collectRoutes = async (selector, uniqueKeys, routes, maxScrolls = 20, scrollDelay = 100) => {
+  const extractAssociates = (container, isV1) => {
+    if (!isV1) {
+      return Array.from(container.querySelectorAll(".css-1kttr4w"))
+        .map((el) => el.textContent.trim())
+        .join(", ");
+    }
+
+    const associateContainer = container.querySelector(".ml-lg-4.ml-2.mr-2.mr-lg-auto.normal-white-space");
+    const tooltip = associateContainer?.nextElementSibling?.classList.contains("af-tooltip")
+      ? Array.from(associateContainer.nextElementSibling.querySelectorAll("div")).map((el) =>
+          el.textContent.trim()
+        )
+      : null;
+
+    if (tooltip) {
+      return tooltip.join(", ");
+    }
+
+    return associateContainer?.textContent.trim() || "No associate info";
+  };
+
+  const collectRoutes = async (selector, uniqueKeys, routes, maxScrolls = 20, scrollDelay = 100, isV1 = false) => {
     for (let i = 0; i < maxScrolls; i++) {
       const elements = document.querySelectorAll(selector);
 
       elements.forEach((el) => {
         const routeCodeElem = el.querySelector(".css-1nqzkik") || el.querySelector(".left-column.text-sm div:first-child");
-        const associateElem = el.querySelector(".css-1kttr4w") || el.querySelector(".ml-lg-4.ml-2.mr-2.mr-lg-auto.normal-white-space");
         const progressElem = el.querySelector(".css-1xac89n.font-weight-bold") || el.querySelector(".progress");
 
         const routeCode = routeCodeElem?.textContent.trim() || routeCodeElem?.getAttribute("title");
-        const associateName = associateElem?.textContent.trim();
+        const associateInfo = extractAssociates(el, isV1);
         const progressRaw = progressElem?.textContent.trim();
         const progress = extractBehindProgress(progressRaw); // Extract only "X behind"
 
-        const uniqueKey = hashString(`${routeCode}-${associateName}-${progress}`);
+        const uniqueKey = hashString(`${routeCode}-${associateInfo}-${progress}`);
         if (!uniqueKeys.has(uniqueKey) && progress) {
           uniqueKeys.add(uniqueKey);
-          routes.push({ routeCode, associateName, progress });
+          routes.push({ routeCode, associateInfo, progress });
         }
       });
 
@@ -121,14 +141,14 @@
     const routes = [];
 
     updateProgress("Scrolling to collect routes...");
-    await collectRoutes(routeSelector, uniqueKeys, routes, 20, 100);
+    await collectRoutes(routeSelector, uniqueKeys, routes, 20, 100, isV1);
 
     updateProgress("Scrolling back to the top...");
     window.scrollTo({ top: 0, behavior: "smooth" });
     await new Promise((resolve) => setTimeout(resolve, 2000)); // Wait for everything to load again
 
     updateProgress("Rechecking routes...");
-    await collectRoutes(routeSelector, uniqueKeys, routes, 20, 100);
+    await collectRoutes(routeSelector, uniqueKeys, routes, 20, 100, isV1);
 
     updateProgress(`Final collection complete. ${routes.length} unique routes found.`);
 
@@ -136,7 +156,7 @@
 
     if (behindRoutes.length > 0) {
       const fileContent = behindRoutes
-        .map((route) => `${route.routeCode}: ${route.associateName || "No associate info"} (${route.progress})`)
+        .map((route) => `${route.routeCode}: ${route.associateInfo} (${route.progress})`)
         .join("\n");
 
       const blob = new Blob([fileContent], { type: "text/plain" });
