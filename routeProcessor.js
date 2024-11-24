@@ -18,7 +18,9 @@
     modal.style.top = "50%";
     modal.style.left = "50%";
     modal.style.transform = "translate(-50%, -50%)";
-    modal.style.width = "400px";
+    modal.style.width = "500px";
+    modal.style.maxHeight = "80%";
+    modal.style.overflowY = "auto";
     modal.style.background = "white";
     modal.style.border = "1px solid #ccc";
     modal.style.boxShadow = "0 4px 6px rgba(0, 0, 0, 0.3)";
@@ -33,9 +35,7 @@
         <img src="https://crdrdispatch.github.io/GembaScript/Logo.svg" alt="Logo" style="height: 70px; display: block; margin: 0 auto;">
       </div>
       <h2 style="font-family: Arial, sans-serif; margin-bottom: 20px;">Gimme That GEMBA</h2>
-      <div id="progress-details" style="font-family: Arial, sans-serif; text-align: left; margin-bottom: 20px;">
-        <p>Initializing...</p>
-      </div>
+      <div id="route-dropdowns" style="font-family: Arial, sans-serif; text-align: left; margin-bottom: 20px;"></div>
       <button id="download-btn" style="display: none; margin: 0 auto; padding: 10px 20px; background-color: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer; font-family: Arial, sans-serif; box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);">Download File</button>
     `;
 
@@ -49,15 +49,21 @@
     return modal;
   };
 
-  const updateProgress = (message, append = true) => {
-    const progressDetails = document.getElementById("progress-details");
-    if (progressDetails) {
-      if (append) {
-        progressDetails.innerHTML += `<p>${message}</p>`;
-      } else {
-        progressDetails.innerHTML = `<p>${message}</p>`;
-      }
-    }
+  const updateDropdowns = (routesWithDropdowns) => {
+    const dropdownContainer = document.getElementById("route-dropdowns");
+    if (!dropdownContainer) return;
+
+    dropdownContainer.innerHTML = routesWithDropdowns
+      .map(
+        (route, index) => `
+      <div style="margin-bottom: 15px;">
+        <label for="route-select-${index}" style="display: block; font-weight: bold;">${route.routeCode}:</label>
+        <select id="route-select-${index}" style="width: 100%; padding: 5px; border: 1px solid #ccc; border-radius: 5px;">
+          ${route.associates.map((associate) => `<option value="${associate}">${associate}</option>`).join("")}
+        </select>
+      </div>`
+      )
+      .join("");
   };
 
   const hashString = (str) => {
@@ -82,8 +88,7 @@
   const extractAssociates = (container, isV1) => {
     if (!isV1) {
       return Array.from(container.querySelectorAll(".css-1kttr4w"))
-        .map((el) => cleanAssociateNames(el.textContent.trim()))
-        .join(", ");
+        .map((el) => cleanAssociateNames(el.textContent.trim()));
     }
 
     const associateContainer = container.querySelector(".ml-lg-4.ml-2.mr-2.mr-lg-auto.normal-white-space");
@@ -94,13 +99,13 @@
       : null;
 
     if (tooltip) {
-      return tooltip.join(", ");
+      return tooltip;
     }
 
-    return cleanAssociateNames(associateContainer?.textContent.trim() || "No associate info");
+    return [cleanAssociateNames(associateContainer?.textContent.trim() || "No associate info")];
   };
 
-  const collectRoutes = async (selector, uniqueKeys, routes, maxScrolls = 20, scrollDelay = 100, isV1 = false) => {
+  const collectRoutes = async (selector, uniqueKeys, routes, routesWithDropdowns, maxScrolls = 20, scrollDelay = 100, isV1 = false) => {
     for (let i = 0; i < maxScrolls; i++) {
       const elements = document.querySelectorAll(selector);
 
@@ -109,22 +114,25 @@
         const progressElem = el.querySelector(".css-1xac89n.font-weight-bold") || el.querySelector(".progress");
 
         const routeCode = routeCodeElem?.textContent.trim() || routeCodeElem?.getAttribute("title");
-        const associateInfo = extractAssociates(el, isV1);
+        const associates = extractAssociates(el, isV1);
         const progressRaw = progressElem?.textContent.trim();
-        const progress = extractBehindProgress(progressRaw); // Extract only "X behind"
+        const progress = extractBehindProgress(progressRaw);
 
-        const uniqueKey = hashString(`${routeCode}-${associateInfo}-${progress}`);
+        const uniqueKey = hashString(`${routeCode}-${associates.join(",")}-${progress}`);
         if (!uniqueKeys.has(uniqueKey) && progress) {
           uniqueKeys.add(uniqueKey);
-          routes.push({ routeCode, associateInfo, progress });
+
+          if (associates.length > 1) {
+            routesWithDropdowns.push({ routeCode, associates, progress });
+          } else {
+            routes.push({ routeCode, associate: associates[0], progress });
+          }
         }
       });
 
       elements[elements.length - 1]?.scrollIntoView({ behavior: "smooth", block: "end" });
       await new Promise((resolve) => setTimeout(resolve, scrollDelay));
     }
-
-    updateProgress(`Collected ${routes.length} unique routes so far.`);
   };
 
   const modal = createModal();
@@ -132,10 +140,8 @@
 
   try {
     console.log("Script started");
-    updateProgress("Script started...");
 
     const isV1 = document.querySelector(".css-hkr77h")?.checked;
-    updateProgress(`Detected Cortex Version: ${isV1 ? "V1" : "V2"}`);
 
     const routeSelector = isV1
       ? '[class^="af-link routes-list-item p-2 d-flex align-items-center w-100 route-"]'
@@ -143,31 +149,43 @@
 
     const uniqueKeys = new Set();
     const routes = [];
+    const routesWithDropdowns = [];
 
-    updateProgress("Scrolling to collect routes...");
-    await collectRoutes(routeSelector, uniqueKeys, routes, 20, 100, isV1);
+    await collectRoutes(routeSelector, uniqueKeys, routes, routesWithDropdowns, 20, 100, isV1);
 
-    updateProgress("Scrolling back to the top...");
-    window.scrollTo({ top: 0, behavior: "smooth" });
-    await new Promise((resolve) => setTimeout(resolve, 2000)); // Wait for everything to load again
+    if (routesWithDropdowns.length > 0) {
+      updateDropdowns(routesWithDropdowns);
 
-    updateProgress("Rechecking routes...");
-    await collectRoutes(routeSelector, uniqueKeys, routes, 20, 100, isV1);
+      downloadBtn.style.display = "block";
+      downloadBtn.onclick = () => {
+        routesWithDropdowns.forEach((route, index) => {
+          const dropdown = document.getElementById(`route-select-${index}`);
+          const selectedAssociate = dropdown?.value || "No associate info";
+          routes.push({ routeCode: route.routeCode, associate: selectedAssociate, progress: route.progress });
+        });
 
-    updateProgress(`Final collection complete. ${routes.length} unique routes found.`);
+        const fileContent = routes
+          .map((route) => `${route.routeCode}: ${route.associate} (${route.progress})`)
+          .join("\n");
 
-    const behindRoutes = routes.filter((route) => route.progress);
+        const blob = new Blob([fileContent], { type: "text/plain" });
+        const blobURL = URL.createObjectURL(blob);
 
-    if (behindRoutes.length > 0) {
-      const fileContent = behindRoutes
-        .map((route) => `${route.routeCode}: ${route.associateInfo} (${route.progress})`)
+        const link = document.createElement("a");
+        link.href = blobURL;
+        link.download = "behind_routes.txt";
+        link.click();
+        URL.revokeObjectURL(blobURL);
+      };
+    } else {
+      downloadBtn.style.display = "block";
+      const fileContent = routes
+        .map((route) => `${route.routeCode}: ${route.associate} (${route.progress})`)
         .join("\n");
 
       const blob = new Blob([fileContent], { type: "text/plain" });
       const blobURL = URL.createObjectURL(blob);
 
-      downloadBtn.style.display = "block";
-      downloadBtn.textContent = `Download (${behindRoutes.length} Routes)`;
       downloadBtn.onclick = () => {
         const link = document.createElement("a");
         link.href = blobURL;
@@ -175,13 +193,8 @@
         link.click();
         URL.revokeObjectURL(blobURL);
       };
-
-      updateProgress(`Exporting ${behindRoutes.length} behind routes.`);
-    } else {
-      updateProgress("No behind routes found.");
     }
   } catch (error) {
     console.error("Error during route data processing:", error);
-    updateProgress(`Error: ${error.message}`);
   }
 })();
