@@ -80,64 +80,75 @@
 
     // Make modal draggable
     let isDragging = false;
-    let currentX;
-    let currentY;
-    let initialX;
-    let initialY;
-    let xOffset = 0;
-    let yOffset = 0;
+    let startX;
+    let startY;
+    let modalRect;
 
     const dragStart = (e) => {
       if (e.target.closest('button') || e.target.closest('select')) return;  // Don't drag when clicking buttons or dropdowns
 
+      isDragging = true;
+      modalRect = modal.getBoundingClientRect();
+      
       if (e.type === "touchstart") {
-        initialX = e.touches[0].clientX - xOffset;
-        initialY = e.touches[0].clientY - yOffset;
+        startX = e.touches[0].clientX - modalRect.left;
+        startY = e.touches[0].clientY - modalRect.top;
       } else {
-        initialX = e.clientX - xOffset;
-        initialY = e.clientY - yOffset;
+        startX = e.clientX - modalRect.left;
+        startY = e.clientY - modalRect.top;
       }
-
-      if (e.target === modal || e.target.closest('.modal-header')) {
-        isDragging = true;
-      }
+      
+      modal.style.cursor = 'grabbing';
     };
 
     const dragEnd = () => {
-      initialX = currentX;
-      initialY = currentY;
       isDragging = false;
+      modal.style.cursor = 'move';
     };
 
     const drag = (e) => {
-      if (isDragging) {
-        e.preventDefault();
+      if (!isDragging) return;
+      e.preventDefault();
 
-        if (e.type === "touchmove") {
-          currentX = e.touches[0].clientX - initialX;
-          currentY = e.touches[0].clientY - initialY;
-        } else {
-          currentX = e.clientX - initialX;
-          currentY = e.clientY - initialY;
-        }
-
-        xOffset = currentX;
-        yOffset = currentY;
-
-        modal.style.transform = `translate(${currentX}px, ${currentY}px) translateZ(0)`;
-        modal.style.webkitTransform = `translate(${currentX}px, ${currentY}px) translateZ(0)`;
+      let x, y;
+      if (e.type === "touchmove") {
+        x = e.touches[0].clientX - startX;
+        y = e.touches[0].clientY - startY;
+      } else {
+        x = e.clientX - startX;
+        y = e.clientY - startY;
       }
+
+      // Keep modal within viewport bounds
+      const modalWidth = modalRect.width;
+      const modalHeight = modalRect.height;
+      const maxX = window.innerWidth - modalWidth;
+      const maxY = window.innerHeight - modalHeight;
+
+      x = Math.max(0, Math.min(x, maxX));
+      y = Math.max(0, Math.min(y, maxY));
+
+      modal.style.left = x + 'px';
+      modal.style.top = y + 'px';
+      modal.style.transform = 'none';
+      modal.style.webkitTransform = 'none';
     };
 
-    modal.addEventListener("touchstart", dragStart, false);
-    modal.addEventListener("touchend", dragEnd, false);
-    modal.addEventListener("touchmove", drag, false);
-    modal.addEventListener("mousedown", dragStart, false);
-    modal.addEventListener("mouseup", dragEnd, false);
-    modal.addEventListener("mousemove", drag, false);
-    modal.addEventListener("mouseleave", dragEnd, false);
+    // Add passive event listeners for better performance
+    modal.addEventListener("touchstart", dragStart, { passive: false });
+    modal.addEventListener("touchend", dragEnd);
+    modal.addEventListener("touchmove", drag, { passive: false });
+    document.addEventListener("mousedown", (e) => {
+      if (modal.contains(e.target)) dragStart(e);
+    });
+    document.addEventListener("mouseup", dragEnd);
+    document.addEventListener("mousemove", drag);
 
+    // Clean up event listeners when modal is closed
     modal.querySelector("#close-btn").addEventListener("click", () => {
+      document.removeEventListener("mousedown", dragStart);
+      document.removeEventListener("mouseup", dragEnd);
+      document.removeEventListener("mousemove", drag);
       modal.remove();
     });
 
