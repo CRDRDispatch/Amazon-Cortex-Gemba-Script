@@ -60,13 +60,34 @@
     }
   };
 
-  const collectRoutes = async (selector, uniqueRoutes, maxScrolls = 20, scrollDelay = 100) => {
+  const hashString = (str) => {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      const char = str.charCodeAt(i);
+      hash = (hash << 5) - hash + char;
+      hash |= 0; // Convert to 32-bit integer
+    }
+    return hash;
+  };
+
+  const collectRoutes = async (selector, uniqueKeys, routes, maxScrolls = 20, scrollDelay = 100) => {
     for (let i = 0; i < maxScrolls; i++) {
       const elements = document.querySelectorAll(selector);
 
       elements.forEach((el) => {
-        if (!uniqueRoutes.has(el)) {
-          uniqueRoutes.add(el); // Store the element reference directly
+        const routeCodeElem = el.querySelector(".css-1nqzkik") || el.querySelector(".left-column.text-sm div:first-child");
+        const associateElem = el.querySelector(".css-1kttr4w") || el.querySelector(".ml-lg-4.ml-2.mr-2.mr-lg-auto.normal-white-space");
+        const progressElem = el.querySelector(".css-1xac89n.font-weight-bold") || el.querySelector(".progress");
+
+        const routeCode = routeCodeElem?.textContent.trim() || routeCodeElem?.getAttribute("title");
+        const associateName = associateElem?.textContent.trim();
+        const progress = progressElem?.textContent.trim();
+
+        // Combine key elements to create a unique hash
+        const uniqueKey = hashString(`${routeCode}-${associateName}-${progress}`);
+        if (!uniqueKeys.has(uniqueKey)) {
+          uniqueKeys.add(uniqueKey);
+          routes.push({ routeCode, associateName, progress });
         }
       });
 
@@ -74,7 +95,7 @@
       await new Promise((resolve) => setTimeout(resolve, scrollDelay));
     }
 
-    updateProgress(`Collected ${uniqueRoutes.size} unique routes so far.`);
+    updateProgress(`Collected ${routes.length} unique routes so far.`);
   };
 
   const modal = createModal();
@@ -91,56 +112,33 @@
       ? '[class^="af-link routes-list-item p-2 d-flex align-items-center w-100 route-"]'
       : ".css-1muusaa";
 
-    const uniqueRoutes = new Set();
+    const uniqueKeys = new Set();
+    const routes = [];
 
     updateProgress("Scrolling to collect routes...");
-    await collectRoutes(routeSelector, uniqueRoutes, 20, 100);
+    await collectRoutes(routeSelector, uniqueKeys, routes, 20, 100);
 
     updateProgress("Scrolling back to the top...");
     window.scrollTo({ top: 0, behavior: "smooth" });
     await new Promise((resolve) => setTimeout(resolve, 2000)); // Wait for everything to load again
 
     updateProgress("Rechecking routes...");
-    await collectRoutes(routeSelector, uniqueRoutes, 20, 100);
+    await collectRoutes(routeSelector, uniqueKeys, routes, 20, 100);
 
-    updateProgress(`Final collection complete. ${uniqueRoutes.size} unique routes found.`);
+    updateProgress(`Final collection complete. ${routes.length} unique routes found.`);
 
-    const results = [];
-    uniqueRoutes.forEach((container) => {
-      const progressElem = isV1
-        ? container.querySelector(".progress")
-        : container.querySelector(".css-1xac89n.font-weight-bold");
-      let progressText = progressElem?.textContent.trim();
+    const behindRoutes = routes.filter((route) => route.progress && route.progress.includes("behind"));
 
-      const behindMatch = progressText?.match(/(\d+)\s*behind/);
-      progressText = behindMatch ? `${behindMatch[1]} behind` : null;
+    if (behindRoutes.length > 0) {
+      const fileContent = behindRoutes
+        .map((route) => `${route.routeCode}: ${route.associateName || "No associate info"} (${route.progress})`)
+        .join("\n");
 
-      if (progressText) {
-        const routeCodeElem = isV1
-          ? container.querySelector(".left-column.text-sm div:first-child")
-          : container.querySelector(".css-1nqzkik");
-        const routeCode = isV1
-          ? routeCodeElem?.textContent.trim()
-          : routeCodeElem?.getAttribute("title")?.trim();
-
-        const associateContainers = isV1
-          ? container.querySelector(".ml-lg-4.ml-2.mr-2.mr-lg-auto.normal-white-space")
-          : container.querySelectorAll(".css-1kttr4w");
-        const associateNames = Array.from(associateContainers || [])
-          .map((el) => el.textContent.trim())
-          .join(", ");
-
-        results.push(`${routeCode}: ${associateNames || "No associate info"} (${progressText})`);
-      }
-    });
-
-    if (results.length > 0) {
-      const fileContent = results.join("\n");
       const blob = new Blob([fileContent], { type: "text/plain" });
       const blobURL = URL.createObjectURL(blob);
 
       downloadBtn.style.display = "block";
-      downloadBtn.textContent = `Download (${results.length} Routes)`;
+      downloadBtn.textContent = `Download (${behindRoutes.length} Routes)`;
       downloadBtn.onclick = () => {
         const link = document.createElement("a");
         link.href = blobURL;
@@ -149,7 +147,7 @@
         URL.revokeObjectURL(blobURL);
       };
 
-      updateProgress(`Exporting ${results.length} behind routes.`);
+      updateProgress(`Exporting ${behindRoutes.length} behind routes.`);
     } else {
       updateProgress("No behind routes found.");
     }
