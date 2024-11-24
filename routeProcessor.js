@@ -124,7 +124,7 @@
       const routeCodeElem = isV1
         ? container.querySelector(".left-column.text-sm div:first-child")
         : container.querySelector(".css-1nqzkik");
-      const routeCode = routeCodeElem?.textContent.trim();
+      const routeCode = routeCodeElem?.getAttribute("title")?.trim();
 
       // Associated Info
       const associateContainers = isV1
