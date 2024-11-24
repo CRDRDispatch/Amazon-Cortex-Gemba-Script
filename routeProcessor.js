@@ -38,7 +38,7 @@
       <div id="progress-details" style="font-family: Arial, sans-serif; text-align: left; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid #ddd;">
         <p>Initializing...</p>
       </div>
-      <div id="route-dropdowns" style="font-family: Arial, sans-serif; text-align: left; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid #ddd;">
+      <div id="route-dropdowns" style="font-family: Arial, sans-serif; text-align: left; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid #ddd; display: none;">
         <h3 style="margin-bottom: 10px; font-size: 16px;">These routes have multiple DAs. Please choose the DA assigned to the route:</h3>
       </div>
       <button id="download-btn" style="display: none; margin: 20px auto 0; padding: 10px 20px; background-color: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer; font-family: Arial, sans-serif; box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);">Download File</button>
@@ -63,6 +63,26 @@
         progressDetails.innerHTML = `<p>${message}</p>`;
       }
     }
+  };
+
+  const updateDropdowns = (routesWithDropdowns) => {
+    const dropdownContainer = document.getElementById("route-dropdowns");
+    if (!dropdownContainer) return;
+
+    dropdownContainer.innerHTML += routesWithDropdowns
+      .map(
+        (route, index) => `
+      <div style="margin-bottom: 15px;">
+        <label for="route-select-${index}" style="display: block; font-weight: bold;">${route.routeCode}:</label>
+        <select id="route-select-${index}" style="width: 100%; padding: 5px; border: 1px solid #ccc; border-radius: 5px;">
+          ${route.associates.map((associate) => `<option value="${associate}">${associate}</option>`).join("")}
+        </select>
+      </div>`
+      )
+      .join("");
+
+    // Make the dropdowns section visible
+    dropdownContainer.style.display = "block";
   };
 
   const hashString = (str) => {
@@ -133,11 +153,6 @@
       updateProgress(`Scrolling... Step ${i + 1} of ${maxScrolls}`, false);
       await new Promise((resolve) => setTimeout(resolve, scrollDelay));
     }
-
-    updateProgress("Finished scrolling. Rechecking routes...");
-    window.scrollTo({ top: 0, behavior: "smooth" });
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-    updateProgress("Rechecking complete. Processing routes...");
   };
 
   const modal = createModal();
