@@ -76,16 +76,34 @@
     return cleanedNames;
   };
 
-  const extractAssociates = (container) => {
-    console.log("Extracting associates.");
-    const associates = Array.from(container.querySelectorAll(".css-1kttr4w"))
-      .map((el) => cleanAssociateNames(el.textContent.trim()))
-      .join(", ");
-    console.log("Extracted associates:", associates);
-    return associates;
+  const extractAssociates = (container, isV1) => {
+    console.log("Extracting associates. Version:", isV1 ? "V1" : "V2");
+    if (isV1) {
+      const associateContainer = container.querySelector(".ml-lg-4.ml-2.mr-2.mr-lg-auto.normal-white-space");
+      const tooltip = associateContainer?.nextElementSibling?.classList.contains("af-tooltip")
+        ? Array.from(associateContainer.nextElementSibling.querySelectorAll("div")).map((el) =>
+            cleanAssociateNames(el.textContent.trim())
+          )
+        : null;
+
+      if (tooltip) {
+        console.log("Extracted associates from tooltip (V1):", tooltip.join(", "));
+        return tooltip.join(", ");
+      }
+
+      const associateInfo = cleanAssociateNames(associateContainer?.querySelector(".text-truncate")?.textContent.trim() || "No associate info");
+      console.log("Extracted associates (V1):", associateInfo);
+      return associateInfo;
+    } else {
+      const associates = Array.from(container.querySelectorAll(".css-1kttr4w"))
+        .map((el) => cleanAssociateNames(el.textContent.trim()))
+        .join(", ");
+      console.log("Extracted associates (V2):", associates);
+      return associates;
+    }
   };
 
-  const collectRoutes = async (selector, routes, maxScrolls = 20, scrollDelay = 100) => {
+  const collectRoutes = async (selector, routes, maxScrolls = 20, scrollDelay = 100, isV1 = false) => {
     console.log("Starting route collection. Selector:", selector);
     for (let i = 0; i < maxScrolls; i++) {
       console.log(`Scroll iteration ${i + 1} of ${maxScrolls}`);
@@ -94,11 +112,15 @@
 
       elements.forEach((el, index) => {
         console.log(`Processing element ${index + 1} of ${elements.length}`);
-        const routeCodeElem = el.querySelector(".css-1nqzkik");
-        const progressElem = el.querySelector(".css-1xac89n.font-weight-bold");
+        const routeCodeElem = isV1
+          ? el.querySelector(".left-column.text-sm")
+          : el.querySelector(".css-1nqzkik");
+        const progressElem = isV1
+          ? el.querySelector(".complete.h-100.d-flex.justify-content-center.align-items-center.progressStatusBar")
+          : el.querySelector(".css-1xac89n.font-weight-bold");
 
         const routeCode = routeCodeElem?.textContent.trim() || routeCodeElem?.getAttribute("title");
-        const associateInfo = extractAssociates(el);
+        const associateInfo = extractAssociates(el, isV1);
         const progressRaw = progressElem?.textContent.trim();
         const progress = extractBehindProgress(progressRaw); // Extract only "X behind"
 
@@ -144,14 +166,14 @@
     const routes = [];
 
     updateProgress("Scrolling to collect routes...");
-    await collectRoutes(routeSelector, routes, 20, 100);
+    await collectRoutes(routeSelector, routes, 20, 100, isV1);
 
     updateProgress("Scrolling back to the top...");
     window.scrollTo({ top: 0, behavior: "smooth" });
     await new Promise((resolve) => setTimeout(resolve, 2000)); // Wait for everything to load again
 
     updateProgress("Rechecking routes...");
-    await collectRoutes(routeSelector, routes, 20, 100);
+    await collectRoutes(routeSelector, routes, 20, 100, isV1);
 
     updateProgress(`Final collection complete. ${routes.length} unique routes found.`);
     console.log("Final routes collected:", routes);
