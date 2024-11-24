@@ -55,23 +55,28 @@
     }
   };
 
-  const waitForElements = (selector, timeout = 15000) => {
+  const scrollPage = async (selector, maxScrolls = 20, scrollDelay = 500) => {
     return new Promise((resolve, reject) => {
-      const observer = new MutationObserver(() => {
+      let scrollCount = 0;
+      let lastElementCount = 0;
+
+      const interval = setInterval(() => {
         const elements = document.querySelectorAll(selector);
-        if (elements.length > 0) {
-          console.log(`Found ${elements.length} elements matching ${selector}`, elements);
-          observer.disconnect();
+        const currentElementCount = elements.length;
+
+        window.scrollBy(0, window.innerHeight);
+        scrollCount++;
+
+        if (currentElementCount > lastElementCount) {
+          lastElementCount = currentElementCount;
+          updateProgress(`Loaded ${currentElementCount} elements so far...`);
+        }
+
+        if (scrollCount >= maxScrolls || currentElementCount === lastElementCount) {
+          clearInterval(interval);
           resolve(Array.from(elements));
         }
-      });
-
-      observer.observe(document.body, { childList: true, subtree: true });
-
-      setTimeout(() => {
-        observer.disconnect();
-        reject(`Timeout: No elements found for selector "${selector}" within ${timeout}ms`);
-      }, timeout);
+      }, scrollDelay);
     });
   };
 
@@ -89,7 +94,7 @@
       ? '[class^="af-link routes-list-item p-2 d-flex align-items-center w-100 route-"]'
       : ".css-1muusaa";
 
-    let routeContainers = await waitForElements(routeSelector).catch((err) => {
+    const routeContainers = await scrollPage(routeSelector).catch((err) => {
       console.error(err);
       modal.querySelector("#progress-details").innerHTML = `<p>${err}</p>`;
       return [];
@@ -102,51 +107,39 @@
     const results = [];
     const processedIds = new Set();
 
-    const processRoutes = (containers) => {
-      containers.forEach((container, index) => {
-        if (processedIds.has(container)) return;
+    routeContainers.forEach((container, index) => {
+      if (processedIds.has(container)) return;
 
-        processedIds.add(container);
+      processedIds.add(container);
 
-        const routeCodeElem = isV1
-          ? container.querySelector(".left-column.text-sm div:first-child")
-          : container.querySelector(".css-1nqzkik");
-        const routeCode = isV1
-          ? routeCodeElem?.textContent.trim()
-          : routeCodeElem?.getAttribute("title")?.trim();
+      const routeCodeElem = isV1
+        ? container.querySelector(".left-column.text-sm div:first-child")
+        : container.querySelector(".css-1nqzkik");
+      const routeCode = isV1
+        ? routeCodeElem?.textContent.trim()
+        : routeCodeElem?.getAttribute("title")?.trim();
 
-        const associateContainers = isV1
-          ? container.querySelector(".ml-lg-4.ml-2.mr-2.mr-lg-auto.normal-white-space")
-          : container.querySelectorAll(".css-1kttr4w");
-        const associateNames = Array.from(associateContainers || [])
-          .map((el) => el.textContent.trim())
-          .join(", ");
+      const associateContainers = isV1
+        ? container.querySelector(".ml-lg-4.ml-2.mr-2.mr-lg-auto.normal-white-space")
+        : container.querySelectorAll(".css-1kttr4w");
+      const associateNames = Array.from(associateContainers || [])
+        .map((el) => el.textContent.trim())
+        .join(", ");
 
-        const progressElem = isV1
-          ? container.querySelector(".progress")
-          : container.querySelector(".css-1xac89n.font-weight-bold");
-        let progressText = progressElem?.textContent.trim();
+      const progressElem = isV1
+        ? container.querySelector(".progress")
+        : container.querySelector(".css-1xac89n.font-weight-bold");
+      let progressText = progressElem?.textContent.trim();
 
-        const behindMatch = progressText?.match(/(\d+)\s*behind/);
-        progressText = behindMatch ? `${behindMatch[1]} behind` : null;
+      const behindMatch = progressText?.match(/(\d+)\s*behind/);
+      progressText = behindMatch ? `${behindMatch[1]} behind` : null;
 
-        if (routeCode && progressText) {
-          results.push(`${routeCode}: ${associateNames || "No associate info"} (${progressText})`);
-        }
-      });
-    };
-
-    processRoutes(routeContainers);
-
-    updateProgress(`Initial processing complete. Checking for missed routes...`);
-    routeContainers = await waitForElements(routeSelector).catch((err) => {
-      console.warn("Backup check failed:", err);
-      return [];
+      if (routeCode && progressText) {
+        results.push(`${routeCode}: ${associateNames || "No associate info"} (${progressText})`);
+      }
     });
 
-    processRoutes(routeContainers);
-
-    updateProgress("Final processing complete.");
+    updateProgress("Processing complete.");
 
     if (results.length > 0) {
       updateProgress(`Exporting ${results.length} routes.`);
