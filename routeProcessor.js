@@ -37,19 +37,18 @@
         let elapsed = 0;
 
         const intervalCheck = setInterval(() => {
-          console.log("Checking for parent container...");
           const parentContainer = document.querySelector(".routes-list.d-flex.flex-1.flex-column.border-y-list");
-          console.log("Parent container found:", !!parentContainer);
+          console.log("Parent container:", parentContainer);
 
           if (parentContainer) {
+            // Select route containers using the partial class selector
             const routeContainers = Array.from(
-              parentContainer.querySelectorAll("div")
-            ).filter((container) =>
-              container.classList.contains("routes-list-item")
+              parentContainer.querySelectorAll('[class^="af-link routes-list-item p-2 d-flex align-items-center w-100 route-"]')
             );
 
+            console.log(`Found ${routeContainers.length} valid route containers`, routeContainers);
+
             if (routeContainers.length > 0) {
-              console.log(`Found ${routeContainers.length} valid route containers`);
               clearInterval(intervalCheck);
               foundRoutes = true;
               resolve(routeContainers);
@@ -59,7 +58,7 @@
           elapsed += interval;
           if (elapsed >= timeout) {
             clearInterval(intervalCheck);
-            console.warn("Timeout reached. No valid route containers found.");
+            console.warn("Timeout reached. No route containers found.");
             reject("Timeout reached while waiting for routes.");
           }
         }, interval);
@@ -79,28 +78,12 @@
       console.log(`Processing container ${index + 1}`);
 
       const routeCodeElem = container.querySelector(".left-column.text-sm");
-      const associateContainer = container.querySelector(
-        ".ml-lg-4.ml-2.mr-2.mr-lg-auto.normal-white-space"
-      );
-      const tooltipElem = associateContainer?.nextElementSibling?.classList.contains("af-tooltip")
-        ? associateContainer.nextElementSibling.querySelectorAll("div")
-        : null;
-      const progressElem = container.querySelector(".progress");
-
       const routeCode = routeCodeElem?.textContent.trim();
-      const associateNames = tooltipElem
-        ? Array.from(tooltipElem).map((el) => el.textContent.trim()).join(", ")
-        : associateContainer?.querySelector(".text-truncate")?.textContent.trim();
-      const progressText = progressElem?.textContent.trim();
 
-      console.log({
-        routeCode,
-        associateNames,
-        progressText,
-      });
+      console.log({ routeCode });
 
-      if (routeCode && associateNames && progressText) {
-        results.push(`${routeCode}: ${associateNames} (${progressText})`);
+      if (routeCode) {
+        results.push(routeCode);
       }
     });
 
