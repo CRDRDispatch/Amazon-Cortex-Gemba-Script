@@ -254,8 +254,8 @@
 
   const extractBehindProgress = (progressText) => {
     console.log("Extracting progress from text:", progressText);
-    const match = progressText?.match(/(\d+)\s*behind/);
-    const result = match ? `${match[1]} behind` : null;
+    const match = progressText?.match(/(\d+)\s*BEHIND/i);
+    const result = match ? `${match[1]} BEHIND` : null;
     console.log("Extracted progress:", result);
     return result;
   };
@@ -369,7 +369,11 @@
     updateProgress(`Final collection complete. Found ${routes.length} total routes.`);
     console.log("Final routes collected:", routes);
 
-    const behindRoutes = routes.filter((route) => route.progress?.includes("behind"));
+    const behindRoutes = routes.filter(route => {
+      const progressText = extractBehindProgress(route.progress);
+      // Only include routes if they have a non-zero BEHIND count
+      return progressText && !progressText.startsWith('0 BEHIND');
+    });
     console.log("Behind Routes:", behindRoutes);
 
     updateProgress(`Found ${behindRoutes.length} routes that are behind schedule.`, true, true);
