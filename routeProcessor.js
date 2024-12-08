@@ -111,6 +111,8 @@
     modal.style.perspective = "1000";
     modal.style.webkitPerspective = "1000";
     modal.style.width = "400px";
+    modal.style.minWidth = "320px";
+    modal.style.minHeight = "400px";
     modal.style.background = "white";
     modal.style.border = "none";
     modal.style.boxShadow = "0 10px 25px rgba(0, 0, 0, 0.2), 0 2px 10px rgba(0, 0, 0, 0.1)";
@@ -126,15 +128,40 @@
     modal.style.resize = "both";
     modal.style.overflow = "auto";
 
-    // Add drag functionality
+    // Initialize state
     let isDragging = false;
-    let currentX;
-    let currentY;
-    let initialX;
-    let initialY;
+    let isResizing = false;
+    let currentHandle = null;
+    let currentX = 0;
+    let currentY = 0;
+    let initialX = 0;
+    let initialY = 0;
     let xOffset = 0;
     let yOffset = 0;
+    let initialWidth = 0;
+    let initialHeight = 0;
 
+    // Add resize handles
+    const handles = ['n', 's', 'e', 'w', 'ne', 'nw', 'se', 'sw'].map(dir => {
+      const handle = document.createElement('div');
+      handle.className = `resize-handle resize-${dir}`;
+      Object.assign(handle.style, {
+        position: 'absolute',
+        width: dir.includes('e') || dir.includes('w') ? '10px' : '100%',
+        height: dir.includes('n') || dir.includes('s') ? '10px' : '100%',
+        [dir.includes('n') ? 'top' : dir.includes('s') ? 'bottom' : '']: '0',
+        [dir.includes('e') ? 'right' : dir.includes('w') ? 'left' : '']: '0',
+        cursor: `${dir}-resize`,
+        zIndex: '10001'
+      });
+      return handle;
+    });
+
+    handles.forEach(handle => {
+      modal.appendChild(handle);
+    });
+
+    // Drag functionality
     const dragStart = (e) => {
       if (e.type === "touchstart") {
         initialX = e.touches[0].clientX - xOffset;
@@ -165,27 +192,70 @@
         yOffset = currentY;
 
         requestAnimationFrame(() => {
-          const bounds = {
-            top: 20,
-            bottom: window.innerHeight - modal.offsetHeight - 20,
-            left: 20,
-            right: window.innerWidth - modal.offsetWidth - 20
-          };
-
-          const newY = Math.min(Math.max(currentY, bounds.top - window.innerHeight/2), bounds.bottom - window.innerHeight/2);
-          const newX = Math.min(Math.max(currentX, bounds.left - window.innerWidth/2), bounds.right - window.innerWidth/2);
-
-          modal.style.transform = `translate(calc(-50% + ${newX}px), calc(-50% + ${newY}px)) translateZ(0)`;
-          modal.style.webkitTransform = `translate(calc(-50% + ${newX}px), calc(-50% + ${newY}px)) translateZ(0)`;
+          modal.style.transform = `translate(calc(-50% + ${currentX}px), calc(-50% + ${currentY}px)) translateZ(0)`;
+          modal.style.webkitTransform = `translate(calc(-50% + ${currentX}px), calc(-50% + ${currentY}px)) translateZ(0)`;
         });
       }
     };
 
     const dragEnd = () => {
+      initialX = currentX;
+      initialY = currentY;
       isDragging = false;
     };
 
-    // Add drag event listeners
+    // Resize functionality
+    const startResize = (e, handle) => {
+      if (e.target !== handle) return;
+      e.preventDefault();
+      isResizing = true;
+      currentHandle = handle;
+      initialWidth = modal.offsetWidth;
+      initialHeight = modal.offsetHeight;
+      initialX = e.clientX;
+      initialY = e.clientY;
+    };
+
+    const resize = (e) => {
+      if (!isResizing) return;
+      e.preventDefault();
+
+      const deltaX = e.clientX - initialX;
+      const deltaY = e.clientY - initialY;
+      const direction = currentHandle.className.split('-')[2];
+
+      let newWidth = initialWidth;
+      let newHeight = initialHeight;
+      let newX = xOffset;
+      let newY = yOffset;
+
+      if (direction.includes('e')) newWidth = initialWidth + deltaX;
+      if (direction.includes('w')) {
+        newWidth = initialWidth - deltaX;
+        newX = xOffset + deltaX / 2;
+      }
+      if (direction.includes('s')) newHeight = initialHeight + deltaY;
+      if (direction.includes('n')) {
+        newHeight = initialHeight - deltaY;
+        newY = yOffset + deltaY / 2;
+      }
+
+      // Apply minimum dimensions
+      newWidth = Math.max(320, newWidth);
+      newHeight = Math.max(400, newHeight);
+
+      modal.style.width = `${newWidth}px`;
+      modal.style.height = `${newHeight}px`;
+      modal.style.transform = `translate(calc(-50% + ${newX}px), calc(-50% + ${newY}px)) translateZ(0)`;
+      modal.style.webkitTransform = `translate(calc(-50% + ${newX}px), calc(-50% + ${newY}px)) translateZ(0)`;
+    };
+
+    const stopResize = () => {
+      isResizing = false;
+      currentHandle = null;
+    };
+
+    // Add event listeners
     modal.addEventListener("touchstart", dragStart, { passive: false });
     modal.addEventListener("touchend", dragEnd, { passive: false });
     modal.addEventListener("touchmove", drag, { passive: false });
@@ -193,32 +263,12 @@
     modal.addEventListener("mouseup", dragEnd);
     modal.addEventListener("mousemove", drag);
 
-    // Initialize drag and resize state
-    let isResizing = false;
-    let currentHandle = null;
-    let initialWidth = 0;
-    let initialHeight = 0;
-
-    // Add resize handles
-    const handles = ['n', 's', 'e', 'w', 'ne', 'nw', 'se', 'sw'].map(dir => {
-      const handle = document.createElement('div');
-      handle.className = `resize-handle resize-${dir}`;
-      Object.assign(handle.style, {
-        position: 'absolute',
-        width: dir.includes('e') || dir.includes('w') ? '10px' : '100%',
-        height: dir.includes('n') || dir.includes('s') ? '10px' : '100%',
-        [dir.includes('n') ? 'top' : dir.includes('s') ? 'bottom' : '']: '0',
-        [dir.includes('e') ? 'right' : dir.includes('w') ? 'left' : '']: '0',
-        cursor: `${dir}-resize`,
-        zIndex: '10001'
-      });
-      return handle;
-    });
-
     handles.forEach(handle => {
-      modal.appendChild(handle);
       handle.addEventListener('mousedown', (e) => startResize(e, handle));
     });
+
+    document.addEventListener('mousemove', resize);
+    document.addEventListener('mouseup', stopResize);
 
     // Register cleanup
     registerCleanup('eventListeners', () => {
@@ -231,102 +281,9 @@
       document.removeEventListener('mousemove', resize);
       document.removeEventListener('mouseup', stopResize);
       handles.forEach(handle => {
-        handle.removeEventListener('mousedown', startResize);
+        handle.removeEventListener('mousedown', (e) => startResize(e, handle));
       });
     });
-
-    const startResize = (e, handle) => {
-      if (e.target !== handle) return;
-      isResizing = true;
-      currentHandle = handle;
-      initialWidth = modal.offsetWidth;
-      initialHeight = modal.offsetHeight;
-      initialX = e.clientX;
-      initialY = e.clientY;
-      e.preventDefault();
-    };
-
-    const resize = (e) => {
-      if (!isResizing) return;
-      e.preventDefault();
-
-      requestAnimationFrame(() => {
-        const deltaX = e.clientX - initialX;
-        const deltaY = e.clientY - initialY;
-        const dir = currentHandle.className.split('-')[2];
-
-        let newWidth = initialWidth;
-        let newHeight = initialHeight;
-        let newX = xOffset;
-        let newY = yOffset;
-
-        if (dir.includes('e')) newWidth = initialWidth + deltaX;
-        if (dir.includes('w')) {
-          newWidth = initialWidth - deltaX;
-          newX += deltaX / 2;
-        }
-        if (dir.includes('s')) newHeight = initialHeight + deltaY;
-        if (dir.includes('n')) {
-          newHeight = initialHeight - deltaY;
-          newY += deltaY / 2;
-        }
-
-        // Apply size constraints
-        newWidth = Math.min(Math.max(newWidth, 320), window.innerWidth * 0.9);
-        newHeight = Math.min(Math.max(newHeight, 400), window.innerHeight * 0.9);
-
-        modal.style.width = `${newWidth}px`;
-        modal.style.height = `${newHeight}px`;
-        modal.style.transform = `translate(${newX}px, ${newY}px)`;
-
-        // Update inner content layout
-        updateInnerLayout();
-      });
-    };
-
-    const stopResize = () => {
-      isResizing = false;
-      currentHandle = null;
-    };
-
-    document.addEventListener('mousemove', resize);
-    document.addEventListener('mouseup', stopResize);
-
-    // Register cleanup for all event listeners
-    registerCleanup('eventListeners', () => {
-      modal.removeEventListener("mousedown", dragStart);
-      document.removeEventListener("mousemove", drag);
-      document.removeEventListener("mouseup", dragEnd);
-      document.removeEventListener('mousemove', resize);
-      document.removeEventListener('mouseup', stopResize);
-      handles.forEach(handle => {
-        handle.removeEventListener('mousedown', startResize);
-      });
-    });
-
-    // Function to update inner layout
-    const updateInnerLayout = () => {
-      const width = modal.offsetWidth;
-      const height = modal.offsetHeight;
-
-      // Update grid layout for DSP progress section
-      const progressGrid = modal.querySelector('#dsp-progress-section > div:nth-child(2)');
-      if (progressGrid) {
-        progressGrid.style.gridTemplateColumns = width < 400 ? '1fr' : 'repeat(2, 1fr)';
-      }
-
-      // Update route details max height
-      const routeDetails = modal.querySelector('#route-details');
-      if (routeDetails) {
-        routeDetails.style.maxHeight = `${height * 0.6}px`;
-      }
-
-      // Update DA dropdowns max height
-      const daDropdowns = modal.querySelector('#da-dropdowns');
-      if (daDropdowns) {
-        daDropdowns.style.maxHeight = `${height * 0.6}px`;
-      }
-    };
 
     // Create entrance animation
     const fadeIn = modal.animate([
