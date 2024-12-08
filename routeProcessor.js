@@ -148,8 +148,8 @@
     const initResize = (e) => {
         if (e.button !== undefined && e.button !== 0) return;
         isResizing = true;
-        startX = e.clientX;
-        startY = e.clientY;
+        startX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
+        startY = e.type === 'touchstart' ? e.touches[0].clientY : e.clientY;
         startWidth = parseInt(getComputedStyle(modal).width, 10);
         startHeight = parseInt(getComputedStyle(modal).height, 10);
         e.preventDefault();
@@ -160,8 +160,10 @@
         if (!isResizing) return;
         e.preventDefault();
 
-        const width = startWidth + (e.clientX - startX);
-        const height = startHeight + (e.clientY - startY);
+        const clientX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
+        const clientY = e.type === 'touchmove' ? e.touches[0].clientY : e.clientY;
+        const width = startWidth + (clientX - startX);
+        const height = startHeight + (clientY - startY);
 
         // Apply minimum size constraints
         if (width >= 400) {
@@ -242,13 +244,6 @@
     document.addEventListener('touchmove', drag, { passive: false });
     document.addEventListener('touchend', dragEnd);
 
-    // Prevent click events from bubbling up for dropdowns
-    modal.addEventListener('click', (e) => {
-        if (e.target.tagName === 'SELECT' || e.target.tagName === 'OPTION') {
-            e.stopPropagation();
-        }
-    });
-
     // Register cleanup for event listeners
     registerCleanup('eventListeners', () => {
         resizeHandle.removeEventListener('mousedown', initResize);
@@ -278,62 +273,133 @@
 
     registerCleanup('animations', () => fadeIn.cancel());
 
-    // Add hover effects and event listeners
-    const closeBtn = getElement("#close-btn", modal);
-    const modalToggleBtn = getElement("#toggle-progress", modal);
-    const progressDetails = getElement("#progress-details", modal);
-    const nextButtons = getElements("#da-next-btn, #preview-next-btn", modal);
-
-    // Register hover effects with cleanup
-    const addHoverEffect = (element, enterStyles, leaveStyles) => {
-      const mouseenter = () => Object.assign(element.style, enterStyles);
-      const mouseleave = () => Object.assign(element.style, leaveStyles);
-      
-      element.addEventListener("mouseenter", mouseenter);
-      element.addEventListener("mouseleave", mouseleave);
-      
-      registerCleanup('eventListeners', () => {
-        element.removeEventListener("mouseenter", mouseenter);
-        element.removeEventListener("mouseleave", mouseleave);
-      });
-    };
+    // Add modal content
+    modal.innerHTML = `
+      <button id="close-btn" style="position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 18px; cursor: pointer; color: #666; transition: color 0.2s ease;">✖</button>
+      <div style="margin-bottom: 25px; cursor: move;">
+        <img src="https://crdrdispatch.github.io/GembaScript/Logo.svg" alt="Logo" style="height: 90px; display: block; margin: 0 auto; -webkit-transform: translateZ(0); transform: translateZ(0); pointer-events: none;">
+      </div>
+      <h2 style="font-family: Arial, sans-serif; margin-bottom: 25px; border-bottom: 2px solid #eee; padding-bottom: 15px; color: #2c3e50; font-size: 24px;">Gimme That GEMBA</h2>
+      <div id="progress-section" style="margin-bottom: 30px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <h3 style="font-family: Arial, sans-serif; font-size: 16px; color: #2c3e50; margin: 0; font-weight: 600;">Progress</h3>
+            <span id="progress-status" style="display: none; font-size: 12px; padding: 3px 10px; border-radius: 20px; background-color: #4CAF50; color: white; font-weight: 500; box-shadow: 0 2px 4px rgba(76, 175, 80, 0.2);">Complete</span>
+          </div>
+          <button id="toggle-progress" style="background: none; border: none; color: #666; cursor: pointer; font-size: 14px; padding: 5px 10px; border-radius: 5px; transition: background-color 0.2s ease;">Hide</button>
+        </div>
+        <div id="progress-details" style="font-family: Arial, sans-serif; text-align: left; margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 12px; border: 1px solid #edf2f7;">
+          <p>Initializing...</p>
+        </div>
+      </div>
+      <div id="da-selection-section" style="display: none; margin-bottom: 30px;">
+        <h3 style="font-family: Arial, sans-serif; font-size: 16px; color: #2c3e50; margin-bottom: 12px; font-weight: 600;">These routes have multiple DAs. Please select the DA assigned to the route.</h3>
+        <div id="da-dropdowns" style="max-height: 400px; overflow-y: auto; padding: 15px; background: #f8f9fa; border-radius: 12px; border: 1px solid #edf2f7;">
+        </div>
+        <div style="margin-top: 20px; text-align: right;">
+          <button id="da-next-btn" style="padding: 12px 30px; background-color: #4CAF50; color: white; border: none; border-radius: 8px; cursor: pointer; font-family: Arial, sans-serif; font-weight: 500; font-size: 15px; box-shadow: 0 4px 6px rgba(76, 175, 80, 0.2); transition: all 0.2s ease;">Next</button>
+        </div>
+      </div>
+      <div id="preview-section" style="display: none; margin-bottom: 30px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <button id="back-btn" style="padding: 8px 16px; background-color: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer; font-family: Arial, sans-serif; font-weight: 500; font-size: 14px; box-shadow: 0 2px 4px rgba(108, 117, 125, 0.2); transition: all 0.2s ease; display: flex; align-items: center; gap: 6px;">
+            <span style="font-size: 18px;">←</span> Back
+          </button>
+          <h3 style="font-family: Arial, sans-serif; font-size: 16px; color: #2c3e50; margin: 0; font-weight: 600;">Route Details</h3>
+          <div style="width: 80px;"></div>
+        </div>
+        <div id="route-details" style="max-height: 400px; overflow-y: auto; padding: 15px; background: #f8f9fa; border-radius: 12px; border: 1px solid #edf2f7; scrollbar-width: thin; scrollbar-color: #cbd5e0 #f8f9fa;">
+        </div>
+        <div style="display: flex; justify-content: flex-end; margin-top: 20px;">
+          <button id="preview-next-btn" style="padding: 12px 30px; background-color: #4CAF50; color: white; border: none; border-radius: 8px; cursor: pointer; font-family: Arial, sans-serif; font-weight: 500; font-size: 15px; box-shadow: 0 4px 6px rgba(76, 175, 80, 0.2); transition: all 0.2s ease;">Next</button>
+        </div>
+      </div>
+      <div id="dsp-progress-section" style="display: none;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <button id="progress-back-btn" style="padding: 8px 16px; background-color: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer; font-family: Arial, sans-serif; font-weight: 500; font-size: 14px; box-shadow: 0 2px 4px rgba(108, 117, 125, 0.2); transition: all 0.2s ease; display: flex; align-items: center; gap: 6px;">
+            <span style="font-size: 18px;">←</span> Back
+          </button>
+          <h3 style="font-family: Arial, sans-serif; font-size: 16px; color: #2c3e50; margin: 0; font-weight: 600;">DSP Total Progress</h3>
+          <div style="width: 80px;"></div>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin-bottom: 30px;">
+          <div class="input-group">
+            <label style="display: block; margin-bottom: 8px; color: #2c3e50; font-weight: 600; font-size: 14px;">In Progress:</label>
+            <input type="number" id="in-progress-input" class="progress-input" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px;" min="0">
+          </div>
+          <div class="input-group">
+            <label style="display: block; margin-bottom: 8px; color: #2c3e50; font-weight: 600; font-size: 14px;">At Risk:</label>
+            <input type="number" id="at-risk-input" class="progress-input" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px;" min="0">
+          </div>
+          <div class="input-group">
+            <label style="display: block; margin-bottom: 8px; color: #2c3e50; font-weight: 600; font-size: 14px;">Behind:</label>
+            <input type="number" id="behind-input" class="progress-input" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px;" min="0">
+          </div>
+          <div class="input-group">
+            <label style="display: block; margin-bottom: 8px; color: #2c3e50; font-weight: 600; font-size: 14px;">Package Progress:</label>
+            <input type="number" id="package-progress-input" class="progress-input" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px;" min="0" max="100">
+          </div>
+        </div>
+        <div style="text-align: center;">
+          <button id="download-btn" style="padding: 12px 30px; background-color: #4CAF50; color: white; border: none; border-radius: 8px; cursor: pointer; font-family: Arial, sans-serif; font-weight: 500; font-size: 15px; box-shadow: 0 4px 6px rgba(76, 175, 80, 0.2); transition: all 0.2s ease; display: inline-flex; align-items: center; gap: 8px;">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M8 12L3 7L4.4 5.55L7 8.15V0H9V8.15L11.6 5.55L13 7L8 12ZM2 16C1.45 16 0.979333 15.8043 0.588 15.413C0.196667 15.0217 0.001333 14.5507 0 14V11H2V14H14V11H16V14C16 14.55 15.8043 15.021 15.413 15.413C15.0217 15.805 14.5507 16 14 16H2Z" fill="white"/>
+            </svg>
+            Download File
+          </button>
+        </div>
+      </div>
+    `;
 
     // Add hover effects
-    addHoverEffect(closeBtn, 
-      { color: "#ff4444" }, 
-      { color: "#666" }
-    );
+    const closeBtn = modal.querySelector("#close-btn");
+    closeBtn.addEventListener("mouseover", () => closeBtn.style.color = "#ff4444");
+    closeBtn.addEventListener("mouseout", () => closeBtn.style.color = "#666");
 
-    addHoverEffect(modalToggleBtn,
-      { backgroundColor: "#f0f0f0" },
-      { backgroundColor: "transparent" }
-    );
+    const modalToggleBtn = modal.querySelector("#toggle-progress");
+    const progressDetails = modal.querySelector("#progress-details");
+    
+    modalToggleBtn.addEventListener("mouseover", () => {
+      modalToggleBtn.style.backgroundColor = "#f0f0f0";
+    });
+    modalToggleBtn.addEventListener("mouseout", () => {
+      modalToggleBtn.style.backgroundColor = "transparent";
+    });
+    
+    // Add toggle functionality
+    modalToggleBtn.addEventListener("click", () => {
+      if (progressDetails.style.display === "none") {
+        progressDetails.style.display = "block";
+        modalToggleBtn.textContent = "Hide";
+      } else {
+        progressDetails.style.display = "none";
+        modalToggleBtn.textContent = "Show";
+      }
+    });
 
+    const nextButtons = modal.querySelectorAll("#da-next-btn, #preview-next-btn");
     nextButtons.forEach(btn => {
-      addHoverEffect(btn,
-        { 
-          backgroundColor: "#45a049",
-          boxShadow: "0 6px 8px rgba(76, 175, 80, 0.3)"
-        },
-        {
-          backgroundColor: "#4CAF50",
-          boxShadow: "0 4px 6px rgba(76, 175, 80, 0.2)"
-        }
-      );
+      btn.addEventListener("mouseover", () => {
+        btn.style.backgroundColor = "#45a049";
+        btn.style.boxShadow = "0 6px 8px rgba(76, 175, 80, 0.3)";
+      });
+      
+      btn.addEventListener("mouseout", () => {
+        btn.style.backgroundColor = "#4CAF50";
+        btn.style.boxShadow = "0 4px 6px rgba(76, 175, 80, 0.2)";
+      });
     });
 
     // Add download button hover effect
-    const downloadBtn = getElement("#download-btn", modal);
-    addHoverEffect(downloadBtn,
-      { 
-        backgroundColor: "#45a049",
-        boxShadow: "0 6px 8px rgba(76, 175, 80, 0.3)"
-      },
-      {
-        backgroundColor: "#4CAF50",
-        boxShadow: "0 4px 6px rgba(76, 175, 80, 0.2)"
-      }
-    );
+    const downloadBtn = modal.querySelector("#download-btn");
+    downloadBtn.addEventListener("mouseover", () => {
+      downloadBtn.style.backgroundColor = "#45a049";
+      downloadBtn.style.boxShadow = "0 6px 8px rgba(76, 175, 80, 0.3)";
+    });
+    downloadBtn.addEventListener("mouseout", () => {
+      downloadBtn.style.backgroundColor = "#4CAF50";
+      downloadBtn.style.boxShadow = "0 4px 6px rgba(76, 175, 80, 0.2)";
+    });
 
     // Add toggle functionality
     modalToggleBtn.addEventListener("click", () => {
@@ -351,11 +417,11 @@
     });
 
     // Navigation handlers
-    const backBtn = getElement("#back-btn", modal);
-    const progressBackBtn = getElement("#progress-back-btn", modal);
-    const daSelectionSection = getElement("#da-selection-section", modal);
-    const previewSection = getElement("#preview-section", modal);
-    const dspProgressSection = getElement("#dsp-progress-section", modal);
+    const backBtn = modal.querySelector("#back-btn");
+    const progressBackBtn = modal.querySelector("#progress-back-btn");
+    const daSelectionSection = modal.querySelector("#da-selection-section");
+    const previewSection = modal.querySelector("#preview-section");
+    const dspProgressSection = modal.querySelector("#dsp-progress-section");
 
     backBtn?.addEventListener("click", () => {
       previewSection.style.display = "none";
