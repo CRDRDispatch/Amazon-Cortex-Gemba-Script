@@ -102,70 +102,145 @@
     const modal = document.createElement("div");
     modal.id = "custom-modal";
     modal.style.position = "fixed";
+    modal.style.top = "50%";
+    modal.style.left = "50%";
+    modal.style.transform = "translate(-50%, -50%) translateZ(0)";
+    modal.style.webkitTransform = "translate(-50%, -50%) translateZ(0)";
+    modal.style.backfaceVisibility = "hidden";
+    modal.style.webkitBackfaceVisibility = "hidden";
+    modal.style.perspective = "1000";
+    modal.style.webkitPerspective = "1000";
     modal.style.width = "600px";
     modal.style.minWidth = "400px";
     modal.style.height = "600px";
     modal.style.minHeight = "500px";
     modal.style.background = "white";
-    modal.style.border = "1px solid #ccc";
-    modal.style.boxShadow = "0 4px 8px rgba(0, 0, 0, 0.1)";
-    modal.style.padding = "20px";
-    modal.style.borderRadius = "8px";
+    modal.style.border = "none";
+    modal.style.boxShadow = "0 10px 25px rgba(0, 0, 0, 0.2), 0 2px 10px rgba(0, 0, 0, 0.1)";
+    modal.style.padding = "25px";
+    modal.style.borderRadius = "16px";
     modal.style.zIndex = "10000";
     modal.style.textAlign = "center";
     modal.style.maxHeight = "90vh";
     modal.style.overflowY = "auto";
+    modal.style.willChange = "transform";
+    modal.style.isolation = "isolate";
     modal.style.cursor = "move";
 
-    // Add resize handles
-    const handles = [];
-    ['n', 's', 'e', 'w', 'ne', 'nw', 'se', 'sw'].forEach(dir => {
-        const handle = document.createElement('div');
-        handle.className = `resize-handle resize-${dir}`;
-        handle.style.position = 'absolute';
-        handle.style.background = '#00000020';
-        handle.style.zIndex = '10001';
+    // Add resize handle
+    const resizeHandle = document.createElement('div');
+    resizeHandle.style.position = 'absolute';
+    resizeHandle.style.width = '15px';
+    resizeHandle.style.height = '15px';
+    resizeHandle.style.bottom = '0';
+    resizeHandle.style.right = '0';
+    resizeHandle.style.cursor = 'se-resize';
+    resizeHandle.style.background = '#00000020';
+    resizeHandle.style.zIndex = '10001';
+    modal.appendChild(resizeHandle);
 
-        switch(dir) {
-            case 'n':
-            case 's':
-                handle.style.height = '8px';
-                handle.style.left = '0';
-                handle.style.right = '0';
-                handle.style[dir] = '-4px';
-                handle.style.cursor = `${dir}-resize`;
-                break;
-            case 'e':
-            case 'w':
-                handle.style.width = '8px';
-                handle.style.top = '0';
-                handle.style.bottom = '0';
-                handle.style[dir] = '-4px';
-                handle.style.cursor = `${dir}-resize`;
-                break;
-            default:
-                handle.style.width = '16px';
-                handle.style.height = '16px';
-                handle.style[dir[0]] = '-8px';
-                handle.style[dir[1]] = '-8px';
-                handle.style.cursor = `${dir}-resize`;
-                break;
-        }
-        
-        modal.appendChild(handle);
-        handles.push(handle);
-    });
-
-    // Add modal to DOM and center it
     document.body.appendChild(modal);
-    setTimeout(() => {
-        const viewportWidth = window.innerWidth;
-        const viewportHeight = window.innerHeight;
-        const modalRect = modal.getBoundingClientRect();
+
+    // Resize functionality
+    let isResizing = false;
+    let startX, startY, startWidth, startHeight;
+
+    const initResize = (e) => {
+        if (e.button !== undefined && e.button !== 0) return;
+        isResizing = true;
+        startX = e.clientX;
+        startY = e.clientY;
+        startWidth = parseInt(getComputedStyle(modal).width, 10);
+        startHeight = parseInt(getComputedStyle(modal).height, 10);
+        e.preventDefault();
+        e.stopPropagation();
+    };
+
+    const resize = (e) => {
+        if (!isResizing) return;
+        e.preventDefault();
+
+        const width = startWidth + (e.clientX - startX);
+        const height = startHeight + (e.clientY - startY);
+
+        // Apply minimum size constraints
+        if (width >= 400) {
+            modal.style.width = `${width}px`;
+        }
+        if (height >= 500) {
+            modal.style.height = `${height}px`;
+        }
+    };
+
+    const stopResize = () => {
+        isResizing = false;
+    };
+
+    // Add event listeners for resize
+    resizeHandle.addEventListener('mousedown', initResize);
+    document.addEventListener('mousemove', resize);
+    document.addEventListener('mouseup', stopResize);
+    resizeHandle.addEventListener('touchstart', initResize, { passive: false });
+    document.addEventListener('touchmove', resize, { passive: false });
+    document.addEventListener('touchend', stopResize);
+
+    // Drag functionality
+    let isDragging = false;
+    let currentX = 0;
+    let currentY = 0;
+    let initialX = 0;
+    let initialY = 0;
+
+    const dragStart = (e) => {
+        if (e.target === resizeHandle) return;
+        if (e.button !== undefined && e.button !== 0) return;
         
-        modal.style.left = `${(viewportWidth - modalRect.width) / 2}px`;
-        modal.style.top = `${(viewportHeight - modalRect.height) / 2}px`;
-    }, 0);
+        e.preventDefault();
+        isDragging = true;
+
+        if (e.type === "touchstart") {
+            initialX = e.touches[0].clientX - currentX;
+            initialY = e.touches[0].clientY - currentY;
+        } else {
+            initialX = e.clientX - currentX;
+            initialY = e.clientY - currentY;
+        }
+    };
+
+    const drag = (e) => {
+        if (!isDragging) return;
+        e.preventDefault();
+
+        if (e.type === "touchmove") {
+            currentX = e.touches[0].clientX - initialX;
+            currentY = e.touches[0].clientY - initialY;
+        } else {
+            currentX = e.clientX - initialX;
+            currentY = e.clientY - initialY;
+        }
+
+        // Apply bounds checking
+        const rect = modal.getBoundingClientRect();
+        const maxX = window.innerWidth - rect.width - 20;
+        const maxY = window.innerHeight - rect.height - 20;
+        currentX = Math.max(-rect.width + 40, Math.min(currentX, maxX));
+        currentY = Math.max(-rect.height + 40, Math.min(currentY, maxY));
+
+        modal.style.transform = `translate(calc(-50% + ${currentX}px), calc(-50% + ${currentY}px)) translateZ(0)`;
+        modal.style.webkitTransform = `translate(calc(-50% + ${currentX}px), calc(-50% + ${currentY}px)) translateZ(0)`;
+    };
+
+    const dragEnd = () => {
+        isDragging = false;
+    };
+
+    // Add event listeners for drag
+    modal.addEventListener('mousedown', dragStart);
+    document.addEventListener('mousemove', drag);
+    document.addEventListener('mouseup', dragEnd);
+    modal.addEventListener('touchstart', dragStart, { passive: false });
+    document.addEventListener('touchmove', drag, { passive: false });
+    document.addEventListener('touchend', dragEnd);
 
     // Prevent click events from bubbling up for dropdowns
     modal.addEventListener('click', (e) => {
@@ -174,265 +249,34 @@
         }
     });
 
-    // Initialize state
-    let isDragging = false;
-    let isResizing = false;
-    let currentHandle = null;
-    let offsetX = 0;
-    let offsetY = 0;
-    let initialWidth = 0;
-    let initialHeight = 0;
-    let initialMouseX = 0;
-    let initialMouseY = 0;
-
-    // Resize functionality
-    const startResize = (e, handle) => {
-      e.preventDefault();
-      e.stopPropagation();
-      isResizing = true;
-      currentHandle = handle;
-      
-      const rect = modal.getBoundingClientRect();
-      initialWidth = rect.width;
-      initialHeight = rect.height;
-      
-      if (e.type === "touchstart") {
-        initialMouseX = e.touches[0].clientX;
-        initialMouseY = e.touches[0].clientY;
-      } else {
-        initialMouseX = e.clientX;
-        initialMouseY = e.clientY;
-      }
-    };
-
-    const resize = (e) => {
-      if (!isResizing) return;
-      e.preventDefault();
-      
-      let mouseX, mouseY;
-      
-      if (e.type === "touchmove") {
-        mouseX = e.touches[0].clientX;
-        mouseY = e.touches[0].clientY;
-      } else {
-        mouseX = e.clientX;
-        mouseY = e.clientY;
-      }
-
-      const dx = mouseX - initialMouseX;
-      const dy = mouseY - initialMouseY;
-      const rect = modal.getBoundingClientRect();
-      const direction = currentHandle.className.split('resize-')[1];
-
-      let newWidth = initialWidth;
-      let newHeight = initialHeight;
-      let newLeft = rect.left;
-      let newTop = rect.top;
-
-      // Handle resizing based on direction
-      if (direction.includes('e')) {
-        newWidth = Math.max(400, initialWidth + dx);
-      }
-      if (direction.includes('w')) {
-        const adjustedWidth = Math.max(400, initialWidth - dx);
-        newWidth = adjustedWidth;
-        newLeft = rect.left + (initialWidth - adjustedWidth);
-      }
-      if (direction.includes('s')) {
-        newHeight = Math.max(500, initialHeight + dy);
-      }
-      if (direction.includes('n')) {
-        const adjustedHeight = Math.max(500, initialHeight - dy);
-        newHeight = adjustedHeight;
-        newTop = rect.top + (initialHeight - adjustedHeight);
-      }
-
-      // Apply bounds checking
-      const maxWidth = window.innerWidth - 40;
-      const maxHeight = window.innerHeight - 40;
-      newWidth = Math.min(newWidth, maxWidth);
-      newHeight = Math.min(newHeight, maxHeight);
-      newLeft = Math.max(20, Math.min(newLeft, window.innerWidth - newWidth - 20));
-      newTop = Math.max(20, Math.min(newTop, window.innerHeight - newHeight - 20));
-
-      // Update modal size and position
-      modal.style.width = `${newWidth}px`;
-      modal.style.height = `${newHeight}px`;
-      modal.style.left = `${newLeft}px`;
-      modal.style.top = `${newTop}px`;
-    };
-
-    const stopResize = () => {
-      isResizing = false;
-      currentHandle = null;
-    };
-
-    // Add document-level resize event listeners
-    document.addEventListener('mousemove', resize);
-    document.addEventListener('touchmove', resize, { passive: false });
-    document.addEventListener('mouseup', stopResize);
-    document.addEventListener('touchend', stopResize);
-
-    // Register cleanup for resize event listeners
-    registerCleanup('eventListeners', () => {
-      document.removeEventListener('mousemove', resize);
-      document.removeEventListener('touchmove', resize);
-      document.removeEventListener('mouseup', stopResize);
-      document.removeEventListener('touchend', stopResize);
-      handles.forEach(handle => {
-        handle.removeEventListener('mousedown', startResize);
-        handle.removeEventListener('touchstart', startResize);
-      });
-    });
-
-    // Drag functionality
-    const dragStart = (e) => {
-      if (e.target.closest('.resize-handle')) return;
-      e.preventDefault();
-      
-      if (e.type === "touchstart") {
-        offsetX = e.touches[0].clientX - modal.offsetLeft;
-        offsetY = e.touches[0].clientY - modal.offsetTop;
-      } else {
-        offsetX = e.clientX - modal.offsetLeft;
-        offsetY = e.clientY - modal.offsetTop;
-      }
-      
-      isDragging = true;
-    };
-
-    const drag = (e) => {
-      if (!isDragging) return;
-      e.preventDefault();
-      
-      let left, top;
-      
-      if (e.type === "touchmove") {
-        left = e.touches[0].clientX - offsetX;
-        top = e.touches[0].clientY - offsetY;
-      } else {
-        left = e.clientX - offsetX;
-        top = e.clientY - offsetY;
-      }
-
-      // Apply bounds checking
-      left = Math.max(20, Math.min(left, window.innerWidth - modal.offsetWidth - 20));
-      top = Math.max(20, Math.min(top, window.innerHeight - modal.offsetHeight - 20));
-
-      modal.style.left = `${left}px`;
-      modal.style.top = `${top}px`;
-    };
-
-    const dragEnd = () => {
-      isDragging = false;
-    };
-
-    // Event Listeners for drag
-    modal.addEventListener("mousedown", dragStart);
-    document.addEventListener("mousemove", drag);
-    document.addEventListener("mouseup", dragEnd);
-    modal.addEventListener("touchstart", dragStart, { passive: false });
-    document.addEventListener("touchmove", drag, { passive: false });
-    document.addEventListener("touchend", dragEnd);
-
     // Register cleanup for event listeners
     registerCleanup('eventListeners', () => {
-      modal.removeEventListener("mousedown", dragStart);
-      document.removeEventListener("mousemove", drag);
-      document.removeEventListener("mouseup", dragEnd);
-      modal.removeEventListener("touchstart", dragStart);
-      document.removeEventListener("touchmove", drag);
-      document.removeEventListener("touchend", dragEnd);
+        resizeHandle.removeEventListener('mousedown', initResize);
+        document.removeEventListener('mousemove', resize);
+        document.removeEventListener('mouseup', stopResize);
+        resizeHandle.removeEventListener('touchstart', initResize);
+        document.removeEventListener('touchmove', resize);
+        document.removeEventListener('touchend', stopResize);
+        
+        modal.removeEventListener('mousedown', dragStart);
+        document.removeEventListener('mousemove', drag);
+        document.removeEventListener('mouseup', dragEnd);
+        modal.removeEventListener('touchstart', dragStart);
+        document.removeEventListener('touchmove', drag);
+        document.removeEventListener('touchend', dragEnd);
     });
 
     // Create entrance animation
     const fadeIn = modal.animate([
-      { opacity: 0, transform: 'translate(-50%, -60%)' },
-      { opacity: 1, transform: 'translate(-50%, -50%)' }
+        { opacity: 0, transform: 'translate(-50%, -60%) translateZ(0)' },
+        { opacity: 1, transform: 'translate(-50%, -50%) translateZ(0)' }
     ], {
-      duration: 300,
-      easing: 'ease-out',
-      fill: 'forwards'
+        duration: 300,
+        easing: 'ease-out',
+        fill: 'forwards'
     });
 
     registerCleanup('animations', () => fadeIn.cancel());
-
-    modal.innerHTML = `
-      <button id="close-btn" style="position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 18px; cursor: pointer; color: #666; transition: color 0.2s ease;">✖</button>
-      <div style="margin-bottom: 25px; cursor: move;">
-        <img src="https://crdrdispatch.github.io/GembaScript/Logo.svg" alt="Logo" style="height: 90px; display: block; margin: 0 auto; -webkit-transform: translateZ(0); transform: translateZ(0); pointer-events: none;">
-      </div>
-      <h2 style="font-family: Arial, sans-serif; margin-bottom: 25px; border-bottom: 2px solid #eee; padding-bottom: 15px; color: #2c3e50; font-size: 24px;">Gimme That GEMBA</h2>
-      <div id="progress-section" style="margin-bottom: 30px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-          <div style="display: flex; align-items: center; gap: 10px;">
-            <h3 style="font-family: Arial, sans-serif; font-size: 16px; color: #2c3e50; margin: 0; font-weight: 600;">Progress</h3>
-            <span id="progress-status" style="display: none; font-size: 12px; padding: 3px 10px; border-radius: 20px; background-color: #4CAF50; color: white; font-weight: 500; box-shadow: 0 2px 4px rgba(76, 175, 80, 0.2);">Complete</span>
-          </div>
-          <button id="toggle-progress" style="background: none; border: none; color: #666; cursor: pointer; font-size: 14px; padding: 5px 10px; border-radius: 5px; transition: background-color 0.2s ease;">Hide</button>
-        </div>
-        <div id="progress-details" style="font-family: Arial, sans-serif; text-align: left; margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 12px; border: 1px solid #edf2f7;">
-          <p>Initializing...</p>
-        </div>
-      </div>
-      <div id="da-selection-section" style="display: none; margin-bottom: 30px;">
-        <h3 style="font-family: Arial, sans-serif; font-size: 16px; color: #2c3e50; margin-bottom: 12px; font-weight: 600;">These routes have multiple DAs. Please select the DA assigned to the route.</h3>
-        <div id="da-dropdowns" style="max-height: 400px; overflow-y: auto; padding: 15px; background: #f8f9fa; border-radius: 12px; border: 1px solid #edf2f7;">
-        </div>
-        <div style="margin-top: 20px; text-align: right;">
-          <button id="da-next-btn" style="padding: 12px 30px; background-color: #4CAF50; color: white; border: none; border-radius: 8px; cursor: pointer; font-family: Arial, sans-serif; font-weight: 500; font-size: 15px; box-shadow: 0 4px 6px rgba(76, 175, 80, 0.2); transition: all 0.2s ease;">Next</button>
-        </div>
-      </div>
-      <div id="preview-section" style="display: none; margin-bottom: 30px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-          <button id="back-btn" style="padding: 8px 16px; background-color: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer; font-family: Arial, sans-serif; font-weight: 500; font-size: 14px; box-shadow: 0 2px 4px rgba(108, 117, 125, 0.2); transition: all 0.2s ease; display: flex; align-items: center; gap: 6px;">
-            <span style="font-size: 18px;">←</span> Back
-          </button>
-          <h3 style="font-family: Arial, sans-serif; font-size: 16px; color: #2c3e50; margin: 0; font-weight: 600;">Route Details</h3>
-          <div style="width: 80px;"></div>
-        </div>
-        <div id="route-details" style="max-height: 400px; overflow-y: auto; padding: 15px; background: #f8f9fa; border-radius: 12px; border: 1px solid #edf2f7; scrollbar-width: thin; scrollbar-color: #cbd5e0 #f8f9fa;">
-        </div>
-        <div style="display: flex; justify-content: flex-end; margin-top: 20px;">
-          <button id="preview-next-btn" style="padding: 12px 30px; background-color: #4CAF50; color: white; border: none; border-radius: 8px; cursor: pointer; font-family: Arial, sans-serif; font-weight: 500; font-size: 15px; box-shadow: 0 4px 6px rgba(76, 175, 80, 0.2); transition: all 0.2s ease;">Next</button>
-        </div>
-      </div>
-      <div id="dsp-progress-section" style="display: none;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-          <button id="progress-back-btn" style="padding: 8px 16px; background-color: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer; font-family: Arial, sans-serif; font-weight: 500; font-size: 14px; box-shadow: 0 2px 4px rgba(108, 117, 125, 0.2); transition: all 0.2s ease; display: flex; align-items: center; gap: 6px;">
-            <span style="font-size: 18px;">←</span> Back
-          </button>
-          <h3 style="font-family: Arial, sans-serif; font-size: 16px; color: #2c3e50; margin: 0; font-weight: 600;">DSP Total Progress</h3>
-          <div style="width: 80px;"></div>
-        </div>
-        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin-bottom: 30px;">
-          <div class="input-group">
-            <label style="display: block; margin-bottom: 8px; color: #2c3e50; font-weight: 600; font-size: 14px;">In Progress:</label>
-            <input type="number" id="in-progress-input" class="progress-input" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px;" min="0">
-          </div>
-          <div class="input-group">
-            <label style="display: block; margin-bottom: 8px; color: #2c3e50; font-weight: 600; font-size: 14px;">At Risk:</label>
-            <input type="number" id="at-risk-input" class="progress-input" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px;" min="0">
-          </div>
-          <div class="input-group">
-            <label style="display: block; margin-bottom: 8px; color: #2c3e50; font-weight: 600; font-size: 14px;">Behind:</label>
-            <input type="number" id="behind-input" class="progress-input" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px;" min="0">
-          </div>
-          <div class="input-group">
-            <label style="display: block; margin-bottom: 8px; color: #2c3e50; font-weight: 600; font-size: 14px;">Package Progress:</label>
-            <input type="number" id="package-progress-input" class="progress-input" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px;" min="0" max="100">
-          </div>
-        </div>
-        <div style="text-align: center;">
-          <button id="download-btn" style="padding: 12px 30px; background-color: #4CAF50; color: white; border: none; border-radius: 8px; cursor: pointer; font-family: Arial, sans-serif; font-weight: 500; font-size: 15px; box-shadow: 0 4px 6px rgba(76, 175, 80, 0.2); transition: all 0.2s ease; display: inline-flex; align-items: center; gap: 8px;">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M8 12L3 7L4.4 5.55L7 8.15V0H9V8.15L11.6 5.55L13 7L8 12ZM2 16C1.45 16 0.979333 15.8043 0.588 15.413C0.196667 15.0217 0.001333 14.5507 0 14V11H2V14H14V11H16V14C16 14.55 15.8043 15.021 15.413 15.413C15.0217 15.805 14.5507 16 14 16H2Z" fill="white"/>
-            </svg>
-            Download File
-          </button>
-        </div>
-      </div>
-    `;
 
     // Add hover effects and event listeners
     const closeBtn = getElement("#close-btn", modal);
