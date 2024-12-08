@@ -102,8 +102,9 @@
     const modal = document.createElement("div");
     modal.id = "custom-modal";
     modal.style.position = "fixed";
-    modal.style.top = "100px";
-    modal.style.left = "calc(50% - 300px)"; // Half of width
+    modal.style.top = "50%";
+    modal.style.left = "50%";
+    modal.style.transform = "translate(-50%, -50%)";
     modal.style.width = "600px";
     modal.style.minWidth = "400px";
     modal.style.height = "600px";
@@ -134,13 +135,12 @@
     let initialMouseX = 0;
     let initialMouseY = 0;
 
-    // After initial render, update position to center
+    // After initial render, position the modal
     requestAnimationFrame(() => {
       const rect = modal.getBoundingClientRect();
-      currentX = -rect.width / 2;
-      currentY = rect.top;
-      initialX = currentX;
-      initialY = currentY;
+      modal.style.transform = "none";
+      modal.style.top = `${window.innerHeight/2 - rect.height/2}px`;
+      modal.style.left = `${window.innerWidth/2 - rect.width/2}px`;
     });
 
     // Add resize handles
@@ -292,6 +292,7 @@
     // Drag functionality
     const dragStart = (e) => {
       if (e.target.closest('.resize-handle')) return;
+      e.preventDefault();
       
       const rect = modal.getBoundingClientRect();
       if (e.type === "touchstart") {
@@ -305,6 +306,18 @@
       initialX = rect.left;
       initialY = rect.top;
       isDragging = true;
+
+      // Create a transparent overlay to prevent text selection during drag
+      const overlay = document.createElement('div');
+      overlay.id = 'drag-overlay';
+      overlay.style.position = 'fixed';
+      overlay.style.top = '0';
+      overlay.style.left = '0';
+      overlay.style.width = '100%';
+      overlay.style.height = '100%';
+      overlay.style.zIndex = '9999';
+      overlay.style.cursor = 'move';
+      document.body.appendChild(overlay);
     };
 
     const drag = (e) => {
@@ -340,15 +353,19 @@
 
     const dragEnd = () => {
       isDragging = false;
+      const overlay = document.getElementById('drag-overlay');
+      if (overlay) {
+        overlay.remove();
+      }
     };
 
     // Event Listeners for drag
-    modal.addEventListener("mousedown", dragStart, false);
-    document.addEventListener("mousemove", drag, false);
-    document.addEventListener("mouseup", dragEnd, false);
+    modal.addEventListener("mousedown", dragStart);
+    document.addEventListener("mousemove", drag);
+    document.addEventListener("mouseup", dragEnd);
     modal.addEventListener("touchstart", dragStart, { passive: false });
     document.addEventListener("touchmove", drag, { passive: false });
-    document.addEventListener("touchend", dragEnd, false);
+    document.addEventListener("touchend", dragEnd);
 
     // Register cleanup for event listeners
     registerCleanup('eventListeners', () => {
@@ -358,6 +375,10 @@
       modal.removeEventListener("touchstart", dragStart);
       document.removeEventListener("touchmove", drag);
       document.removeEventListener("touchend", dragEnd);
+      const overlay = document.getElementById('drag-overlay');
+      if (overlay) {
+        overlay.remove();
+      }
     });
 
     // Create entrance animation
