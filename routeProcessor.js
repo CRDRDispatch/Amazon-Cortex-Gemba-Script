@@ -191,10 +191,18 @@
         xOffset = currentX;
         yOffset = currentY;
 
-        requestAnimationFrame(() => {
-          modal.style.transform = `translate(calc(-50% + ${currentX}px), calc(-50% + ${currentY}px)) translateZ(0)`;
-          modal.style.webkitTransform = `translate(calc(-50% + ${currentX}px), calc(-50% + ${currentY}px)) translateZ(0)`;
-        });
+        const bounds = {
+          top: 20,
+          bottom: window.innerHeight - modal.offsetHeight - 20,
+          left: 20,
+          right: window.innerWidth - modal.offsetWidth - 20
+        };
+
+        const newY = Math.min(Math.max(currentY, bounds.top - window.innerHeight/2), bounds.bottom - window.innerHeight/2);
+        const newX = Math.min(Math.max(currentX, bounds.left - window.innerWidth/2), bounds.right - window.innerWidth/2);
+
+        modal.style.transform = `translate(${newX}px, ${newY}px) translateZ(0)`;
+        modal.style.webkitTransform = `translate(${newX}px, ${newY}px) translateZ(0)`;
       }
     };
 
@@ -246,8 +254,8 @@
 
       modal.style.width = `${newWidth}px`;
       modal.style.height = `${newHeight}px`;
-      modal.style.transform = `translate(calc(-50% + ${newX}px), calc(-50% + ${newY}px)) translateZ(0)`;
-      modal.style.webkitTransform = `translate(calc(-50% + ${newX}px), calc(-50% + ${newY}px)) translateZ(0)`;
+      modal.style.transform = `translate(${newX}px, ${newY}px) translateZ(0)`;
+      modal.style.webkitTransform = `translate(${newX}px, ${newY}px) translateZ(0)`;
     };
 
     const stopResize = () => {
