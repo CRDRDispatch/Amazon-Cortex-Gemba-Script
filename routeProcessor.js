@@ -2,273 +2,230 @@
   const createModal = () => {
     const modal = document.createElement("div");
     modal.id = "custom-modal";
-    Object.assign(modal.style, {
-      position: "fixed",
-      top: "50%",
-      left: "50%",
-      transform: "translate(-50%, -50%) translateZ(0)",
-      width: "400px",
-      background: "white",
-      border: "none",
-      boxShadow: "0 10px 25px rgba(0, 0, 0, 0.2), 0 2px 10px rgba(0, 0, 0, 0.1)",
-      padding: "25px",
-      borderRadius: "16px",
-      zIndex: "10000",
-      textAlign: "center",
-      maxHeight: "90vh",
-      overflowY: "auto",
-      willChange: "transform",
-      isolation: "isolate",
-      cursor: "move"
-    });
+    modal.style.position = "fixed";
+    modal.style.top = "50%";
+    modal.style.left = "50%";
+    modal.style.transform = "translate(-50%, -50%) translateZ(0)";
+    modal.style.webkitTransform = "translate(-50%, -50%) translateZ(0)";
+    modal.style.backfaceVisibility = "hidden";
+    modal.style.webkitBackfaceVisibility = "hidden";
+    modal.style.perspective = "1000";
+    modal.style.webkitPerspective = "1000";
+    modal.style.width = "400px";
+    modal.style.background = "white";
+    modal.style.border = "none";
+    modal.style.boxShadow = "0 10px 25px rgba(0, 0, 0, 0.2), 0 2px 10px rgba(0, 0, 0, 0.1)";
+    modal.style.padding = "25px";
+    modal.style.borderRadius = "16px";
+    modal.style.zIndex = "10000";
+    modal.style.textAlign = "center";
+    modal.style.maxHeight = "90vh";
+    modal.style.overflowY = "auto";
+    modal.style.willChange = "transform";
+    modal.style.isolation = "isolate";
+    modal.style.cursor = "move";  // Indicate draggable
 
-    // Create close button
-    const closeBtn = document.createElement("button");
-    closeBtn.id = "close-btn";
-    Object.assign(closeBtn.style, {
-      position: "absolute",
-      top: "15px",
-      right: "15px",
-      background: "none",
-      border: "none",
-      fontSize: "18px",
-      cursor: "pointer",
-      color: "#666",
-      transition: "color 0.2s ease"
-    });
-    closeBtn.textContent = "✖";
-    modal.appendChild(closeBtn);
+    modal.innerHTML = `
+      <button id="close-btn" style="position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 18px; cursor: pointer; color: #666; transition: color 0.2s ease;">✖</button>
+      <div style="margin-bottom: 25px; cursor: move;">
+        <img src="https://crdrdispatch.github.io/GembaScript/Logo.svg" alt="Logo" style="height: 90px; display: block; margin: 0 auto; -webkit-transform: translateZ(0); transform: translateZ(0); pointer-events: none;">
+      </div>
+      <h2 style="font-family: Arial, sans-serif; margin-bottom: 25px; border-bottom: 2px solid #eee; padding-bottom: 15px; color: #2c3e50; font-size: 24px;">Gimme That GEMBA</h2>
+      <div id="progress-section" style="margin-bottom: 30px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <h3 style="font-family: Arial, sans-serif; font-size: 16px; color: #2c3e50; margin: 0; font-weight: 600;">Progress</h3>
+            <span id="progress-status" style="display: none; font-size: 12px; padding: 3px 10px; border-radius: 20px; background-color: #4CAF50; color: white; font-weight: 500; box-shadow: 0 2px 4px rgba(76, 175, 80, 0.2);">Complete</span>
+          </div>
+          <button id="toggle-progress" style="background: none; border: none; color: #666; cursor: pointer; font-size: 14px; padding: 5px 10px; border-radius: 5px; transition: background-color 0.2s ease;">Hide</button>
+        </div>
+        <div id="progress-details" style="font-family: Arial, sans-serif; text-align: left; margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 12px; border: 1px solid #edf2f7;">
+          <p>Initializing...</p>
+        </div>
+      </div>
+      <div id="da-selection-section" style="display: none; margin-bottom: 30px;">
+        <h3 style="font-family: Arial, sans-serif; font-size: 16px; color: #2c3e50; margin-bottom: 12px; font-weight: 600;">These routes have multiple DAs. Please select the DA assigned to the route.</h3>
+        <div id="da-dropdowns" style="max-height: 400px; overflow-y: auto; padding: 15px; background: #f8f9fa; border-radius: 12px; border: 1px solid #edf2f7;">
+        </div>
+        <div style="margin-top: 20px; text-align: right;">
+          <button id="da-next-btn" style="padding: 12px 30px; background-color: #4CAF50; color: white; border: none; border-radius: 8px; cursor: pointer; font-family: Arial, sans-serif; font-weight: 500; font-size: 15px; box-shadow: 0 4px 6px rgba(76, 175, 80, 0.2); transition: all 0.2s ease;">Next</button>
+        </div>
+      </div>
+      <div id="preview-section" style="display: none; margin-bottom: 30px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <button id="back-btn" style="padding: 8px 16px; background-color: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer; font-family: Arial, sans-serif; font-weight: 500; font-size: 14px; box-shadow: 0 2px 4px rgba(108, 117, 125, 0.2); transition: all 0.2s ease; display: flex; align-items: center; gap: 6px;">
+            <span style="font-size: 18px;">←</span> Back
+          </button>
+          <h3 style="font-family: Arial, sans-serif; font-size: 16px; color: #2c3e50; margin: 0; font-weight: 600;">Route Details</h3>
+          <div style="width: 80px;"></div>
+        </div>
+        <div id="route-details" style="max-height: 400px; overflow-y: auto; padding: 15px; background: #f8f9fa; border-radius: 12px; border: 1px solid #edf2f7; scrollbar-width: thin; scrollbar-color: #cbd5e0 #f8f9fa;">
+        </div>
+        <div style="display: flex; justify-content: flex-end; margin-top: 20px;">
+          <button id="preview-next-btn" style="padding: 12px 30px; background-color: #4CAF50; color: white; border: none; border-radius: 8px; cursor: pointer; font-family: Arial, sans-serif; font-weight: 500; font-size: 15px; box-shadow: 0 4px 6px rgba(76, 175, 80, 0.2); transition: all 0.2s ease;">Next</button>
+        </div>
+      </div>
+      <div id="dsp-progress-section" style="display: none;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <button id="progress-back-btn" style="padding: 8px 16px; background-color: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer; font-family: Arial, sans-serif; font-weight: 500; font-size: 14px; box-shadow: 0 2px 4px rgba(108, 117, 125, 0.2); transition: all 0.2s ease; display: flex; align-items: center; gap: 6px;">
+            <span style="font-size: 18px;">←</span> Back
+          </button>
+          <h3 style="font-family: Arial, sans-serif; font-size: 16px; color: #2c3e50; margin: 0; font-weight: 600;">DSP Total Progress</h3>
+          <div style="width: 80px;"></div>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin-bottom: 30px;">
+          <div class="input-group">
+            <label style="display: block; margin-bottom: 8px; color: #2c3e50; font-weight: 600; font-size: 14px;">In Progress:</label>
+            <input type="number" id="in-progress-input" class="progress-input" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px;" min="0">
+          </div>
+          <div class="input-group">
+            <label style="display: block; margin-bottom: 8px; color: #2c3e50; font-weight: 600; font-size: 14px;">At Risk:</label>
+            <input type="number" id="at-risk-input" class="progress-input" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px;" min="0">
+          </div>
+          <div class="input-group">
+            <label style="display: block; margin-bottom: 8px; color: #2c3e50; font-weight: 600; font-size: 14px;">Behind:</label>
+            <input type="number" id="behind-input" class="progress-input" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px;" min="0">
+          </div>
+          <div class="input-group">
+            <label style="display: block; margin-bottom: 8px; color: #2c3e50; font-weight: 600; font-size: 14px;">Package Progress:</label>
+            <input type="number" id="package-progress-input" class="progress-input" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px;" min="0" max="100">
+          </div>
+        </div>
+        <div style="text-align: center;">
+          <button id="download-btn" style="padding: 12px 30px; background-color: #4CAF50; color: white; border: none; border-radius: 8px; cursor: pointer; font-family: Arial, sans-serif; font-weight: 500; font-size: 15px; box-shadow: 0 4px 6px rgba(76, 175, 80, 0.2); transition: all 0.2s ease; display: inline-flex; align-items: center; gap: 8px;">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M8 12L3 7L4.4 5.55L7 8.15V0H9V8.15L11.6 5.55L13 7L8 12ZM2 16C1.45 16 0.979333 15.8043 0.588 15.413C0.196667 15.0217 0.001333 14.5507 0 14V11H2V14H14V11H16V14C16 14.55 15.8043 15.021 15.413 15.413C15.0217 15.805 14.5507 16 14 16H2Z" fill="white"/>
+            </svg>
+            Download File
+          </button>
+        </div>
+      </div>
+    `;
 
-    // Create logo container
-    const logoContainer = document.createElement("div");
-    logoContainer.style.marginBottom = "25px";
-    logoContainer.style.cursor = "move";
-  
-    const logoImg = document.createElement("img");
-    logoImg.src = "https://crdrdispatch.github.io/GembaScript/Logo.svg";
-    logoImg.alt = "Logo";
-    Object.assign(logoImg.style, {
-      height: "90px",
-      display: "block",
-      margin: "0 auto",
-      transform: "translateZ(0)",
-      pointerEvents: "none"
-    });
-    logoContainer.appendChild(logoImg);
-    modal.appendChild(logoContainer);
-
-    // Create title
-    const title = document.createElement("h2");
-    Object.assign(title.style, {
-      fontFamily: "Arial, sans-serif",
-      marginBottom: "25px",
-      borderBottom: "2px solid #eee",
-      paddingBottom: "15px",
-      color: "#2c3e50",
-      fontSize: "24px"
-    });
-    title.textContent = "Gimme That GEMBA";
-    modal.appendChild(title);
-
-    // Create sections
-    const createSection = (id, style = {}) => {
-      const section = document.createElement("div");
-      section.id = id;
-      Object.assign(section.style, {
-        marginBottom: "30px",
-        display: "none",
-        ...style
-      });
-      return section;
-    };
-
-    // Progress section
-    const progressSection = createSection("progress-section", { display: "block" });
-    const progressHeader = document.createElement("div");
-    Object.assign(progressHeader.style, {
-      display: "flex",
-      justifyContent: "space-between",
-      alignItems: "center",
-      marginBottom: "12px"
-    });
-
-    const progressTitle = document.createElement("div");
-    progressTitle.style.display = "flex";
-    progressTitle.style.alignItems = "center";
-    progressTitle.style.gap = "10px";
-
-    const progressH3 = document.createElement("h3");
-    Object.assign(progressH3.style, {
-      fontFamily: "Arial, sans-serif",
-      fontSize: "16px",
-      color: "#2c3e50",
-      margin: "0",
-      fontWeight: "600"
-    });
-    progressH3.textContent = "Progress";
-    progressTitle.appendChild(progressH3);
-
-    const progressStatus = document.createElement("span");
-    progressStatus.id = "progress-status";
-    Object.assign(progressStatus.style, {
-      display: "none",
-      fontSize: "12px",
-      padding: "3px 10px",
-      borderRadius: "20px",
-      backgroundColor: "#4CAF50",
-      color: "white",
-      fontWeight: "500",
-      boxShadow: "0 2px 4px rgba(76, 175, 80, 0.2)"
-    });
-    progressStatus.textContent = "Complete";
-    progressTitle.appendChild(progressStatus);
-
-    const toggleBtn = document.createElement("button");
-    toggleBtn.id = "toggle-progress";
-    Object.assign(toggleBtn.style, {
-      background: "none",
-      border: "none",
-      color: "#666",
-      cursor: "pointer",
-      fontSize: "14px",
-      padding: "5px 10px",
-      borderRadius: "5px",
-      transition: "background-color 0.2s ease"
-    });
-    toggleBtn.textContent = "Hide";
-
-    progressHeader.appendChild(progressTitle);
-    progressHeader.appendChild(toggleBtn);
-    progressSection.appendChild(progressHeader);
-
-    const progressDetails = document.createElement("div");
-    progressDetails.id = "progress-details";
-    Object.assign(progressDetails.style, {
-      fontFamily: "Arial, sans-serif",
-      textAlign: "left",
-      marginBottom: "20px",
-      padding: "15px",
-      background: "#f8f9fa",
-      borderRadius: "12px",
-      border: "1px solid #edf2f7"
-    });
-  
-    const initText = document.createElement("p");
-    initText.textContent = "Initializing...";
-    progressDetails.appendChild(initText);
-    progressSection.appendChild(progressDetails);
-
-    modal.appendChild(progressSection);
-
-    // Add remaining sections (DA Selection, Preview, DSP Progress)
-    const daSelectionSection = createSection("da-selection-section");
-    const previewSection = createSection("preview-section");
-    const dspProgressSection = createSection("dsp-progress-section");
-  
-    modal.appendChild(daSelectionSection);
-    modal.appendChild(previewSection);
-    modal.appendChild(dspProgressSection);
-
-    // Add event listeners
+    // Add hover effects
+    const closeBtn = modal.querySelector("#close-btn");
     closeBtn.addEventListener("mouseover", () => closeBtn.style.color = "#ff4444");
     closeBtn.addEventListener("mouseout", () => closeBtn.style.color = "#666");
 
-    toggleBtn.addEventListener("mouseover", () => {
-      toggleBtn.style.backgroundColor = "#f0f0f0";
+    const modalToggleBtn = modal.querySelector("#toggle-progress");
+    const progressDetails = modal.querySelector("#progress-details");
+    
+    modalToggleBtn.addEventListener("mouseover", () => {
+      modalToggleBtn.style.backgroundColor = "#f0f0f0";
     });
-    toggleBtn.addEventListener("mouseout", () => {
-      toggleBtn.style.backgroundColor = "transparent";
+    modalToggleBtn.addEventListener("mouseout", () => {
+      modalToggleBtn.style.backgroundColor = "transparent";
     });
-
-    toggleBtn.addEventListener("click", () => {
+    
+    // Add toggle functionality
+    modalToggleBtn.addEventListener("click", () => {
       if (progressDetails.style.display === "none") {
         progressDetails.style.display = "block";
-        toggleBtn.textContent = "Hide";
+        modalToggleBtn.textContent = "Hide";
       } else {
         progressDetails.style.display = "none";
-        toggleBtn.textContent = "Show";
+        modalToggleBtn.textContent = "Show";
       }
     });
 
-    // Add the modal to the document body
+    const nextButtons = modal.querySelectorAll("#da-next-btn, #preview-next-btn");
+    nextButtons.forEach(btn => {
+      btn.addEventListener("mouseover", () => {
+        btn.style.backgroundColor = "#45a049";
+        btn.style.boxShadow = "0 6px 8px rgba(76, 175, 80, 0.3)";
+      });
+      
+      btn.addEventListener("mouseout", () => {
+        btn.style.backgroundColor = "#4CAF50";
+        btn.style.boxShadow = "0 4px 6px rgba(76, 175, 80, 0.2)";
+      });
+    });
+
+    const downloadBtn = modal.querySelector("#download-btn");
+    downloadBtn.addEventListener("mouseover", () => {
+      downloadBtn.style.backgroundColor = "#45a049";
+      downloadBtn.style.boxShadow = "0 6px 8px rgba(76, 175, 80, 0.3)";
+    });
+    downloadBtn.addEventListener("mouseout", () => {
+      downloadBtn.style.backgroundColor = "#4CAF50";
+      downloadBtn.style.boxShadow = "0 4px 6px rgba(76, 175, 80, 0.2)";
+    });
+
     document.body.appendChild(modal);
 
-    const setupModalDragging = (modal) => {
-      let isDragging = false;
-      let startX;
-      let startY;
-      let startLeft;
-      let startTop;
+    // Make modal draggable
+    let isDragging = false;
+    let startX;
+    let startY;
+    let modalRect;
 
-      const dragStart = (e) => {
-        if (e.target.closest('button') || e.target.closest('select')) return;
+    const dragStart = (e) => {
+      if (e.target.closest('button') || e.target.closest('select')) return;  // Don't drag when clicking buttons or dropdowns
 
-        isDragging = true;
-        const rect = modal.getBoundingClientRect();
-        
-        if (e.type === "touchstart") {
-          startX = e.touches[0].clientX;
-          startY = e.touches[0].clientY;
-        } else {
-          startX = e.clientX;
-          startY = e.clientY;
-        }
-        
-        startLeft = rect.left;
-        startTop = rect.top;
-        modal.style.cursor = 'grabbing';
-      };
-
-      const dragEnd = () => {
-        isDragging = false;
-        modal.style.cursor = 'move';
-      };
-
-      const drag = (e) => {
-        if (!isDragging) return;
-        e.preventDefault();
-
-        let clientX, clientY;
-        if (e.type === "touchmove") {
-          clientX = e.touches[0].clientX;
-          clientY = e.touches[0].clientY;
-        } else {
-          clientX = e.clientX;
-          clientY = e.clientY;
-        }
-
-        const deltaX = clientX - startX;
-        const deltaY = clientY - startY;
-
-        const newLeft = startLeft + deltaX;
-        const newTop = startTop + deltaY;
-
-        // Keep modal within viewport bounds
-        const maxX = window.innerWidth - modal.offsetWidth;
-        const maxY = window.innerHeight - modal.offsetHeight;
-
-        modal.style.left = Math.max(0, Math.min(newLeft, maxX)) + 'px';
-        modal.style.top = Math.max(0, Math.min(newTop, maxY)) + 'px';
-        modal.style.transform = 'none';
-      };
-
-      modal.addEventListener("mousedown", dragStart);
-      document.addEventListener("mousemove", drag);
-      document.addEventListener("mouseup", dragEnd);
-      modal.addEventListener("touchstart", dragStart, { passive: false });
-      document.addEventListener("touchmove", drag, { passive: false });
-      document.addEventListener("touchend", dragEnd);
-
-      // Clean up event listeners when modal is closed
-      const closeBtn = modal.querySelector("#close-btn");
-      closeBtn.addEventListener("click", () => {
-        document.removeEventListener("mousemove", drag);
-        document.removeEventListener("mouseup", dragEnd);
-        modal.remove();
-      });
+      isDragging = true;
+      modalRect = modal.getBoundingClientRect();
+      
+      if (e.type === "touchstart") {
+        startX = e.touches[0].clientX - modalRect.left;
+        startY = e.touches[0].clientY - modalRect.top;
+      } else {
+        startX = e.clientX - modalRect.left;
+        startY = e.clientY - modalRect.top;
+      }
+      
+      modal.style.cursor = 'grabbing';
     };
 
-    setupModalDragging(modal);
+    const dragEnd = () => {
+      isDragging = false;
+      modal.style.cursor = 'move';
+    };
+
+    const drag = (e) => {
+      if (!isDragging) return;
+      e.preventDefault();
+
+      let x, y;
+      if (e.type === "touchmove") {
+        x = e.touches[0].clientX - startX;
+        y = e.touches[0].clientY - startY;
+      } else {
+        x = e.clientX - startX;
+        y = e.clientY - startY;
+      }
+
+      // Keep modal within viewport bounds
+      const modalWidth = modalRect.width;
+      const modalHeight = modalRect.height;
+      const maxX = window.innerWidth - modalWidth;
+      const maxY = window.innerHeight - modalHeight;
+
+      x = Math.max(0, Math.min(x, maxX));
+      y = Math.max(0, Math.min(y, maxY));
+
+      modal.style.left = x + 'px';
+      modal.style.top = y + 'px';
+      modal.style.transform = 'none';
+      modal.style.webkitTransform = 'none';
+    };
+
+    // Add passive event listeners for better performance
+    modal.addEventListener("touchstart", dragStart, { passive: false });
+    modal.addEventListener("touchend", dragEnd);
+    modal.addEventListener("touchmove", drag, { passive: false });
+    document.addEventListener("mousedown", (e) => {
+      if (modal.contains(e.target)) dragStart(e);
+    });
+    document.addEventListener("mouseup", dragEnd);
+    document.addEventListener("mousemove", drag);
+
+    // Clean up event listeners when modal is closed
+    modal.querySelector("#close-btn").addEventListener("click", () => {
+      document.removeEventListener("mousedown", dragStart);
+      document.removeEventListener("mouseup", dragEnd);
+      document.removeEventListener("mousemove", drag);
+      modal.remove();
+    });
 
     return modal;
   };
@@ -338,68 +295,72 @@
   };
 
   async function collectRoutes(selector, routes, maxScrolls = 20, scrollDelay = 100, isV1 = false) {
-    console.log("Starting route collection. Selector:", selector);
-    const elements = document.querySelectorAll(selector);
-    console.log(`Found ${elements.length} route elements`);
-
-    for (let i = 0; i < maxScrolls; i++) {
-      console.log(`Scroll iteration ${i + 1} of ${maxScrolls}`);
-      
-      // Process all visible elements
-      const visibleElements = document.querySelectorAll(selector);
-      console.log(`Found ${visibleElements.length} visible route elements`);
-
-      for (const el of visibleElements) {
-        const routeCodeElem = isV1
-          ? el.querySelector('[data-testid="route-code"]')
-          : el.querySelector('.css-1qmjxm9');
-        const progressElem = isV1
-          ? el.querySelector('[data-testid="route-progress"]')
-          : el.querySelector('.css-1j1ehm7');
-
-        if (!routeCodeElem || !progressElem) continue;
-
-        const routeCode = routeCodeElem.textContent.trim();
-        const progressText = progressElem.textContent.trim();
-
-        // Only process if it's not already in our routes array and is behind
-        if (!routes.some(r => r.routeCode === routeCode) && progressText.includes('behind')) {
-          const associateInfo = await extractAssociates(el, isV1);
-          routes.push({ 
-            routeCode, 
-            progress: progressText,
-            associateInfo 
-          });
-          console.log("Added route:", { routeCode, progress: progressText, associateInfo });
-        }
-      }
-
-      // Scroll to the last visible element
-      const lastElement = visibleElements[visibleElements.length - 1];
-      if (lastElement) {
-        lastElement.scrollIntoView({ behavior: "smooth", block: "end" });
-        await new Promise(resolve => setTimeout(resolve, scrollDelay));
-      } else {
-        break; // No more elements to scroll to
-      }
-
-      // Check if we've reached the bottom
-      const container = document.querySelector(selector).parentElement;
-      const atBottom = container.scrollHeight - container.scrollTop === container.clientHeight;
-      if (atBottom) {
-        console.log("Reached bottom of container");
-        break;
-      }
+    const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
+    const container = document.querySelector(selector);
+    if (!container) {
+      throw new Error(`Container not found with selector: ${selector}`);
     }
 
-    updateProgress(`Collected ${routes.length} unique routes so far.`);
-    console.log("Completed route collection. Total routes:", routes.length);
-    return routes;
+    let lastHeight = container.scrollHeight;
+    let scrollCount = 0;
+    let noChangeCount = 0;
+
+    while (scrollCount < maxScrolls) {
+      container.scrollTo(0, container.scrollHeight);
+      await delay(scrollDelay);
+
+      const currentHeight = container.scrollHeight;
+      if (currentHeight === lastHeight) {
+        noChangeCount++;
+        if (noChangeCount >= 3) {
+          break;
+        }
+      } else {
+        noChangeCount = 0;
+      }
+      lastHeight = currentHeight;
+      scrollCount++;
+    }
+
+    const routeElements = container.querySelectorAll('[data-testid="route-card"]');
+    updateProgress(`Found ${routeElements.length} routes`);
+
+    routeElements.forEach(routeElement => {
+      const progressElement = routeElement.querySelector('[data-testid="progress-text"]');
+      if (!progressElement) return;
+
+      const progressText = progressElement.textContent.trim();
+      const behindProgress = extractBehindProgress(progressText);
+      if (!behindProgress) return;
+
+      const routeCode = routeElement.querySelector('[data-testid="route-code"]')?.textContent?.trim();
+      if (!routeCode) return;
+
+      const associateInfo = extractAssociates(routeElement, isV1);
+      routes.push({ routeCode, progress: progressText, associateInfo });
+    });
   }
+
+  function createElement(tag, attributes = {}, styles = {}) {
+    const element = document.createElement(tag);
+    Object.entries(attributes).forEach(([key, value]) => {
+      if (key === 'textContent') {
+        element.textContent = value;
+      } else {
+        element.setAttribute(key, value);
+      }
+    });
+    Object.entries(styles).forEach(([key, value]) => {
+      element.style[key] = value;
+    });
+    return element;
+  }
+
+  const modal = createModal();
+  const downloadBtn = modal.querySelector("#download-btn");
 
   try {
     console.log("Script started");
-    const modal = createModal();
     updateProgress("Script started...");
 
     const isV1 = document.querySelector(".css-hkr77h")?.checked;
@@ -444,42 +405,169 @@
       behindRoutes.forEach((route) => {
         const das = route.associateInfo.split(", ");
         if (das.length > 1) {
-          const container = document.createElement("div");
-          container.style.marginBottom = "15px";
-          container.style.padding = "15px";
-          container.style.background = "white";
-          container.style.borderRadius = "8px";
-          container.style.boxShadow = "0 2px 4px rgba(0,0,0,0.05)";
-          container.style.border = "1px solid #edf2f7";
-          
-          const label = document.createElement("label");
-          label.textContent = `${route.routeCode} (${route.progress}):`;
-          label.style.display = "block";
-          label.style.marginBottom = "8px";
-          label.style.fontWeight = "600";
-          label.style.color = "#2c3e50";
-          
-          const select = document.createElement("select");
-          select.style.width = "100%";
-          select.style.padding = "8px 12px";
-          select.style.borderRadius = "6px";
-          select.style.border = "1px solid #ddd";
-          select.style.backgroundColor = "#f8f9fa";
-          select.style.cursor = "pointer";
-          select.style.color = "#2c3e50";
-          select.style.fontSize = "14px";
-          select.dataset.routeCode = route.routeCode;
-          
-          das.forEach((da) => {
-            const option = document.createElement("option");
-            option.value = da;
-            option.textContent = da;
-            select.appendChild(option);
+          const container = createElement('div', {
+            class: 'route-detail-container',
+            'data-route-code': route.routeCode
           });
-          
-          container.appendChild(label);
-          container.appendChild(select);
+
+          // Create header section
+          const header = createElement('div', {}, {
+            padding: '15px',
+            borderBottom: '1px solid #edf2f7',
+            background: '#f8fafc'
+          });
+
+          const title = createElement('h4', {}, {
+            margin: '0',
+            color: '#2c3e50',
+            fontSize: '16px',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center'
+          });
+
+          const routeSpan = createElement('span', {
+            textContent: `${route.routeCode}: ${route.associateInfo}`
+          });
+
+          const progressSpan = createElement('span', {
+            textContent: route.progress
+          }, {
+            fontSize: '14px',
+            padding: '4px 8px',
+            background: '#ebf5ff',
+            color: '#3182ce',
+            borderRadius: '6px'
+          });
+
+          title.appendChild(routeSpan);
+          title.appendChild(progressSpan);
+          header.appendChild(title);
+
+          // Create content section
+          const content = createElement('div', {}, { padding: '15px' });
+
+          // Root Cause section
+          const rcSection = createElement('div', {}, { marginBottom: '15px' });
+          const rcLabel = createElement('label', {
+            textContent: 'Root Cause:'
+          }, {
+            display: 'block',
+            marginBottom: '8px',
+            color: '#2c3e50',
+            fontWeight: '600',
+            fontSize: '14px'
+          });
+
+          const rcCheckboxes = createElement('div', {
+            class: 'rc-checkboxes'
+          }, {
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '10px'
+          });
+
+          // Add checkboxes
+          ['Late Start', 'Sweeper', 'System Issues', 'Weather', 'Other'].forEach(option => {
+            const label = createElement('label', {}, {
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              cursor: 'pointer',
+              padding: '8px',
+              borderRadius: '6px'
+            });
+
+            const checkbox = createElement('input', {
+              type: 'checkbox',
+              value: option,
+              class: option.toLowerCase() === 'other' ? 'other-checkbox' : ''
+            });
+
+            const span = createElement('span', {
+              textContent: option
+            });
+
+            label.appendChild(checkbox);
+            label.appendChild(span);
+            rcCheckboxes.appendChild(label);
+          });
+
+          // Other input container
+          const otherInputContainer = createElement('div', {
+            class: 'other-input-container'
+          }, {
+            display: 'none',
+            marginTop: '8px',
+            marginLeft: '24px'
+          });
+
+          const otherInput = createElement('input', {
+            type: 'text',
+            placeholder: 'Specify other reason...',
+            class: 'other-input'
+          }, {
+            width: '100%',
+            padding: '8px',
+            border: '1px solid #e2e8f0',
+            borderRadius: '6px',
+            fontSize: '14px'
+          });
+
+          otherInputContainer.appendChild(otherInput);
+          rcCheckboxes.appendChild(otherInputContainer);
+
+          // Point of Action section
+          const poaSection = createElement('div');
+          const poaLabel = createElement('label', {
+            textContent: 'Point of Action:'
+          }, {
+            display: 'block',
+            marginBottom: '8px',
+            color: '#2c3e50',
+            fontWeight: '600',
+            fontSize: '14px'
+          });
+
+          const poaSelect = createElement('select', {
+            class: 'poa-select'
+          }, {
+            width: '100%',
+            padding: '10px 12px',
+            border: '1px solid #e2e8f0',
+            borderRadius: '6px',
+            fontSize: '14px',
+            backgroundColor: 'white',
+            cursor: 'pointer',
+            color: '#2c3e50',
+            appearance: 'none'
+          });
+
+          ['', 'Rescue Planned', 'Support Requested', 'Monitoring', 'No Action Required'].forEach(option => {
+            const optionElement = createElement('option', {
+              value: option,
+              textContent: option || 'Select a point of action...'
+            });
+            poaSelect.appendChild(optionElement);
+          });
+
+          // Assemble all elements
+          rcSection.appendChild(rcLabel);
+          rcSection.appendChild(rcCheckboxes);
+          poaSection.appendChild(poaLabel);
+          poaSection.appendChild(poaSelect);
+          content.appendChild(rcSection);
+          content.appendChild(poaSection);
+          container.appendChild(header);
+          container.appendChild(content);
+
           daDropdowns.appendChild(container);
+
+          // Add event listener for Other checkbox
+          const otherCheckbox = container.querySelector('.other-checkbox');
+          otherCheckbox.addEventListener('change', (e) => {
+            otherInputContainer.style.display = e.target.checked ? 'block' : 'none';
+          });
         }
       });
 
@@ -497,91 +585,169 @@
           const select = daDropdowns.querySelector(`select[data-route-code="${route.routeCode}"]`);
           const associateInfo = select ? select.value : route.associateInfo;
 
-          const container = document.createElement("div");
-          container.style.marginBottom = "20px";
-          container.style.padding = "15px";
-          container.style.background = "white";
-          container.style.borderRadius = "12px";
-          container.style.boxShadow = "0 2px 4px rgba(0,0,0,0.05)";
-          container.style.border = "1px solid #edf2f7";
-          container.style.overflow = "hidden";
-          container.dataset.routeCode = route.routeCode;
+          const container = createElement('div', {
+            class: 'route-detail-container',
+            'data-route-code': route.routeCode
+          });
 
-          container.innerHTML = `
-            <div style="padding: 15px; border-bottom: 1px solid #edf2f7; background: #f8fafc;">
-              <h4 style="margin: 0; color: #2c3e50; font-size: 16px; display: flex; justify-content: space-between; align-items: center;">
-                <span>${route.routeCode}: ${associateInfo}</span>
-                <span style="font-size: 14px; padding: 4px 8px; background: #ebf5ff; color: #3182ce; border-radius: 6px;">${route.progress}</span>
-              </h4>
-            </div>
-            <div style="padding: 15px;">
-              <div style="margin-bottom: 15px;">
-                <label style="display: block; margin-bottom: 8px; color: #2c3e50; font-weight: 600; font-size: 14px;">Root Cause:</label>
-                <div class="rc-checkboxes" style="display: flex; flex-direction: column; gap: 10px;">
-                  <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 8px; border-radius: 6px; transition: background-color 0.2s; hover:background-color: #f7fafc;">
-                    <input type="checkbox" class="rc-checkbox" value="Route is spread out" style="cursor: pointer; width: 16px; height: 16px;">
-                    <span style="color: #2c3e50; font-size: 14px;">Route is spread out</span>
-                  </label>
-                  <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 8px; border-radius: 6px; transition: background-color 0.2s; hover:background-color: #f7fafc;">
-                    <input type="checkbox" class="rc-checkbox" value="DA is working at a slow pace" style="cursor: pointer; width: 16px; height: 16px;">
-                    <span style="color: #2c3e50; font-size: 14px;">DA is working at a slow pace</span>
-                  </label>
-                  <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 8px; border-radius: 6px; transition: background-color 0.2s; hover:background-color: #f7fafc;">
-                    <input type="checkbox" class="rc-checkbox" value="DA is having connection issues" style="cursor: pointer; width: 16px; height: 16px;">
-                    <span style="color: #2c3e50; font-size: 14px;">DA is having connection issues</span>
-                  </label>
-                  <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 8px; border-radius: 6px; transition: background-color 0.2s; hover:background-color: #f7fafc;">
-                    <input type="checkbox" class="rc-checkbox" value="High Package Count" style="cursor: pointer; width: 16px; height: 16px;">
-                    <span style="color: #2c3e50; font-size: 14px;">High Package Count</span>
-                  </label>
-                  <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 8px; border-radius: 6px; transition: background-color 0.2s; hover:background-color: #f7fafc;">
-                    <input type="checkbox" class="rc-checkbox" value="High Stop Count" style="cursor: pointer; width: 16px; height: 16px;">
-                    <span style="color: #2c3e50; font-size: 14px;">High Stop Count</span>
-                  </label>
-                  <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 8px; border-radius: 6px; transition: background-color 0.2s; hover:background-color: #f7fafc;">
-                    <input type="checkbox" class="rc-checkbox other-checkbox" value="Other" style="cursor: pointer; width: 16px; height: 16px;">
-                    <span style="color: #2c3e50; font-size: 14px;">Other</span>
-                  </label>
-                  <div class="other-input-container" style="display: none; margin-left: 32px;">
-                    <input type="text" class="other-input" style="width: calc(100% - 16px); padding: 8px 12px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px; background: #f8fafc;" placeholder="Enter other root cause...">
-                  </div>
-                </div>
-              </div>
-              <div>
-                <label style="display: block; margin-bottom: 8px; color: #2c3e50; font-weight: 600; font-size: 14px;">Point of Action:</label>
-                <select class="poa-select" style="width: 100%; padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px; background-color: white; cursor: pointer; color: #2c3e50; appearance: none; background-image: url('data:image/svg+xml;charset=US-ASCII,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%232c3e50" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>'); background-repeat: no-repeat; background-position: right 12px center; background-size: 16px;">
-                  <option value="">Select a point of action...</option>
-                  <option value="Rescue Planned">Rescue Planned</option>
-                  <option value="Rescue Sent">Rescue Sent</option>
-                  <option value="Rescue on the way">Rescue on the way</option>
-                  <option value="We're monitoring progress and will send a rescue if needed">We're monitoring progress and will send a rescue if needed</option>
-                  <option value="Route Complete">Route Complete</option>
-                  <option value="Other">Other</option>
-                </select>
-                <div class="poa-other-container" style="display: none; margin-top: 8px;">
-                  <input type="text" class="poa-other-input" style="width: 100%; padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px; background: #f8fafc;" placeholder="Enter other point of action...">
-                </div>
-              </div>
-            </div>
-          `;
+          // Create header section
+          const header = createElement('div', {}, {
+            padding: '15px',
+            borderBottom: '1px solid #edf2f7',
+            background: '#f8fafc'
+          });
+
+          const title = createElement('h4', {}, {
+            margin: '0',
+            color: '#2c3e50',
+            fontSize: '16px',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center'
+          });
+
+          const routeSpan = createElement('span', {
+            textContent: `${route.routeCode}: ${associateInfo}`
+          });
+
+          const progressSpan = createElement('span', {
+            textContent: route.progress
+          }, {
+            fontSize: '14px',
+            padding: '4px 8px',
+            background: '#ebf5ff',
+            color: '#3182ce',
+            borderRadius: '6px'
+          });
+
+          title.appendChild(routeSpan);
+          title.appendChild(progressSpan);
+          header.appendChild(title);
+
+          // Create content section
+          const content = createElement('div', {}, { padding: '15px' });
+
+          // Root Cause section
+          const rcSection = createElement('div', {}, { marginBottom: '15px' });
+          const rcLabel = createElement('label', {
+            textContent: 'Root Cause:'
+          }, {
+            display: 'block',
+            marginBottom: '8px',
+            color: '#2c3e50',
+            fontWeight: '600',
+            fontSize: '14px'
+          });
+
+          const rcCheckboxes = createElement('div', {
+            class: 'rc-checkboxes'
+          }, {
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '10px'
+          });
+
+          // Add checkboxes
+          ['Late Start', 'Sweeper', 'System Issues', 'Weather', 'Other'].forEach(option => {
+            const label = createElement('label', {}, {
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              cursor: 'pointer',
+              padding: '8px',
+              borderRadius: '6px'
+            });
+
+            const checkbox = createElement('input', {
+              type: 'checkbox',
+              value: option,
+              class: option.toLowerCase() === 'other' ? 'other-checkbox' : ''
+            });
+
+            const span = createElement('span', {
+              textContent: option
+            });
+
+            label.appendChild(checkbox);
+            label.appendChild(span);
+            rcCheckboxes.appendChild(label);
+          });
+
+          // Other input container
+          const otherInputContainer = createElement('div', {
+            class: 'other-input-container'
+          }, {
+            display: 'none',
+            marginTop: '8px',
+            marginLeft: '24px'
+          });
+
+          const otherInput = createElement('input', {
+            type: 'text',
+            placeholder: 'Specify other reason...',
+            class: 'other-input'
+          }, {
+            width: '100%',
+            padding: '8px',
+            border: '1px solid #e2e8f0',
+            borderRadius: '6px',
+            fontSize: '14px'
+          });
+
+          otherInputContainer.appendChild(otherInput);
+          rcCheckboxes.appendChild(otherInputContainer);
+
+          // Point of Action section
+          const poaSection = createElement('div');
+          const poaLabel = createElement('label', {
+            textContent: 'Point of Action:'
+          }, {
+            display: 'block',
+            marginBottom: '8px',
+            color: '#2c3e50',
+            fontWeight: '600',
+            fontSize: '14px'
+          });
+
+          const poaSelect = createElement('select', {
+            class: 'poa-select'
+          }, {
+            width: '100%',
+            padding: '10px 12px',
+            border: '1px solid #e2e8f0',
+            borderRadius: '6px',
+            fontSize: '14px',
+            backgroundColor: 'white',
+            cursor: 'pointer',
+            color: '#2c3e50',
+            appearance: 'none'
+          });
+
+          ['', 'Rescue Planned', 'Support Requested', 'Monitoring', 'No Action Required'].forEach(option => {
+            const optionElement = createElement('option', {
+              value: option,
+              textContent: option || 'Select a point of action...'
+            });
+            poaSelect.appendChild(optionElement);
+          });
+
+          // Assemble all elements
+          rcSection.appendChild(rcLabel);
+          rcSection.appendChild(rcCheckboxes);
+          poaSection.appendChild(poaLabel);
+          poaSection.appendChild(poaSelect);
+          content.appendChild(rcSection);
+          content.appendChild(poaSection);
+          container.appendChild(header);
+          container.appendChild(content);
+
+          routeDetails.appendChild(container);
 
           // Add event listener for Other checkbox
           const otherCheckbox = container.querySelector('.other-checkbox');
-          const otherInputContainer = container.querySelector('.other-input-container');
-          
           otherCheckbox.addEventListener('change', (e) => {
             otherInputContainer.style.display = e.target.checked ? 'block' : 'none';
           });
-
-          // Add event listener for POA select
-          const poaSelect = container.querySelector('.poa-select');
-          const poaOtherContainer = container.querySelector('.poa-other-container');
-          
-          poaSelect.addEventListener('change', (e) => {
-            poaOtherContainer.style.display = e.target.value === 'Other' ? 'block' : 'none';
-          });
-
-          routeDetails.appendChild(container);
         });
 
         // Add change event listeners to all DA dropdowns
@@ -600,7 +766,6 @@
       });
 
       // Update download functionality to include RC and POA
-      const downloadBtn = modal.querySelector("#download-btn");
       downloadBtn.onclick = () => {
         // Get current date and time
         const now = new Date();
