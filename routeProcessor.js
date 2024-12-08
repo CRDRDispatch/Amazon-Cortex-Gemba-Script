@@ -193,6 +193,83 @@
     // Add the modal to the document body
     document.body.appendChild(modal);
 
+    const setupModalDragging = (modal) => {
+      let isDragging = false;
+      let startX;
+      let startY;
+      let startLeft;
+      let startTop;
+
+      const dragStart = (e) => {
+        if (e.target.closest('button') || e.target.closest('select')) return;
+
+        isDragging = true;
+        const rect = modal.getBoundingClientRect();
+        
+        if (e.type === "touchstart") {
+          startX = e.touches[0].clientX;
+          startY = e.touches[0].clientY;
+        } else {
+          startX = e.clientX;
+          startY = e.clientY;
+        }
+        
+        startLeft = rect.left;
+        startTop = rect.top;
+        modal.style.cursor = 'grabbing';
+      };
+
+      const dragEnd = () => {
+        isDragging = false;
+        modal.style.cursor = 'move';
+      };
+
+      const drag = (e) => {
+        if (!isDragging) return;
+        e.preventDefault();
+
+        let clientX, clientY;
+        if (e.type === "touchmove") {
+          clientX = e.touches[0].clientX;
+          clientY = e.touches[0].clientY;
+        } else {
+          clientX = e.clientX;
+          clientY = e.clientY;
+        }
+
+        const deltaX = clientX - startX;
+        const deltaY = clientY - startY;
+
+        const newLeft = startLeft + deltaX;
+        const newTop = startTop + deltaY;
+
+        // Keep modal within viewport bounds
+        const maxX = window.innerWidth - modal.offsetWidth;
+        const maxY = window.innerHeight - modal.offsetHeight;
+
+        modal.style.left = Math.max(0, Math.min(newLeft, maxX)) + 'px';
+        modal.style.top = Math.max(0, Math.min(newTop, maxY)) + 'px';
+        modal.style.transform = 'none';
+      };
+
+      modal.addEventListener("mousedown", dragStart);
+      document.addEventListener("mousemove", drag);
+      document.addEventListener("mouseup", dragEnd);
+      modal.addEventListener("touchstart", dragStart, { passive: false });
+      document.addEventListener("touchmove", drag, { passive: false });
+      document.addEventListener("touchend", dragEnd);
+
+      // Clean up event listeners when modal is closed
+      const closeBtn = modal.querySelector("#close-btn");
+      closeBtn.addEventListener("click", () => {
+        document.removeEventListener("mousemove", drag);
+        document.removeEventListener("mouseup", dragEnd);
+        modal.remove();
+      });
+    };
+
+    setupModalDragging(modal);
+
     return modal;
   };
 
@@ -261,59 +338,63 @@
   };
 
   async function collectRoutes(selector, routes, maxScrolls = 20, scrollDelay = 100, isV1 = false) {
-    const container = document.querySelector(selector);
-    if (!container) {
-      throw new Error(`Container not found with selector: ${selector}`);
-    }
+    console.log("Starting route collection. Selector:", selector);
+    const elements = document.querySelectorAll(selector);
+    console.log(`Found ${elements.length} route elements`);
 
-    let lastHeight = container.scrollHeight;
-    let scrollCount = 0;
-    let noNewContentCount = 0;
+    for (let i = 0; i < maxScrolls; i++) {
+      console.log(`Scroll iteration ${i + 1} of ${maxScrolls}`);
+      
+      // Process all visible elements
+      const visibleElements = document.querySelectorAll(selector);
+      console.log(`Found ${visibleElements.length} visible route elements`);
 
-    const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+      for (const el of visibleElements) {
+        const routeCodeElem = isV1
+          ? el.querySelector('[data-testid="route-code"]')
+          : el.querySelector('.css-1qmjxm9');
+        const progressElem = isV1
+          ? el.querySelector('[data-testid="route-progress"]')
+          : el.querySelector('.css-1j1ehm7');
 
-    try {
-      while (scrollCount < maxScrolls) {
-        // Extract current visible routes
-        const routeElements = container.querySelectorAll(isV1 ? '[data-testid="route-card"]' : '.css-175xrm9');
-        for (const element of routeElements) {
-          const routeCode = isV1
-            ? element.querySelector('[data-testid="route-code"]')?.textContent?.trim()
-            : element.querySelector('.css-1qmjxm9')?.textContent?.trim();
+        if (!routeCodeElem || !progressElem) continue;
 
-          if (!routeCode || routes.some(r => r.routeCode === routeCode)) continue;
+        const routeCode = routeCodeElem.textContent.trim();
+        const progressText = progressElem.textContent.trim();
 
-          const progressElement = element.querySelector(isV1 ? '[data-testid="route-progress"]' : '.css-1j1ehm7');
-          if (!progressElement) continue;
-
-          const progress = progressElement.textContent.trim();
-          if (!progress.includes('behind')) continue;
-
-          const associateInfo = await extractAssociates(element, isV1);
-          routes.push({ routeCode, progress, associateInfo });
+        // Only process if it's not already in our routes array and is behind
+        if (!routes.some(r => r.routeCode === routeCode) && progressText.includes('behind')) {
+          const associateInfo = await extractAssociates(el, isV1);
+          routes.push({ 
+            routeCode, 
+            progress: progressText,
+            associateInfo 
+          });
+          console.log("Added route:", { routeCode, progress: progressText, associateInfo });
         }
-
-        // Scroll and wait
-        container.scrollTop = container.scrollHeight;
-        await wait(scrollDelay);
-
-        // Check if we've reached the bottom
-        if (container.scrollHeight === lastHeight) {
-          noNewContentCount++;
-          if (noNewContentCount >= 3) break; // Break if no new content after 3 attempts
-        } else {
-          noNewContentCount = 0;
-          lastHeight = container.scrollHeight;
-        }
-
-        scrollCount++;
       }
 
-      return routes;
-    } catch (error) {
-      console.error('Error in collectRoutes:', error);
-      throw error;
+      // Scroll to the last visible element
+      const lastElement = visibleElements[visibleElements.length - 1];
+      if (lastElement) {
+        lastElement.scrollIntoView({ behavior: "smooth", block: "end" });
+        await new Promise(resolve => setTimeout(resolve, scrollDelay));
+      } else {
+        break; // No more elements to scroll to
+      }
+
+      // Check if we've reached the bottom
+      const container = document.querySelector(selector).parentElement;
+      const atBottom = container.scrollHeight - container.scrollTop === container.clientHeight;
+      if (atBottom) {
+        console.log("Reached bottom of container");
+        break;
+      }
     }
+
+    updateProgress(`Collected ${routes.length} unique routes so far.`);
+    console.log("Completed route collection. Total routes:", routes.length);
+    return routes;
   }
 
   try {
@@ -635,79 +716,5 @@
   progressBackBtn.addEventListener("mouseout", () => {
     progressBackBtn.style.backgroundColor = "#6c757d";
     progressBackBtn.style.boxShadow = "0 2px 4px rgba(108, 117, 125, 0.2)";
-  });
-
-  // Make modal draggable
-  let isDragging = false;
-  let startX;
-  let startY;
-  let modalRect;
-
-  const dragStart = (e) => {
-    if (e.target.closest('button') || e.target.closest('select')) return;  // Don't drag when clicking buttons or dropdowns
-
-    isDragging = true;
-    modalRect = modal.getBoundingClientRect();
-    
-    if (e.type === "touchstart") {
-      startX = e.touches[0].clientX - modalRect.left;
-      startY = e.touches[0].clientY - modalRect.top;
-    } else {
-      startX = e.clientX - modalRect.left;
-      startY = e.clientY - modalRect.top;
-    }
-    
-    modal.style.cursor = 'grabbing';
-  };
-
-  const dragEnd = () => {
-    isDragging = false;
-    modal.style.cursor = 'move';
-  };
-
-  const drag = (e) => {
-    if (!isDragging) return;
-    e.preventDefault();
-
-    let x, y;
-    if (e.type === "touchmove") {
-      x = e.touches[0].clientX - startX;
-      y = e.touches[0].clientY - startY;
-    } else {
-      x = e.clientX - startX;
-      y = e.clientY - startY;
-    }
-
-    // Keep modal within viewport bounds
-    const modalWidth = modalRect.width;
-    const modalHeight = modalRect.height;
-    const maxX = window.innerWidth - modalWidth;
-    const maxY = window.innerHeight - modalHeight;
-
-    x = Math.max(0, Math.min(x, maxX));
-    y = Math.max(0, Math.min(y, maxY));
-
-    modal.style.left = x + 'px';
-    modal.style.top = y + 'px';
-    modal.style.transform = 'none';
-    modal.style.webkitTransform = 'none';
-  };
-
-  // Add passive event listeners for better performance
-  modal.addEventListener("touchstart", dragStart, { passive: false });
-  modal.addEventListener("touchend", dragEnd);
-  modal.addEventListener("touchmove", drag, { passive: false });
-  document.addEventListener("mousedown", (e) => {
-    if (modal.contains(e.target)) dragStart(e);
-  });
-  document.addEventListener("mouseup", dragEnd);
-  document.addEventListener("mousemove", drag);
-
-  // Clean up event listeners when modal is closed
-  modal.querySelector("#close-btn").addEventListener("click", () => {
-    document.removeEventListener("mousedown", dragStart);
-    document.removeEventListener("mouseup", dragEnd);
-    document.removeEventListener("mousemove", drag);
-    modal.remove();
   });
 })();
