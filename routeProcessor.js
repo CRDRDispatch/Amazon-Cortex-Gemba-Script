@@ -489,7 +489,14 @@
           });
 
           // Add checkboxes
-          ['Late Start', 'Sweeper', 'System Issues', 'Weather', 'Other'].forEach(option => {
+          [
+            'Route is spread out',
+            'DA is working at a slow pace',
+            'DA is having connection issues',
+            'High Package Count',
+            'High Stop Count',
+            'Other'
+          ].forEach(option => {
             const label = createElement('label', {}, {
               display: 'flex',
               alignItems: 'center',
@@ -565,7 +572,10 @@
             boxSizing: 'border-box'
           });
 
-          ['', 'Rescue Planned', 'Support Requested', 'Monitoring', 'No Action Required'].forEach(option => {
+          ['', 'Rescue Planned', 'Rescue Sent', 'Rescue on the way', 
+           'We\'re monitoring progress and will send a rescue if needed', 
+           'Route Complete', 'Other'
+          ].forEach(option => {
             const optionElement = createElement('option', {
               value: option,
               textContent: option || 'Select a point of action...'
