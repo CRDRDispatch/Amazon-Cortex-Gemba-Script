@@ -107,87 +107,72 @@
     modal.style.height = "600px";
     modal.style.minHeight = "500px";
     modal.style.background = "white";
-    modal.style.border = "none";
-    modal.style.boxShadow = "0 10px 25px rgba(0, 0, 0, 0.2), 0 2px 10px rgba(0, 0, 0, 0.1)";
-    modal.style.padding = "25px";
-    modal.style.borderRadius = "16px";
+    modal.style.border = "1px solid #ccc";
+    modal.style.boxShadow = "0 4px 8px rgba(0, 0, 0, 0.1)";
+    modal.style.padding = "20px";
+    modal.style.borderRadius = "8px";
     modal.style.zIndex = "10000";
     modal.style.textAlign = "center";
     modal.style.maxHeight = "90vh";
     modal.style.overflowY = "auto";
     modal.style.cursor = "move";
-    modal.style.boxSizing = "border-box";
 
     // Add resize handles
-    const createHandle = (dir) => {
-      const handle = document.createElement('div');
-      handle.className = `resize-handle resize-${dir}`;
-      handle.style.position = 'absolute';
-      handle.style.zIndex = '10001';
-      handle.style.backgroundColor = 'transparent';
+    const handles = [];
+    ['n', 's', 'e', 'w', 'ne', 'nw', 'se', 'sw'].forEach(dir => {
+        const handle = document.createElement('div');
+        handle.className = `resize-handle resize-${dir}`;
+        handle.style.position = 'absolute';
+        handle.style.background = '#00000020';
+        handle.style.zIndex = '10001';
 
-      if (dir === 'n') {
-        handle.style.top = '-4px';
-        handle.style.left = '0';
-        handle.style.width = '100%';
-        handle.style.height = '8px';
-        handle.style.cursor = 'n-resize';
-      } else if (dir === 's') {
-        handle.style.bottom = '-4px';
-        handle.style.left = '0';
-        handle.style.width = '100%';
-        handle.style.height = '8px';
-        handle.style.cursor = 's-resize';
-      } else if (dir === 'e') {
-        handle.style.right = '-4px';
-        handle.style.top = '0';
-        handle.style.width = '8px';
-        handle.style.height = '100%';
-        handle.style.cursor = 'e-resize';
-      } else if (dir === 'w') {
-        handle.style.left = '-4px';
-        handle.style.top = '0';
-        handle.style.width = '8px';
-        handle.style.height = '100%';
-        handle.style.cursor = 'w-resize';
-      } else if (dir === 'ne') {
-        handle.style.right = '-4px';
-        handle.style.top = '-4px';
-        handle.style.width = '16px';
-        handle.style.height = '16px';
-        handle.style.cursor = 'ne-resize';
-      } else if (dir === 'nw') {
-        handle.style.left = '-4px';
-        handle.style.top = '-4px';
-        handle.style.width = '16px';
-        handle.style.height = '16px';
-        handle.style.cursor = 'nw-resize';
-      } else if (dir === 'se') {
-        handle.style.right = '-4px';
-        handle.style.bottom = '-4px';
-        handle.style.width = '16px';
-        handle.style.height = '16px';
-        handle.style.cursor = 'se-resize';
-      } else if (dir === 'sw') {
-        handle.style.left = '-4px';
-        handle.style.bottom = '-4px';
-        handle.style.width = '16px';
-        handle.style.height = '16px';
-        handle.style.cursor = 'sw-resize';
-      }
-
-      modal.appendChild(handle);
-      return handle;
-    };
-
-    // Create all handles
-    const handles = ['n', 's', 'e', 'w', 'ne', 'nw', 'se', 'sw'].map(createHandle);
+        switch(dir) {
+            case 'n':
+            case 's':
+                handle.style.height = '8px';
+                handle.style.left = '0';
+                handle.style.right = '0';
+                handle.style[dir] = '-4px';
+                handle.style.cursor = `${dir}-resize`;
+                break;
+            case 'e':
+            case 'w':
+                handle.style.width = '8px';
+                handle.style.top = '0';
+                handle.style.bottom = '0';
+                handle.style[dir] = '-4px';
+                handle.style.cursor = `${dir}-resize`;
+                break;
+            default:
+                handle.style.width = '16px';
+                handle.style.height = '16px';
+                handle.style[dir[0]] = '-8px';
+                handle.style[dir[1]] = '-8px';
+                handle.style.cursor = `${dir}-resize`;
+                break;
+        }
+        
+        modal.appendChild(handle);
+        handles.push(handle);
+    });
 
     // Add modal to DOM and center it
     document.body.appendChild(modal);
-    const rect = modal.getBoundingClientRect();
-    modal.style.left = `${(window.innerWidth - rect.width) / 2}px`;
-    modal.style.top = `${(window.innerHeight - rect.height) / 2}px`;
+    setTimeout(() => {
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+        const modalRect = modal.getBoundingClientRect();
+        
+        modal.style.left = `${(viewportWidth - modalRect.width) / 2}px`;
+        modal.style.top = `${(viewportHeight - modalRect.height) / 2}px`;
+    }, 0);
+
+    // Prevent click events from bubbling up for dropdowns
+    modal.addEventListener('click', (e) => {
+        if (e.target.tagName === 'SELECT' || e.target.tagName === 'OPTION') {
+            e.stopPropagation();
+        }
+    });
 
     // Initialize state
     let isDragging = false;
