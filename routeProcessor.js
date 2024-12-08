@@ -294,54 +294,53 @@
     }
   };
 
-  async function collectRoutes(selector, routes, maxScrolls = 20, scrollDelay = 100, isV1 = false) {
-    const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
-    const container = document.querySelector(selector);
-    if (!container) {
-      throw new Error(`Container not found with selector: ${selector}`);
-    }
+  const collectRoutes = async (selector, routes, maxScrolls = 20, scrollDelay = 100, isV1 = false) => {
+    console.log("Starting route collection. Selector:", selector);
+    for (let i = 0; i < maxScrolls; i++) {
+      console.log(`Scroll iteration ${i + 1} of ${maxScrolls}`);
+      const elements = document.querySelectorAll(selector);
+      console.log(`Found ${elements.length} route elements`);
 
-    let lastHeight = container.scrollHeight;
-    let scrollCount = 0;
-    let noChangeCount = 0;
+      elements.forEach((el, index) => {
+        console.log(`Processing element ${index + 1} of ${elements.length}`);
+        const routeCodeElem = isV1
+          ? el.querySelector(".left-column.text-sm")?.firstElementChild
+          : el.querySelector(".css-1nqzkik");
+        const progressElem = isV1
+          ? el.querySelector(".complete.h-100.d-flex.justify-content-center.align-items-center.progressStatusBar")
+          : el.querySelector(".css-1xac89n.font-weight-bold");
 
-    while (scrollCount < maxScrolls) {
-      container.scrollTo(0, container.scrollHeight);
-      await delay(scrollDelay);
+        const routeCode = routeCodeElem?.textContent.trim() || routeCodeElem?.getAttribute("title");
+        const associateInfo = extractAssociates(el, isV1);
+        const progressRaw = progressElem?.textContent.trim();
+        const progress = extractBehindProgress(progressRaw); // Extract only "X behind"
 
-      const currentHeight = container.scrollHeight;
-      if (currentHeight === lastHeight) {
-        noChangeCount++;
-        if (noChangeCount >= 3) {
-          break;
+        console.log("Route Code:", routeCode);
+        console.log("Associate Info:", associateInfo);
+        console.log("Progress:", progress);
+
+        if (routeCode) {
+          const existingRouteIndex = routes.findIndex(route => route.routeCode === routeCode);
+          if (existingRouteIndex === -1) {
+            routes.push({ routeCode, associateInfo, progress });
+            console.log("Added route:", { routeCode, associateInfo, progress });
+          } else {
+            console.log("Skipped duplicate route with code:", routeCode);
+          }
+        } else {
+          console.log("Skipped route due to missing code.");
         }
-      } else {
-        noChangeCount = 0;
-      }
-      lastHeight = currentHeight;
-      scrollCount++;
+      });
+
+      elements[elements.length - 1]?.scrollIntoView({ behavior: "smooth", block: "end" });
+      await new Promise((resolve) => setTimeout(resolve, scrollDelay));
     }
 
-    const routeElements = container.querySelectorAll('[data-testid="route-card"]');
-    updateProgress(`Found ${routeElements.length} routes`);
+    updateProgress(`Collected ${routes.length} unique routes so far.`);
+    console.log("Completed route collection. Total routes:", routes.length);
+  };
 
-    routeElements.forEach(routeElement => {
-      const progressElement = routeElement.querySelector('[data-testid="progress-text"]');
-      if (!progressElement) return;
-
-      const progressText = progressElement.textContent.trim();
-      const behindProgress = extractBehindProgress(progressText);
-      if (!behindProgress) return;
-
-      const routeCode = routeElement.querySelector('[data-testid="route-code"]')?.textContent?.trim();
-      if (!routeCode) return;
-
-      const associateInfo = extractAssociates(routeElement, isV1);
-      routes.push({ routeCode, progress: progressText, associateInfo });
-    });
-  }
-
-  function createElement(tag, attributes = {}, styles = {}) {
+  const createElement = (tag, attributes = {}, styles = {}) => {
     const element = document.createElement(tag);
     Object.entries(attributes).forEach(([key, value]) => {
       if (key === 'textContent') {
@@ -354,7 +353,7 @@
       element.style[key] = value;
     });
     return element;
-  }
+  };
 
   const modal = createModal();
   const downloadBtn = modal.querySelector("#download-btn");
