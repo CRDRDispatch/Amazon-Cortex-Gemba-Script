@@ -118,17 +118,14 @@
     modal.style.cursor = "move";
 
     // Position modal in center of screen
+    document.body.appendChild(modal);
     const centerModal = () => {
-      const left = Math.max(20, (window.innerWidth - modal.offsetWidth) / 2);
-      const top = Math.max(20, (window.innerHeight - modal.offsetHeight) / 2);
+      const left = (window.innerWidth - modal.offsetWidth) / 2;
+      const top = (window.innerHeight - modal.offsetHeight) / 2;
       modal.style.left = `${left}px`;
       modal.style.top = `${top}px`;
     };
-
-    // Call after modal is added to DOM
-    requestAnimationFrame(() => {
-      centerModal();
-    });
+    centerModal();
 
     // Initialize state
     let isDragging = false;
@@ -136,6 +133,150 @@
     let currentHandle = null;
     let offsetX = 0;
     let offsetY = 0;
+    let initialWidth = 0;
+    let initialHeight = 0;
+    let initialMouseX = 0;
+    let initialMouseY = 0;
+
+    // Add resize handles
+    const handles = ['n', 's', 'e', 'w', 'ne', 'nw', 'se', 'sw'].map(dir => {
+      const handle = document.createElement('div');
+      handle.className = `resize-handle resize-${dir}`;
+      handle.style.position = 'absolute';
+      handle.style.zIndex = '10001';
+      
+      // Set size and position based on direction
+      if (dir.length === 1) {
+        // Edge handles
+        if (dir === 'n' || dir === 's') {
+          handle.style.height = '8px';
+          handle.style.width = '100%';
+          handle.style[dir] = '0';
+          handle.style.left = '0';
+          handle.style.cursor = 'ns-resize';
+        } else {
+          handle.style.width = '8px';
+          handle.style.height = '100%';
+          handle.style[dir] = '0';
+          handle.style.top = '0';
+          handle.style.cursor = 'ew-resize';
+        }
+      } else {
+        // Corner handles
+        handle.style.width = '16px';
+        handle.style.height = '16px';
+        handle.style[dir[0]] = '0';
+        handle.style[dir[1]] = '0';
+        handle.style.cursor = `${dir}-resize`;
+      }
+      
+      return handle;
+    });
+
+    handles.forEach(handle => {
+      modal.appendChild(handle);
+      handle.addEventListener('mousedown', (e) => startResize(e, handle));
+      handle.addEventListener('touchstart', (e) => startResize(e, handle));
+    });
+
+    // Resize functionality
+    const startResize = (e, handle) => {
+      e.preventDefault();
+      e.stopPropagation();
+      isResizing = true;
+      currentHandle = handle;
+      
+      const rect = modal.getBoundingClientRect();
+      initialWidth = rect.width;
+      initialHeight = rect.height;
+      
+      if (e.type === "touchstart") {
+        initialMouseX = e.touches[0].clientX;
+        initialMouseY = e.touches[0].clientY;
+      } else {
+        initialMouseX = e.clientX;
+        initialMouseY = e.clientY;
+      }
+    };
+
+    const resize = (e) => {
+      if (!isResizing) return;
+      e.preventDefault();
+      
+      let mouseX, mouseY;
+      if (e.type === "touchmove") {
+        mouseX = e.touches[0].clientX;
+        mouseY = e.touches[0].clientY;
+      } else {
+        mouseX = e.clientX;
+        mouseY = e.clientY;
+      }
+
+      const dx = mouseX - initialMouseX;
+      const dy = mouseY - initialMouseY;
+      const rect = modal.getBoundingClientRect();
+      const direction = currentHandle.className.split('resize-')[1];
+
+      let newWidth = initialWidth;
+      let newHeight = initialHeight;
+      let newLeft = rect.left;
+      let newTop = rect.top;
+
+      // Handle resizing based on direction
+      if (direction.includes('e')) {
+        newWidth = Math.max(400, initialWidth + dx);
+      }
+      if (direction.includes('w')) {
+        const adjustedWidth = Math.max(400, initialWidth - dx);
+        newWidth = adjustedWidth;
+        newLeft = rect.left + (initialWidth - adjustedWidth);
+      }
+      if (direction.includes('s')) {
+        newHeight = Math.max(500, initialHeight + dy);
+      }
+      if (direction.includes('n')) {
+        const adjustedHeight = Math.max(500, initialHeight - dy);
+        newHeight = adjustedHeight;
+        newTop = rect.top + (initialHeight - adjustedHeight);
+      }
+
+      // Apply bounds checking
+      const maxWidth = window.innerWidth - 40;
+      const maxHeight = window.innerHeight - 40;
+      newWidth = Math.min(newWidth, maxWidth);
+      newHeight = Math.min(newHeight, maxHeight);
+      newLeft = Math.max(20, Math.min(newLeft, window.innerWidth - newWidth - 20));
+      newTop = Math.max(20, Math.min(newTop, window.innerHeight - newHeight - 20));
+
+      // Update modal size and position
+      modal.style.width = `${newWidth}px`;
+      modal.style.height = `${newHeight}px`;
+      modal.style.left = `${newLeft}px`;
+      modal.style.top = `${newTop}px`;
+    };
+
+    const stopResize = () => {
+      isResizing = false;
+      currentHandle = null;
+    };
+
+    // Add document-level resize event listeners
+    document.addEventListener('mousemove', resize);
+    document.addEventListener('touchmove', resize, { passive: false });
+    document.addEventListener('mouseup', stopResize);
+    document.addEventListener('touchend', stopResize);
+
+    // Register cleanup for resize event listeners
+    registerCleanup('eventListeners', () => {
+      document.removeEventListener('mousemove', resize);
+      document.removeEventListener('touchmove', resize);
+      document.removeEventListener('mouseup', stopResize);
+      document.removeEventListener('touchend', stopResize);
+      handles.forEach(handle => {
+        handle.removeEventListener('mousedown', startResize);
+        handle.removeEventListener('touchstart', startResize);
+      });
+    });
 
     // Drag functionality
     const dragStart = (e) => {
@@ -195,152 +336,6 @@
       modal.removeEventListener("touchstart", dragStart);
       document.removeEventListener("touchmove", drag);
       document.removeEventListener("touchend", dragEnd);
-    });
-
-    // Add resize handles
-    const handles = ['n', 's', 'e', 'w', 'ne', 'nw', 'se', 'sw'].map(dir => {
-      const handle = document.createElement('div');
-      handle.className = `resize-handle resize-${dir}`;
-      handle.style.position = 'absolute';
-      handle.style.zIndex = '10001';
-      
-      // Set size and position based on direction
-      if (dir.length === 1) {
-        // Edge handles
-        if (dir === 'n' || dir === 's') {
-          handle.style.height = '8px';
-          handle.style.width = '100%';
-          handle.style[dir] = '0';
-          handle.style.left = '0';
-          handle.style.cursor = 'ns-resize';
-        } else {
-          handle.style.width = '8px';
-          handle.style.height = '100%';
-          handle.style[dir] = '0';
-          handle.style.top = '0';
-          handle.style.cursor = 'ew-resize';
-        }
-      } else {
-        // Corner handles
-        handle.style.width = '16px';
-        handle.style.height = '16px';
-        handle.style[dir[0]] = '0';
-        handle.style[dir[1]] = '0';
-        handle.style.cursor = `${dir}-resize`;
-      }
-      
-      return handle;
-    });
-
-    handles.forEach(handle => {
-      modal.appendChild(handle);
-      
-      // Add resize event listeners
-      handle.addEventListener('mousedown', (e) => startResize(e, handle));
-      handle.addEventListener('touchstart', (e) => startResize(e, handle));
-    });
-
-    // Resize functionality
-    const startResize = (e, handle) => {
-      e.preventDefault();
-      e.stopPropagation();
-      isResizing = true;
-      currentHandle = handle;
-      
-      const rect = modal.getBoundingClientRect();
-      let initialX, initialY, initialWidth, initialHeight;
-      
-      if (e.type === "touchstart") {
-        initialX = e.touches[0].clientX;
-        initialY = e.touches[0].clientY;
-      } else {
-        initialX = e.clientX;
-        initialY = e.clientY;
-      }
-
-      initialWidth = rect.width;
-      initialHeight = rect.height;
-    };
-
-    const resize = (e) => {
-      if (!isResizing) return;
-      e.preventDefault();
-      e.stopPropagation();
-
-      let mouseX, mouseY;
-      if (e.type === "touchmove") {
-        mouseX = e.touches[0].clientX;
-        mouseY = e.touches[0].clientY;
-      } else {
-        mouseX = e.clientX;
-        mouseY = e.clientY;
-      }
-
-      const dx = mouseX - initialX;
-      const dy = mouseY - initialY;
-      const direction = currentHandle.className.split('resize-')[1];
-
-      let newWidth = initialWidth;
-      let newHeight = initialHeight;
-      let newX = 0;
-      let newY = 0;
-
-      // Handle resizing based on direction
-      if (direction.includes('e')) {
-        newWidth = Math.max(400, initialWidth + dx);
-      }
-      if (direction.includes('w')) {
-        const adjustedWidth = Math.max(400, initialWidth - dx);
-        newWidth = adjustedWidth;
-        newX = initialX + (initialWidth - adjustedWidth);
-      }
-      if (direction.includes('s')) {
-        newHeight = Math.max(500, initialHeight + dy);
-      }
-      if (direction.includes('n')) {
-        const adjustedHeight = Math.max(500, initialHeight - dy);
-        newHeight = adjustedHeight;
-        newY = initialY + (initialHeight - adjustedHeight);
-      }
-
-      // Apply bounds checking
-      const maxWidth = window.innerWidth - 40;
-      const maxHeight = window.innerHeight - 40;
-      
-      newWidth = Math.min(newWidth, maxWidth);
-      newHeight = Math.min(newHeight, maxHeight);
-      
-      newX = Math.max(20, Math.min(newX, window.innerWidth - newWidth - 20));
-      newY = Math.max(20, Math.min(newY, window.innerHeight - newHeight - 20));
-
-      // Update modal size and position
-      modal.style.width = `${newWidth}px`;
-      modal.style.height = `${newHeight}px`;
-      modal.style.left = `${newX}px`;
-      modal.style.top = `${newY}px`;
-    };
-
-    const stopResize = () => {
-      isResizing = false;
-      currentHandle = null;
-    };
-
-    // Add document-level resize event listeners
-    document.addEventListener('mousemove', resize);
-    document.addEventListener('touchmove', resize);
-    document.addEventListener('mouseup', stopResize);
-    document.addEventListener('touchend', stopResize);
-
-    // Register cleanup for resize event listeners
-    registerCleanup('eventListeners', () => {
-      document.removeEventListener('mousemove', resize);
-      document.removeEventListener('touchmove', resize);
-      document.removeEventListener('mouseup', stopResize);
-      document.removeEventListener('touchend', stopResize);
-      handles.forEach(handle => {
-        handle.removeEventListener('mousedown', startResize);
-        handle.removeEventListener('touchstart', startResize);
-      });
     });
 
     // Create entrance animation
