@@ -104,15 +104,14 @@
     modal.style.position = "fixed";
     modal.style.top = "50%";
     modal.style.left = "50%";
-    modal.style.transform = "translate(-50%, -50%) translateZ(0)";
-    modal.style.webkitTransform = "translate(-50%, -50%) translateZ(0)";
+    modal.style.transform = "translate(-50%, -50%)";
     modal.style.backfaceVisibility = "hidden";
     modal.style.webkitBackfaceVisibility = "hidden";
     modal.style.perspective = "1000";
     modal.style.webkitPerspective = "1000";
-    modal.style.width = "400px";
-    modal.style.minWidth = "320px";
-    modal.style.minHeight = "400px";
+    modal.style.width = "600px";
+    modal.style.minWidth = "400px";
+    modal.style.minHeight = "500px";
     modal.style.background = "white";
     modal.style.border = "none";
     modal.style.boxShadow = "0 10px 25px rgba(0, 0, 0, 0.2), 0 2px 10px rgba(0, 0, 0, 0.1)";
@@ -141,19 +140,38 @@
     let initialWidth = 0;
     let initialHeight = 0;
 
+    // After initial render, update position to center and set initial offsets
+    requestAnimationFrame(() => {
+      const rect = modal.getBoundingClientRect();
+      xOffset = -rect.width / 2;
+      yOffset = -rect.height / 2;
+      currentX = xOffset;
+      currentY = yOffset;
+      initialX = xOffset;
+      initialY = yOffset;
+    });
+
     // Add resize handles
     const handles = ['n', 's', 'e', 'w', 'ne', 'nw', 'se', 'sw'].map(dir => {
       const handle = document.createElement('div');
       handle.className = `resize-handle resize-${dir}`;
       Object.assign(handle.style, {
         position: 'absolute',
-        width: dir.includes('e') || dir.includes('w') ? '10px' : '100%',
-        height: dir.includes('n') || dir.includes('s') ? '10px' : '100%',
-        [dir.includes('n') ? 'top' : dir.includes('s') ? 'bottom' : '']: '0',
-        [dir.includes('e') ? 'right' : dir.includes('w') ? 'left' : '']: '0',
+        width: dir.includes('e') || dir.includes('w') ? '12px' : dir.length === 2 ? '12px' : '100%',
+        height: dir.includes('n') || dir.includes('s') ? '12px' : dir.length === 2 ? '12px' : '100%',
+        [dir.includes('n') ? 'top' : dir.includes('s') ? 'bottom' : 'top']: dir.length === 2 ? (dir.includes('n') ? '0' : 'auto') : '0',
+        [dir.includes('e') ? 'right' : dir.includes('w') ? 'left' : 'left']: dir.length === 2 ? (dir.includes('w') ? '0' : 'auto') : '0',
         cursor: `${dir}-resize`,
-        zIndex: '10001'
+        zIndex: '10001',
+        backgroundColor: 'transparent'
       });
+      
+      // For corner handles, adjust positioning
+      if (dir.length === 2) {
+        if (dir.includes('s')) handle.style.bottom = '0';
+        if (dir.includes('e')) handle.style.right = '0';
+      }
+      
       return handle;
     });
 
@@ -164,11 +182,11 @@
     // Drag functionality
     const dragStart = (e) => {
       if (e.type === "touchstart") {
-        initialX = e.touches[0].clientX - xOffset;
-        initialY = e.touches[0].clientY - yOffset;
+        initialX = e.touches[0].clientX - currentX;
+        initialY = e.touches[0].clientY - currentY;
       } else {
-        initialX = e.clientX - xOffset;
-        initialY = e.clientY - yOffset;
+        initialX = e.clientX - currentX;
+        initialY = e.clientY - currentY;
       }
 
       if (e.target === modal || e.target.closest('[style*="cursor: move"]')) {
@@ -188,9 +206,6 @@
           currentY = e.clientY - initialY;
         }
 
-        xOffset = currentX;
-        yOffset = currentY;
-
         const bounds = {
           top: 20,
           bottom: window.innerHeight - modal.offsetHeight - 20,
@@ -198,11 +213,10 @@
           right: window.innerWidth - modal.offsetWidth - 20
         };
 
-        const newY = Math.min(Math.max(currentY, bounds.top - window.innerHeight/2), bounds.bottom - window.innerHeight/2);
-        const newX = Math.min(Math.max(currentX, bounds.left - window.innerWidth/2), bounds.right - window.innerWidth/2);
+        currentX = Math.min(Math.max(currentX, bounds.left), bounds.right);
+        currentY = Math.min(Math.max(currentY, bounds.top), bounds.bottom);
 
-        modal.style.transform = `translate(${newX}px, ${newY}px) translateZ(0)`;
-        modal.style.webkitTransform = `translate(${newX}px, ${newY}px) translateZ(0)`;
+        modal.style.transform = `translate(${currentX}px, ${currentY}px)`;
       }
     };
 
@@ -212,50 +226,99 @@
       isDragging = false;
     };
 
+    // Event Listeners for drag
+    modal.addEventListener("mousedown", dragStart, false);
+    document.addEventListener("mousemove", drag, false);
+    document.addEventListener("mouseup", dragEnd, false);
+    modal.addEventListener("touchstart", dragStart, false);
+    document.addEventListener("touchmove", drag, false);
+    document.addEventListener("touchend", dragEnd, false);
+
+    // Register cleanup for event listeners
+    registerCleanup('eventListeners', () => {
+      modal.removeEventListener("mousedown", dragStart);
+      document.removeEventListener("mousemove", drag);
+      document.removeEventListener("mouseup", dragEnd);
+      modal.removeEventListener("touchstart", dragStart);
+      document.removeEventListener("touchmove", drag);
+      document.removeEventListener("touchend", dragEnd);
+    });
+
     // Resize functionality
     const startResize = (e, handle) => {
       if (e.target !== handle) return;
       e.preventDefault();
       isResizing = true;
       currentHandle = handle;
-      initialWidth = modal.offsetWidth;
-      initialHeight = modal.offsetHeight;
-      initialX = e.clientX;
-      initialY = e.clientY;
+      
+      const rect = modal.getBoundingClientRect();
+      initialWidth = rect.width;
+      initialHeight = rect.height;
+      initialX = currentX;
+      initialY = currentY;
+
+      if (e.type === "touchstart") {
+        initialMouseX = e.touches[0].clientX;
+        initialMouseY = e.touches[0].clientY;
+      } else {
+        initialMouseX = e.clientX;
+        initialMouseY = e.clientY;
+      }
     };
 
     const resize = (e) => {
       if (!isResizing) return;
       e.preventDefault();
 
-      const deltaX = e.clientX - initialX;
-      const deltaY = e.clientY - initialY;
-      const direction = currentHandle.className.split('-')[2];
+      let mouseX, mouseY;
+      if (e.type === "touchmove") {
+        mouseX = e.touches[0].clientX;
+        mouseY = e.touches[0].clientY;
+      } else {
+        mouseX = e.clientX;
+        mouseY = e.clientY;
+      }
+
+      const dx = mouseX - initialMouseX;
+      const dy = mouseY - initialMouseY;
+      const className = currentHandle.className;
 
       let newWidth = initialWidth;
       let newHeight = initialHeight;
-      let newX = xOffset;
-      let newY = yOffset;
+      let newX = initialX;
+      let newY = initialY;
 
-      if (direction.includes('e')) newWidth = initialWidth + deltaX;
-      if (direction.includes('w')) {
-        newWidth = initialWidth - deltaX;
-        newX = xOffset + deltaX / 2;
-      }
-      if (direction.includes('s')) newHeight = initialHeight + deltaY;
-      if (direction.includes('n')) {
-        newHeight = initialHeight - deltaY;
-        newY = yOffset + deltaY / 2;
+      // Handle horizontal resize
+      if (className.includes('e')) {
+        newWidth = Math.max(initialWidth + dx, modal.style.minWidth.replace('px', ''));
+      } else if (className.includes('w')) {
+        const adjustedWidth = Math.max(initialWidth - dx, modal.style.minWidth.replace('px', ''));
+        if (adjustedWidth !== initialWidth) {
+          newWidth = adjustedWidth;
+          newX = initialX + (initialWidth - adjustedWidth);
+        }
       }
 
-      // Apply minimum dimensions
-      newWidth = Math.max(320, newWidth);
-      newHeight = Math.max(400, newHeight);
+      // Handle vertical resize
+      if (className.includes('s')) {
+        newHeight = Math.max(initialHeight + dy, modal.style.minHeight.replace('px', ''));
+      } else if (className.includes('n')) {
+        const adjustedHeight = Math.max(initialHeight - dy, modal.style.minHeight.replace('px', ''));
+        if (adjustedHeight !== initialHeight) {
+          newHeight = adjustedHeight;
+          newY = initialY + (initialHeight - adjustedHeight);
+        }
+      }
+
+      // Apply bounds checking
+      const maxWidth = window.innerWidth - 40; // 20px padding on each side
+      const maxHeight = window.innerHeight - 40;
+      newWidth = Math.min(newWidth, maxWidth);
+      newHeight = Math.min(newHeight, maxHeight);
 
       modal.style.width = `${newWidth}px`;
       modal.style.height = `${newHeight}px`;
-      modal.style.transform = `translate(${newX}px, ${newY}px) translateZ(0)`;
-      modal.style.webkitTransform = `translate(${newX}px, ${newY}px) translateZ(0)`;
+      modal.style.transform = `translate(${newX}px, ${newY}px)`;
     };
 
     const stopResize = () => {
@@ -295,8 +358,8 @@
 
     // Create entrance animation
     const fadeIn = modal.animate([
-      { opacity: 0, transform: 'translate(-50%, -60%) translateZ(0)', webkitTransform: 'translate(-50%, -60%) translateZ(0)' },
-      { opacity: 1, transform: 'translate(-50%, -50%) translateZ(0)', webkitTransform: 'translate(-50%, -50%) translateZ(0)' }
+      { opacity: 0, transform: 'translate(-50%, -60%)' },
+      { opacity: 1, transform: 'translate(-50%, -50%)' }
     ], {
       duration: 300,
       easing: 'ease-out',
@@ -600,8 +663,8 @@
     // Close button handler with animation
     const closeModal = async () => {
       const fadeOut = modal.animate([
-        { opacity: 1, transform: 'translate(-50%, -50%) translateZ(0)', webkitTransform: 'translate(-50%, -50%) translateZ(0)' },
-        { opacity: 0, transform: 'translate(-50%, -40%) translateZ(0)', webkitTransform: 'translate(-50%, -40%) translateZ(0)' }
+        { opacity: 1, transform: 'translate(-50%, -50%)' },
+        { opacity: 0, transform: 'translate(-50%, -40%)' }
       ], {
         duration: 200,
         easing: 'ease-in',
