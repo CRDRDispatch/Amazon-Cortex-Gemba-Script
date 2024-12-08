@@ -102,13 +102,8 @@
     const modal = document.createElement("div");
     modal.id = "custom-modal";
     modal.style.position = "fixed";
-    modal.style.top = "20%";
-    modal.style.left = "50%";
-    modal.style.transform = "translateX(-50%)";
-    modal.style.backfaceVisibility = "hidden";
-    modal.style.webkitBackfaceVisibility = "hidden";
-    modal.style.perspective = "1000";
-    modal.style.webkitPerspective = "1000";
+    modal.style.top = "100px";
+    modal.style.left = "calc(50% - 300px)"; // Half of width
     modal.style.width = "600px";
     modal.style.minWidth = "400px";
     modal.style.height = "600px";
@@ -136,10 +131,6 @@
     let currentY = 0;
     let initialX = 0;
     let initialY = 0;
-    let xOffset = 0;
-    let yOffset = 0;
-    let initialWidth = 0;
-    let initialHeight = 0;
     let initialMouseX = 0;
     let initialMouseY = 0;
 
@@ -203,11 +194,11 @@
       currentHandle = handle;
       
       const rect = modal.getBoundingClientRect();
-      initialWidth = rect.width;
-      initialHeight = rect.height;
       initialX = rect.left;
       initialY = rect.top;
-
+      initialWidth = rect.width;
+      initialHeight = rect.height;
+      
       if (e.type === "touchstart") {
         initialMouseX = e.touches[0].clientX;
         initialMouseY = e.touches[0].clientY;
@@ -261,8 +252,10 @@
       // Apply bounds checking
       const maxWidth = window.innerWidth - 40;
       const maxHeight = window.innerHeight - 40;
+      
       newWidth = Math.min(newWidth, maxWidth);
       newHeight = Math.min(newHeight, maxHeight);
+      
       newX = Math.max(20, Math.min(newX, window.innerWidth - newWidth - 20));
       newY = Math.max(20, Math.min(newY, window.innerHeight - newHeight - 20));
 
@@ -271,7 +264,6 @@
       modal.style.height = `${newHeight}px`;
       modal.style.left = `${newX}px`;
       modal.style.top = `${newY}px`;
-      modal.style.transform = 'none';
     };
 
     const stopResize = () => {
@@ -299,48 +291,54 @@
 
     // Drag functionality
     const dragStart = (e) => {
+      if (e.target.closest('.resize-handle')) return;
+      
+      const rect = modal.getBoundingClientRect();
       if (e.type === "touchstart") {
-        initialX = e.touches[0].clientX - currentX;
-        initialY = e.touches[0].clientY - currentY;
+        initialMouseX = e.touches[0].clientX;
+        initialMouseY = e.touches[0].clientY;
       } else {
-        initialX = e.clientX - currentX;
-        initialY = e.clientY - currentY;
+        initialMouseX = e.clientX;
+        initialMouseY = e.clientY;
       }
-
-      if (e.target === modal || e.target.closest('[style*="cursor: move"]')) {
-        isDragging = true;
-      }
+      
+      initialX = rect.left;
+      initialY = rect.top;
+      isDragging = true;
     };
 
     const drag = (e) => {
-      if (isDragging) {
-        e.preventDefault();
-        
-        if (e.type === "touchmove") {
-          currentX = e.touches[0].clientX - initialX;
-          currentY = e.touches[0].clientY - initialY;
-        } else {
-          currentX = e.clientX - initialX;
-          currentY = e.clientY - initialY;
-        }
-
-        const bounds = {
-          top: 20,
-          bottom: window.innerHeight - modal.offsetHeight - 20,
-          left: 20,
-          right: window.innerWidth - modal.offsetWidth - 20
-        };
-
-        currentX = Math.min(Math.max(currentX, bounds.left), bounds.right);
-        currentY = Math.min(Math.max(currentY, bounds.top), bounds.bottom);
-
-        modal.style.transform = `translate(${currentX}px, ${currentY}px)`;
+      if (!isDragging) return;
+      e.preventDefault();
+      
+      let mouseX, mouseY;
+      if (e.type === "touchmove") {
+        mouseX = e.touches[0].clientX;
+        mouseY = e.touches[0].clientY;
+      } else {
+        mouseX = e.clientX;
+        mouseY = e.clientY;
       }
+
+      const dx = mouseX - initialMouseX;
+      const dy = mouseY - initialMouseY;
+      
+      currentX = initialX + dx;
+      currentY = initialY + dy;
+
+      // Apply bounds checking
+      const rect = modal.getBoundingClientRect();
+      const maxX = window.innerWidth - rect.width - 20;
+      const maxY = window.innerHeight - rect.height - 20;
+      
+      currentX = Math.max(20, Math.min(currentX, maxX));
+      currentY = Math.max(20, Math.min(currentY, maxY));
+
+      modal.style.left = `${currentX}px`;
+      modal.style.top = `${currentY}px`;
     };
 
     const dragEnd = () => {
-      initialX = currentX;
-      initialY = currentY;
       isDragging = false;
     };
 
@@ -348,8 +346,8 @@
     modal.addEventListener("mousedown", dragStart, false);
     document.addEventListener("mousemove", drag, false);
     document.addEventListener("mouseup", dragEnd, false);
-    modal.addEventListener("touchstart", dragStart, false);
-    document.addEventListener("touchmove", drag, false);
+    modal.addEventListener("touchstart", dragStart, { passive: false });
+    document.addEventListener("touchmove", drag, { passive: false });
     document.addEventListener("touchend", dragEnd, false);
 
     // Register cleanup for event listeners
