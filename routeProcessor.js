@@ -116,16 +116,78 @@
     modal.style.maxHeight = "90vh";
     modal.style.overflowY = "auto";
     modal.style.cursor = "move";
+    modal.style.boxSizing = "border-box";
 
-    // Position modal in center of screen
-    document.body.appendChild(modal);
-    const centerModal = () => {
-      const left = (window.innerWidth - modal.offsetWidth) / 2;
-      const top = (window.innerHeight - modal.offsetHeight) / 2;
-      modal.style.left = `${left}px`;
-      modal.style.top = `${top}px`;
+    // Add resize handles
+    const createHandle = (dir) => {
+      const handle = document.createElement('div');
+      handle.className = `resize-handle resize-${dir}`;
+      handle.style.position = 'absolute';
+      handle.style.zIndex = '10001';
+      handle.style.backgroundColor = 'transparent';
+
+      if (dir === 'n') {
+        handle.style.top = '-4px';
+        handle.style.left = '0';
+        handle.style.width = '100%';
+        handle.style.height = '8px';
+        handle.style.cursor = 'n-resize';
+      } else if (dir === 's') {
+        handle.style.bottom = '-4px';
+        handle.style.left = '0';
+        handle.style.width = '100%';
+        handle.style.height = '8px';
+        handle.style.cursor = 's-resize';
+      } else if (dir === 'e') {
+        handle.style.right = '-4px';
+        handle.style.top = '0';
+        handle.style.width = '8px';
+        handle.style.height = '100%';
+        handle.style.cursor = 'e-resize';
+      } else if (dir === 'w') {
+        handle.style.left = '-4px';
+        handle.style.top = '0';
+        handle.style.width = '8px';
+        handle.style.height = '100%';
+        handle.style.cursor = 'w-resize';
+      } else if (dir === 'ne') {
+        handle.style.right = '-4px';
+        handle.style.top = '-4px';
+        handle.style.width = '16px';
+        handle.style.height = '16px';
+        handle.style.cursor = 'ne-resize';
+      } else if (dir === 'nw') {
+        handle.style.left = '-4px';
+        handle.style.top = '-4px';
+        handle.style.width = '16px';
+        handle.style.height = '16px';
+        handle.style.cursor = 'nw-resize';
+      } else if (dir === 'se') {
+        handle.style.right = '-4px';
+        handle.style.bottom = '-4px';
+        handle.style.width = '16px';
+        handle.style.height = '16px';
+        handle.style.cursor = 'se-resize';
+      } else if (dir === 'sw') {
+        handle.style.left = '-4px';
+        handle.style.bottom = '-4px';
+        handle.style.width = '16px';
+        handle.style.height = '16px';
+        handle.style.cursor = 'sw-resize';
+      }
+
+      modal.appendChild(handle);
+      return handle;
     };
-    centerModal();
+
+    // Create all handles
+    const handles = ['n', 's', 'e', 'w', 'ne', 'nw', 'se', 'sw'].map(createHandle);
+
+    // Add modal to DOM and center it
+    document.body.appendChild(modal);
+    const rect = modal.getBoundingClientRect();
+    modal.style.left = `${(window.innerWidth - rect.width) / 2}px`;
+    modal.style.top = `${(window.innerHeight - rect.height) / 2}px`;
 
     // Initialize state
     let isDragging = false;
@@ -137,47 +199,6 @@
     let initialHeight = 0;
     let initialMouseX = 0;
     let initialMouseY = 0;
-
-    // Add resize handles
-    const handles = ['n', 's', 'e', 'w', 'ne', 'nw', 'se', 'sw'].map(dir => {
-      const handle = document.createElement('div');
-      handle.className = `resize-handle resize-${dir}`;
-      handle.style.position = 'absolute';
-      handle.style.zIndex = '10001';
-      
-      // Set size and position based on direction
-      if (dir.length === 1) {
-        // Edge handles
-        if (dir === 'n' || dir === 's') {
-          handle.style.height = '8px';
-          handle.style.width = '100%';
-          handle.style[dir] = '0';
-          handle.style.left = '0';
-          handle.style.cursor = 'ns-resize';
-        } else {
-          handle.style.width = '8px';
-          handle.style.height = '100%';
-          handle.style[dir] = '0';
-          handle.style.top = '0';
-          handle.style.cursor = 'ew-resize';
-        }
-      } else {
-        // Corner handles
-        handle.style.width = '16px';
-        handle.style.height = '16px';
-        handle.style[dir[0]] = '0';
-        handle.style[dir[1]] = '0';
-        handle.style.cursor = `${dir}-resize`;
-      }
-      
-      return handle;
-    });
-
-    handles.forEach(handle => {
-      modal.appendChild(handle);
-      handle.addEventListener('mousedown', (e) => startResize(e, handle));
-      handle.addEventListener('touchstart', (e) => startResize(e, handle));
-    });
 
     // Resize functionality
     const startResize = (e, handle) => {
@@ -204,6 +225,7 @@
       e.preventDefault();
       
       let mouseX, mouseY;
+      
       if (e.type === "touchmove") {
         mouseX = e.touches[0].clientX;
         mouseY = e.touches[0].clientY;
