@@ -399,14 +399,81 @@
     if (behindRoutes.length > 0) {
       const daSelectionSection = modal.querySelector("#da-selection-section");
       const daDropdowns = modal.querySelector("#da-dropdowns");
+      const previewSection = modal.querySelector("#preview-section");
+      const routeDetails = modal.querySelector("#route-details");
       
-      // Show the DA selection section
-      daSelectionSection.style.display = "block";
+      // Show DA selection section if any route has multiple DAs
+      const hasMultipleDAs = behindRoutes.some(route => route.associateInfo.split(", ").length > 1);
+      if (hasMultipleDAs) {
+        daSelectionSection.style.display = "block";
+        previewSection.style.display = "none";
+      } else {
+        daSelectionSection.style.display = "none";
+        previewSection.style.display = "block";
+      }
 
-      // Create dropdowns for routes with multiple DAs
+      // Create DA selection dropdowns for routes with multiple DAs
       behindRoutes.forEach((route) => {
         const das = route.associateInfo.split(", ");
         if (das.length > 1) {
+          const container = createElement('div', {}, {
+            marginBottom: '15px',
+            padding: '15px',
+            background: 'white',
+            borderRadius: '8px',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+            border: '1px solid #edf2f7'
+          });
+          
+          const label = createElement('label', {
+            textContent: `${route.routeCode} (${route.progress}):`
+          }, {
+            display: 'block',
+            marginBottom: '8px',
+            fontWeight: '600',
+            color: '#2c3e50'
+          });
+          
+          const select = createElement('select', {}, {
+            width: '100%',
+            padding: '8px 12px',
+            borderRadius: '6px',
+            border: '1px solid #ddd',
+            backgroundColor: '#f8f9fa',
+            cursor: 'pointer',
+            color: '#2c3e50',
+            fontSize: '14px'
+          });
+          select.dataset.routeCode = route.routeCode;
+          
+          das.forEach((da) => {
+            const option = createElement('option', {
+              value: da,
+              textContent: da
+            });
+            select.appendChild(option);
+          });
+          
+          container.appendChild(label);
+          container.appendChild(select);
+          daDropdowns.appendChild(container);
+        }
+      });
+
+      // Add Next button functionality
+      const nextBtn = modal.querySelector("#da-next-btn");
+      nextBtn.addEventListener("click", () => {
+        daSelectionSection.style.display = "none";
+        previewSection.style.display = "block";
+
+        // Clear existing route details
+        routeDetails.innerHTML = '';
+
+        // Create route detail inputs
+        behindRoutes.forEach((route) => {
+          const select = daDropdowns.querySelector(`select[data-route-code="${route.routeCode}"]`);
+          const associateInfo = select ? select.value : route.associateInfo;
+
           const container = createElement('div', {
             class: 'route-detail-container',
             'data-route-code': route.routeCode
@@ -439,7 +506,7 @@
           });
 
           const routeSpan = createElement('span', {
-            textContent: `${route.routeCode}: ${route.associateInfo}`
+            textContent: `${route.routeCode}: ${associateInfo}`
           });
 
           const progressSpan = createElement('span', {
@@ -455,9 +522,10 @@
           title.appendChild(routeSpan);
           title.appendChild(progressSpan);
           header.appendChild(title);
+          container.appendChild(header);
 
           // Create content section
-          const content = createElement('div', {}, { 
+          const content = createElement('div', {}, {
             padding: '15px',
             width: '100%',
             boxSizing: 'border-box'
@@ -488,7 +556,7 @@
             boxSizing: 'border-box'
           });
 
-          // Add checkboxes
+          // Add checkboxes with original options
           [
             'Route is spread out',
             'DA is working at a slow pace',
@@ -572,6 +640,7 @@
             boxSizing: 'border-box'
           });
 
+          // Add original POA options
           ['', 'Rescue Planned', 'Rescue Sent', 'Rescue on the way', 
            'We\'re monitoring progress and will send a rescue if needed', 
            'Route Complete', 'Other'
@@ -590,37 +659,16 @@
           poaSection.appendChild(poaSelect);
           content.appendChild(rcSection);
           content.appendChild(poaSection);
-          container.appendChild(header);
           container.appendChild(content);
 
-          daDropdowns.appendChild(container);
+          routeDetails.appendChild(container);
 
           // Add event listener for Other checkbox
           const otherCheckbox = container.querySelector('.other-checkbox');
           otherCheckbox.addEventListener('change', (e) => {
             otherInputContainer.style.display = e.target.checked ? 'block' : 'none';
           });
-        }
-      });
-
-      // Add Next button functionality
-      const nextBtn = modal.querySelector("#da-next-btn");
-      const previewSection = modal.querySelector("#preview-section");
-      const dspProgressSection = modal.querySelector("#dsp-progress-section");
-      const routeDetails = modal.querySelector("#route-details");
-
-      nextBtn.addEventListener("click", () => {
-        const hasMultipleDAs = behindRoutes.some(route => route.associateInfo.split(", ").length > 1);
-        
-        if (hasMultipleDAs) {
-          daSelectionSection.style.display = "block";
-          previewSection.style.display = "none";
-          dspProgressSection.style.display = "none";
-        } else {
-          daSelectionSection.style.display = "none";
-          previewSection.style.display = "block";
-          dspProgressSection.style.display = "none";
-        }
+        });
       });
 
       // Add change event listeners to all DA dropdowns
