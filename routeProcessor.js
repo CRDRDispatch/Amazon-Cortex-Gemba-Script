@@ -2,229 +2,192 @@
   const createModal = () => {
     const modal = document.createElement("div");
     modal.id = "custom-modal";
-    modal.style.position = "fixed";
-    modal.style.top = "50%";
-    modal.style.left = "50%";
-    modal.style.transform = "translate(-50%, -50%) translateZ(0)";
-    modal.style.webkitTransform = "translate(-50%, -50%) translateZ(0)";
-    modal.style.backfaceVisibility = "hidden";
-    modal.style.webkitBackfaceVisibility = "hidden";
-    modal.style.perspective = "1000";
-    modal.style.webkitPerspective = "1000";
-    modal.style.width = "400px";
-    modal.style.background = "white";
-    modal.style.border = "none";
-    modal.style.boxShadow = "0 10px 25px rgba(0, 0, 0, 0.2), 0 2px 10px rgba(0, 0, 0, 0.1)";
-    modal.style.padding = "25px";
-    modal.style.borderRadius = "16px";
-    modal.style.zIndex = "10000";
-    modal.style.textAlign = "center";
-    modal.style.maxHeight = "90vh";
-    modal.style.overflowY = "auto";
-    modal.style.willChange = "transform";
-    modal.style.isolation = "isolate";
-    modal.style.cursor = "move";  // Indicate draggable
+    Object.assign(modal.style, {
+      position: "fixed",
+      top: "50%",
+      left: "50%",
+      transform: "translate(-50%, -50%) translateZ(0)",
+      width: "400px",
+      background: "white",
+      border: "none",
+      boxShadow: "0 10px 25px rgba(0, 0, 0, 0.2), 0 2px 10px rgba(0, 0, 0, 0.1)",
+      padding: "25px",
+      borderRadius: "16px",
+      zIndex: "10000",
+      textAlign: "center",
+      maxHeight: "90vh",
+      overflowY: "auto",
+      willChange: "transform",
+      isolation: "isolate",
+      cursor: "move"
+    });
 
-    modal.innerHTML = `
-      <button id="close-btn" style="position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 18px; cursor: pointer; color: #666; transition: color 0.2s ease;">✖</button>
-      <div style="margin-bottom: 25px; cursor: move;">
-        <img src="https://crdrdispatch.github.io/GembaScript/Logo.svg" alt="Logo" style="height: 90px; display: block; margin: 0 auto; -webkit-transform: translateZ(0); transform: translateZ(0); pointer-events: none;">
-      </div>
-      <h2 style="font-family: Arial, sans-serif; margin-bottom: 25px; border-bottom: 2px solid #eee; padding-bottom: 15px; color: #2c3e50; font-size: 24px;">Gimme That GEMBA</h2>
-      <div id="progress-section" style="margin-bottom: 30px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-          <div style="display: flex; align-items: center; gap: 10px;">
-            <h3 style="font-family: Arial, sans-serif; font-size: 16px; color: #2c3e50; margin: 0; font-weight: 600;">Progress</h3>
-            <span id="progress-status" style="display: none; font-size: 12px; padding: 3px 10px; border-radius: 20px; background-color: #4CAF50; color: white; font-weight: 500; box-shadow: 0 2px 4px rgba(76, 175, 80, 0.2);">Complete</span>
-          </div>
-          <button id="toggle-progress" style="background: none; border: none; color: #666; cursor: pointer; font-size: 14px; padding: 5px 10px; border-radius: 5px; transition: background-color 0.2s ease;">Hide</button>
-        </div>
-        <div id="progress-details" style="font-family: Arial, sans-serif; text-align: left; margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 12px; border: 1px solid #edf2f7;">
-          <p>Initializing...</p>
-        </div>
-      </div>
-      <div id="da-selection-section" style="display: none; margin-bottom: 30px;">
-        <h3 style="font-family: Arial, sans-serif; font-size: 16px; color: #2c3e50; margin-bottom: 12px; font-weight: 600;">These routes have multiple DAs. Please select the DA assigned to the route.</h3>
-        <div id="da-dropdowns" style="max-height: 400px; overflow-y: auto; padding: 15px; background: #f8f9fa; border-radius: 12px; border: 1px solid #edf2f7;">
-        </div>
-        <div style="margin-top: 20px; text-align: right;">
-          <button id="da-next-btn" style="padding: 12px 30px; background-color: #4CAF50; color: white; border: none; border-radius: 8px; cursor: pointer; font-family: Arial, sans-serif; font-weight: 500; font-size: 15px; box-shadow: 0 4px 6px rgba(76, 175, 80, 0.2); transition: all 0.2s ease;">Next</button>
-        </div>
-      </div>
-      <div id="preview-section" style="display: none; margin-bottom: 30px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-          <button id="back-btn" style="padding: 8px 16px; background-color: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer; font-family: Arial, sans-serif; font-weight: 500; font-size: 14px; box-shadow: 0 2px 4px rgba(108, 117, 125, 0.2); transition: all 0.2s ease; display: flex; align-items: center; gap: 6px;">
-            <span style="font-size: 18px;">←</span> Back
-          </button>
-          <h3 style="font-family: Arial, sans-serif; font-size: 16px; color: #2c3e50; margin: 0; font-weight: 600;">Route Details</h3>
-          <div style="width: 80px;"></div>
-        </div>
-        <div id="route-details" style="max-height: 400px; overflow-y: auto; padding: 15px; background: #f8f9fa; border-radius: 12px; border: 1px solid #edf2f7; scrollbar-width: thin; scrollbar-color: #cbd5e0 #f8f9fa;">
-        </div>
-        <div style="display: flex; justify-content: flex-end; margin-top: 20px;">
-          <button id="preview-next-btn" style="padding: 12px 30px; background-color: #4CAF50; color: white; border: none; border-radius: 8px; cursor: pointer; font-family: Arial, sans-serif; font-weight: 500; font-size: 15px; box-shadow: 0 4px 6px rgba(76, 175, 80, 0.2); transition: all 0.2s ease;">Next</button>
-        </div>
-      </div>
-      <div id="dsp-progress-section" style="display: none;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-          <button id="progress-back-btn" style="padding: 8px 16px; background-color: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer; font-family: Arial, sans-serif; font-weight: 500; font-size: 14px; box-shadow: 0 2px 4px rgba(108, 117, 125, 0.2); transition: all 0.2s ease; display: flex; align-items: center; gap: 6px;">
-            <span style="font-size: 18px;">←</span> Back
-          </button>
-          <h3 style="font-family: Arial, sans-serif; font-size: 16px; color: #2c3e50; margin: 0; font-weight: 600;">DSP Total Progress</h3>
-          <div style="width: 80px;"></div>
-        </div>
-        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin-bottom: 30px;">
-          <div class="input-group">
-            <label style="display: block; margin-bottom: 8px; color: #2c3e50; font-weight: 600; font-size: 14px;">In Progress:</label>
-            <input type="number" id="in-progress-input" class="progress-input" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px;" min="0">
-          </div>
-          <div class="input-group">
-            <label style="display: block; margin-bottom: 8px; color: #2c3e50; font-weight: 600; font-size: 14px;">At Risk:</label>
-            <input type="number" id="at-risk-input" class="progress-input" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px;" min="0">
-          </div>
-          <div class="input-group">
-            <label style="display: block; margin-bottom: 8px; color: #2c3e50; font-weight: 600; font-size: 14px;">Behind:</label>
-            <input type="number" id="behind-input" class="progress-input" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px;" min="0">
-          </div>
-          <div class="input-group">
-            <label style="display: block; margin-bottom: 8px; color: #2c3e50; font-weight: 600; font-size: 14px;">Package Progress:</label>
-            <input type="number" id="package-progress-input" class="progress-input" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px;" min="0" max="100">
-          </div>
-        </div>
-        <div style="text-align: center;">
-          <button id="download-btn" style="padding: 12px 30px; background-color: #4CAF50; color: white; border: none; border-radius: 8px; cursor: pointer; font-family: Arial, sans-serif; font-weight: 500; font-size: 15px; box-shadow: 0 4px 6px rgba(76, 175, 80, 0.2); transition: all 0.2s ease; display: inline-flex; align-items: center; gap: 8px;">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M8 12L3 7L4.4 5.55L7 8.15V0H9V8.15L11.6 5.55L13 7L8 12ZM2 16C1.45 16 0.979333 15.8043 0.588 15.413C0.196667 15.0217 0.001333 14.5507 0 14V11H2V14H14V11H16V14C16 14.55 15.8043 15.021 15.413 15.413C15.0217 15.805 14.5507 16 14 16H2Z" fill="white"/>
-            </svg>
-            Download File
-          </button>
-        </div>
-      </div>
-    `;
+    // Create close button
+    const closeBtn = document.createElement("button");
+    closeBtn.id = "close-btn";
+    Object.assign(closeBtn.style, {
+      position: "absolute",
+      top: "15px",
+      right: "15px",
+      background: "none",
+      border: "none",
+      fontSize: "18px",
+      cursor: "pointer",
+      color: "#666",
+      transition: "color 0.2s ease"
+    });
+    closeBtn.textContent = "✖";
+    modal.appendChild(closeBtn);
 
-    // Add hover effects
-    const closeBtn = modal.querySelector("#close-btn");
+    // Create logo container
+    const logoContainer = document.createElement("div");
+    logoContainer.style.marginBottom = "25px";
+    logoContainer.style.cursor = "move";
+  
+    const logoImg = document.createElement("img");
+    logoImg.src = "https://crdrdispatch.github.io/GembaScript/Logo.svg";
+    logoImg.alt = "Logo";
+    Object.assign(logoImg.style, {
+      height: "90px",
+      display: "block",
+      margin: "0 auto",
+      transform: "translateZ(0)",
+      pointerEvents: "none"
+    });
+    logoContainer.appendChild(logoImg);
+    modal.appendChild(logoContainer);
+
+    // Create title
+    const title = document.createElement("h2");
+    Object.assign(title.style, {
+      fontFamily: "Arial, sans-serif",
+      marginBottom: "25px",
+      borderBottom: "2px solid #eee",
+      paddingBottom: "15px",
+      color: "#2c3e50",
+      fontSize: "24px"
+    });
+    title.textContent = "Gimme That GEMBA";
+    modal.appendChild(title);
+
+    // Create sections
+    const createSection = (id, style = {}) => {
+      const section = document.createElement("div");
+      section.id = id;
+      Object.assign(section.style, {
+        marginBottom: "30px",
+        display: "none",
+        ...style
+      });
+      return section;
+    };
+
+    // Progress section
+    const progressSection = createSection("progress-section", { display: "block" });
+    const progressHeader = document.createElement("div");
+    Object.assign(progressHeader.style, {
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      marginBottom: "12px"
+    });
+
+    const progressTitle = document.createElement("div");
+    progressTitle.style.display = "flex";
+    progressTitle.style.alignItems = "center";
+    progressTitle.style.gap = "10px";
+
+    const progressH3 = document.createElement("h3");
+    Object.assign(progressH3.style, {
+      fontFamily: "Arial, sans-serif",
+      fontSize: "16px",
+      color: "#2c3e50",
+      margin: "0",
+      fontWeight: "600"
+    });
+    progressH3.textContent = "Progress";
+    progressTitle.appendChild(progressH3);
+
+    const progressStatus = document.createElement("span");
+    progressStatus.id = "progress-status";
+    Object.assign(progressStatus.style, {
+      display: "none",
+      fontSize: "12px",
+      padding: "3px 10px",
+      borderRadius: "20px",
+      backgroundColor: "#4CAF50",
+      color: "white",
+      fontWeight: "500",
+      boxShadow: "0 2px 4px rgba(76, 175, 80, 0.2)"
+    });
+    progressStatus.textContent = "Complete";
+    progressTitle.appendChild(progressStatus);
+
+    const toggleBtn = document.createElement("button");
+    toggleBtn.id = "toggle-progress";
+    Object.assign(toggleBtn.style, {
+      background: "none",
+      border: "none",
+      color: "#666",
+      cursor: "pointer",
+      fontSize: "14px",
+      padding: "5px 10px",
+      borderRadius: "5px",
+      transition: "background-color 0.2s ease"
+    });
+    toggleBtn.textContent = "Hide";
+
+    progressHeader.appendChild(progressTitle);
+    progressHeader.appendChild(toggleBtn);
+    progressSection.appendChild(progressHeader);
+
+    const progressDetails = document.createElement("div");
+    progressDetails.id = "progress-details";
+    Object.assign(progressDetails.style, {
+      fontFamily: "Arial, sans-serif",
+      textAlign: "left",
+      marginBottom: "20px",
+      padding: "15px",
+      background: "#f8f9fa",
+      borderRadius: "12px",
+      border: "1px solid #edf2f7"
+    });
+  
+    const initText = document.createElement("p");
+    initText.textContent = "Initializing...";
+    progressDetails.appendChild(initText);
+    progressSection.appendChild(progressDetails);
+
+    modal.appendChild(progressSection);
+
+    // Add remaining sections (DA Selection, Preview, DSP Progress)
+    const daSelectionSection = createSection("da-selection-section");
+    const previewSection = createSection("preview-section");
+    const dspProgressSection = createSection("dsp-progress-section");
+  
+    modal.appendChild(daSelectionSection);
+    modal.appendChild(previewSection);
+    modal.appendChild(dspProgressSection);
+
+    // Add event listeners
     closeBtn.addEventListener("mouseover", () => closeBtn.style.color = "#ff4444");
     closeBtn.addEventListener("mouseout", () => closeBtn.style.color = "#666");
 
-    const modalToggleBtn = modal.querySelector("#toggle-progress");
-    const progressDetails = modal.querySelector("#progress-details");
-    
-    modalToggleBtn.addEventListener("mouseover", () => {
-      modalToggleBtn.style.backgroundColor = "#f0f0f0";
+    toggleBtn.addEventListener("mouseover", () => {
+      toggleBtn.style.backgroundColor = "#f0f0f0";
     });
-    modalToggleBtn.addEventListener("mouseout", () => {
-      modalToggleBtn.style.backgroundColor = "transparent";
+    toggleBtn.addEventListener("mouseout", () => {
+      toggleBtn.style.backgroundColor = "transparent";
     });
-    
-    // Add toggle functionality
-    modalToggleBtn.addEventListener("click", () => {
+
+    toggleBtn.addEventListener("click", () => {
       if (progressDetails.style.display === "none") {
         progressDetails.style.display = "block";
-        modalToggleBtn.textContent = "Hide";
+        toggleBtn.textContent = "Hide";
       } else {
         progressDetails.style.display = "none";
-        modalToggleBtn.textContent = "Show";
+        toggleBtn.textContent = "Show";
       }
-    });
-
-    const nextButtons = modal.querySelectorAll("#da-next-btn, #preview-next-btn");
-    nextButtons.forEach(btn => {
-      btn.addEventListener("mouseover", () => {
-        btn.style.backgroundColor = "#45a049";
-        btn.style.boxShadow = "0 6px 8px rgba(76, 175, 80, 0.3)";
-      });
-      
-      btn.addEventListener("mouseout", () => {
-        btn.style.backgroundColor = "#4CAF50";
-        btn.style.boxShadow = "0 4px 6px rgba(76, 175, 80, 0.2)";
-      });
-    });
-
-    const downloadBtn = modal.querySelector("#download-btn");
-    downloadBtn.addEventListener("mouseover", () => {
-      downloadBtn.style.backgroundColor = "#45a049";
-      downloadBtn.style.boxShadow = "0 6px 8px rgba(76, 175, 80, 0.3)";
-    });
-    downloadBtn.addEventListener("mouseout", () => {
-      downloadBtn.style.backgroundColor = "#4CAF50";
-      downloadBtn.style.boxShadow = "0 4px 6px rgba(76, 175, 80, 0.2)";
-    });
-
-    document.body.appendChild(modal);
-
-    // Make modal draggable
-    let isDragging = false;
-    let startX;
-    let startY;
-    let modalRect;
-
-    const dragStart = (e) => {
-      if (e.target.closest('button') || e.target.closest('select')) return;  // Don't drag when clicking buttons or dropdowns
-
-      isDragging = true;
-      modalRect = modal.getBoundingClientRect();
-      
-      if (e.type === "touchstart") {
-        startX = e.touches[0].clientX - modalRect.left;
-        startY = e.touches[0].clientY - modalRect.top;
-      } else {
-        startX = e.clientX - modalRect.left;
-        startY = e.clientY - modalRect.top;
-      }
-      
-      modal.style.cursor = 'grabbing';
-    };
-
-    const dragEnd = () => {
-      isDragging = false;
-      modal.style.cursor = 'move';
-    };
-
-    const drag = (e) => {
-      if (!isDragging) return;
-      e.preventDefault();
-
-      let x, y;
-      if (e.type === "touchmove") {
-        x = e.touches[0].clientX - startX;
-        y = e.touches[0].clientY - startY;
-      } else {
-        x = e.clientX - startX;
-        y = e.clientY - startY;
-      }
-
-      // Keep modal within viewport bounds
-      const modalWidth = modalRect.width;
-      const modalHeight = modalRect.height;
-      const maxX = window.innerWidth - modalWidth;
-      const maxY = window.innerHeight - modalHeight;
-
-      x = Math.max(0, Math.min(x, maxX));
-      y = Math.max(0, Math.min(y, maxY));
-
-      modal.style.left = x + 'px';
-      modal.style.top = y + 'px';
-      modal.style.transform = 'none';
-      modal.style.webkitTransform = 'none';
-    };
-
-    // Add passive event listeners for better performance
-    modal.addEventListener("touchstart", dragStart, { passive: false });
-    modal.addEventListener("touchend", dragEnd);
-    modal.addEventListener("touchmove", drag, { passive: false });
-    document.addEventListener("mousedown", (e) => {
-      if (modal.contains(e.target)) dragStart(e);
-    });
-    document.addEventListener("mouseup", dragEnd);
-    document.addEventListener("mousemove", drag);
-
-    // Clean up event listeners when modal is closed
-    modal.querySelector("#close-btn").addEventListener("click", () => {
-      document.removeEventListener("mousedown", dragStart);
-      document.removeEventListener("mouseup", dragEnd);
-      document.removeEventListener("mousemove", drag);
-      modal.remove();
     });
 
     return modal;
@@ -294,51 +257,61 @@
     }
   };
 
-  const collectRoutes = async (selector, routes, maxScrolls = 20, scrollDelay = 100, isV1 = false) => {
-    console.log("Starting route collection. Selector:", selector);
-    for (let i = 0; i < maxScrolls; i++) {
-      console.log(`Scroll iteration ${i + 1} of ${maxScrolls}`);
-      const elements = document.querySelectorAll(selector);
-      console.log(`Found ${elements.length} route elements`);
-
-      elements.forEach((el, index) => {
-        console.log(`Processing element ${index + 1} of ${elements.length}`);
-        const routeCodeElem = isV1
-          ? el.querySelector(".left-column.text-sm")?.firstElementChild
-          : el.querySelector(".css-1nqzkik");
-        const progressElem = isV1
-          ? el.querySelector(".complete.h-100.d-flex.justify-content-center.align-items-center.progressStatusBar")
-          : el.querySelector(".css-1xac89n.font-weight-bold");
-
-        const routeCode = routeCodeElem?.textContent.trim() || routeCodeElem?.getAttribute("title");
-        const associateInfo = extractAssociates(el, isV1);
-        const progressRaw = progressElem?.textContent.trim();
-        const progress = extractBehindProgress(progressRaw); // Extract only "X behind"
-
-        console.log("Route Code:", routeCode);
-        console.log("Associate Info:", associateInfo);
-        console.log("Progress:", progress);
-
-        if (routeCode) {
-          const existingRouteIndex = routes.findIndex(route => route.routeCode === routeCode);
-          if (existingRouteIndex === -1) {
-            routes.push({ routeCode, associateInfo, progress });
-            console.log("Added route:", { routeCode, associateInfo, progress });
-          } else {
-            console.log("Skipped duplicate route with code:", routeCode);
-          }
-        } else {
-          console.log("Skipped route due to missing code.");
-        }
-      });
-
-      elements[elements.length - 1]?.scrollIntoView({ behavior: "smooth", block: "end" });
-      await new Promise((resolve) => setTimeout(resolve, scrollDelay));
+  async function collectRoutes(selector, routes, maxScrolls = 20, scrollDelay = 100, isV1 = false) {
+    const container = document.querySelector(selector);
+    if (!container) {
+      throw new Error(`Container not found with selector: ${selector}`);
     }
 
-    updateProgress(`Collected ${routes.length} unique routes so far.`);
-    console.log("Completed route collection. Total routes:", routes.length);
-  };
+    let lastHeight = container.scrollHeight;
+    let scrollCount = 0;
+    let noNewContentCount = 0;
+
+    const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+    try {
+      while (scrollCount < maxScrolls) {
+        // Extract current visible routes
+        const routeElements = container.querySelectorAll(isV1 ? '[data-testid="route-card"]' : '.css-175xrm9');
+        for (const element of routeElements) {
+          const routeCode = isV1
+            ? element.querySelector('[data-testid="route-code"]')?.textContent?.trim()
+            : element.querySelector('.css-1qmjxm9')?.textContent?.trim();
+
+          if (!routeCode || routes.some(r => r.routeCode === routeCode)) continue;
+
+          const progressElement = element.querySelector(isV1 ? '[data-testid="route-progress"]' : '.css-1j1ehm7');
+          if (!progressElement) continue;
+
+          const progress = progressElement.textContent.trim();
+          if (!progress.includes('behind')) continue;
+
+          const associateInfo = await extractAssociates(element, isV1);
+          routes.push({ routeCode, progress, associateInfo });
+        }
+
+        // Scroll and wait
+        container.scrollTop = container.scrollHeight;
+        await wait(scrollDelay);
+
+        // Check if we've reached the bottom
+        if (container.scrollHeight === lastHeight) {
+          noNewContentCount++;
+          if (noNewContentCount >= 3) break; // Break if no new content after 3 attempts
+        } else {
+          noNewContentCount = 0;
+          lastHeight = container.scrollHeight;
+        }
+
+        scrollCount++;
+      }
+
+      return routes;
+    } catch (error) {
+      console.error('Error in collectRoutes:', error);
+      throw error;
+    }
+  }
 
   const modal = createModal();
   const downloadBtn = modal.querySelector("#download-btn");
@@ -660,5 +633,81 @@
   progressBackBtn.addEventListener("mouseout", () => {
     progressBackBtn.style.backgroundColor = "#6c757d";
     progressBackBtn.style.boxShadow = "0 2px 4px rgba(108, 117, 125, 0.2)";
+  });
+
+  document.body.appendChild(modal);
+
+  // Make modal draggable
+  let isDragging = false;
+  let startX;
+  let startY;
+  let modalRect;
+
+  const dragStart = (e) => {
+    if (e.target.closest('button') || e.target.closest('select')) return;  // Don't drag when clicking buttons or dropdowns
+
+    isDragging = true;
+    modalRect = modal.getBoundingClientRect();
+    
+    if (e.type === "touchstart") {
+      startX = e.touches[0].clientX - modalRect.left;
+      startY = e.touches[0].clientY - modalRect.top;
+    } else {
+      startX = e.clientX - modalRect.left;
+      startY = e.clientY - modalRect.top;
+    }
+    
+    modal.style.cursor = 'grabbing';
+  };
+
+  const dragEnd = () => {
+    isDragging = false;
+    modal.style.cursor = 'move';
+  };
+
+  const drag = (e) => {
+    if (!isDragging) return;
+    e.preventDefault();
+
+    let x, y;
+    if (e.type === "touchmove") {
+      x = e.touches[0].clientX - startX;
+      y = e.touches[0].clientY - startY;
+    } else {
+      x = e.clientX - startX;
+      y = e.clientY - startY;
+    }
+
+    // Keep modal within viewport bounds
+    const modalWidth = modalRect.width;
+    const modalHeight = modalRect.height;
+    const maxX = window.innerWidth - modalWidth;
+    const maxY = window.innerHeight - modalHeight;
+
+    x = Math.max(0, Math.min(x, maxX));
+    y = Math.max(0, Math.min(y, maxY));
+
+    modal.style.left = x + 'px';
+    modal.style.top = y + 'px';
+    modal.style.transform = 'none';
+    modal.style.webkitTransform = 'none';
+  };
+
+  // Add passive event listeners for better performance
+  modal.addEventListener("touchstart", dragStart, { passive: false });
+  modal.addEventListener("touchend", dragEnd);
+  modal.addEventListener("touchmove", drag, { passive: false });
+  document.addEventListener("mousedown", (e) => {
+    if (modal.contains(e.target)) dragStart(e);
+  });
+  document.addEventListener("mouseup", dragEnd);
+  document.addEventListener("mousemove", drag);
+
+  // Clean up event listeners when modal is closed
+  modal.querySelector("#close-btn").addEventListener("click", () => {
+    document.removeEventListener("mousedown", dragStart);
+    document.removeEventListener("mouseup", dragEnd);
+    document.removeEventListener("mousemove", drag);
+    modal.remove();
   });
 })();
