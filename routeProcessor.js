@@ -11,7 +11,9 @@
     modal.style.webkitBackfaceVisibility = "hidden";
     modal.style.perspective = "1000";
     modal.style.webkitPerspective = "1000";
-    modal.style.width = "400px";
+    modal.style.width = "80%";
+    modal.style.maxWidth = "800px";
+    modal.style.minWidth = "400px";
     modal.style.background = "white";
     modal.style.border = "none";
     modal.style.boxShadow = "0 10px 25px rgba(0, 0, 0, 0.2), 0 2px 10px rgba(0, 0, 0, 0.1)";
@@ -23,7 +25,8 @@
     modal.style.overflowY = "auto";
     modal.style.willChange = "transform";
     modal.style.isolation = "isolate";
-    modal.style.cursor = "move";  // Indicate draggable
+    modal.style.resize = "both";  // Make modal resizable
+    modal.style.overflow = "auto"; // Allow both scrolling and resizing
 
     modal.innerHTML = `
       <button id="close-btn" style="position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 18px; cursor: pointer; color: #666; transition: color 0.2s ease;">✖</button>
@@ -407,6 +410,16 @@
           const container = createElement('div', {
             class: 'route-detail-container',
             'data-route-code': route.routeCode
+          }, {
+            marginBottom: '20px',
+            padding: '15px',
+            background: 'white',
+            borderRadius: '12px',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+            border: '1px solid #edf2f7',
+            overflow: 'hidden',
+            width: '100%',
+            boxSizing: 'border-box'
           });
 
           // Create header section
@@ -444,7 +457,11 @@
           header.appendChild(title);
 
           // Create content section
-          const content = createElement('div', {}, { padding: '15px' });
+          const content = createElement('div', {}, { 
+            padding: '15px',
+            width: '100%',
+            boxSizing: 'border-box'
+          });
 
           // Root Cause section
           const rcSection = createElement('div', {}, { marginBottom: '15px' });
@@ -463,7 +480,12 @@
           }, {
             display: 'flex',
             flexDirection: 'column',
-            gap: '10px'
+            gap: '10px',
+            width: '100%',
+            maxHeight: '300px',
+            overflowY: 'auto',
+            padding: '10px',
+            boxSizing: 'border-box'
           });
 
           // Add checkboxes
@@ -539,7 +561,8 @@
             backgroundColor: 'white',
             cursor: 'pointer',
             color: '#2c3e50',
-            appearance: 'none'
+            appearance: 'none',
+            boxSizing: 'border-box'
           });
 
           ['', 'Rescue Planned', 'Support Requested', 'Monitoring', 'No Action Required'].forEach(option => {
@@ -573,268 +596,108 @@
       // Add Next button functionality
       const nextBtn = modal.querySelector("#da-next-btn");
       const previewSection = modal.querySelector("#preview-section");
+      const dspProgressSection = modal.querySelector("#dsp-progress-section");
       const routeDetails = modal.querySelector("#route-details");
 
       nextBtn.addEventListener("click", () => {
-        daSelectionSection.style.display = "none";
-        previewSection.style.display = "block";
-
-        // Create route detail inputs
-        behindRoutes.forEach((route) => {
-          const select = daDropdowns.querySelector(`select[data-route-code="${route.routeCode}"]`);
-          const associateInfo = select ? select.value : route.associateInfo;
-
-          const container = createElement('div', {
-            class: 'route-detail-container',
-            'data-route-code': route.routeCode
-          });
-
-          // Create header section
-          const header = createElement('div', {}, {
-            padding: '15px',
-            borderBottom: '1px solid #edf2f7',
-            background: '#f8fafc'
-          });
-
-          const title = createElement('h4', {}, {
-            margin: '0',
-            color: '#2c3e50',
-            fontSize: '16px',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center'
-          });
-
-          const routeSpan = createElement('span', {
-            textContent: `${route.routeCode}: ${associateInfo}`
-          });
-
-          const progressSpan = createElement('span', {
-            textContent: route.progress
-          }, {
-            fontSize: '14px',
-            padding: '4px 8px',
-            background: '#ebf5ff',
-            color: '#3182ce',
-            borderRadius: '6px'
-          });
-
-          title.appendChild(routeSpan);
-          title.appendChild(progressSpan);
-          header.appendChild(title);
-
-          // Create content section
-          const content = createElement('div', {}, { padding: '15px' });
-
-          // Root Cause section
-          const rcSection = createElement('div', {}, { marginBottom: '15px' });
-          const rcLabel = createElement('label', {
-            textContent: 'Root Cause:'
-          }, {
-            display: 'block',
-            marginBottom: '8px',
-            color: '#2c3e50',
-            fontWeight: '600',
-            fontSize: '14px'
-          });
-
-          const rcCheckboxes = createElement('div', {
-            class: 'rc-checkboxes'
-          }, {
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '10px'
-          });
-
-          // Add checkboxes
-          ['Late Start', 'Sweeper', 'System Issues', 'Weather', 'Other'].forEach(option => {
-            const label = createElement('label', {}, {
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              cursor: 'pointer',
-              padding: '8px',
-              borderRadius: '6px'
-            });
-
-            const checkbox = createElement('input', {
-              type: 'checkbox',
-              value: option,
-              class: option.toLowerCase() === 'other' ? 'other-checkbox' : ''
-            });
-
-            const span = createElement('span', {
-              textContent: option
-            });
-
-            label.appendChild(checkbox);
-            label.appendChild(span);
-            rcCheckboxes.appendChild(label);
-          });
-
-          // Other input container
-          const otherInputContainer = createElement('div', {
-            class: 'other-input-container'
-          }, {
-            display: 'none',
-            marginTop: '8px',
-            marginLeft: '24px'
-          });
-
-          const otherInput = createElement('input', {
-            type: 'text',
-            placeholder: 'Specify other reason...',
-            class: 'other-input'
-          }, {
-            width: '100%',
-            padding: '8px',
-            border: '1px solid #e2e8f0',
-            borderRadius: '6px',
-            fontSize: '14px'
-          });
-
-          otherInputContainer.appendChild(otherInput);
-          rcCheckboxes.appendChild(otherInputContainer);
-
-          // Point of Action section
-          const poaSection = createElement('div');
-          const poaLabel = createElement('label', {
-            textContent: 'Point of Action:'
-          }, {
-            display: 'block',
-            marginBottom: '8px',
-            color: '#2c3e50',
-            fontWeight: '600',
-            fontSize: '14px'
-          });
-
-          const poaSelect = createElement('select', {
-            class: 'poa-select'
-          }, {
-            width: '100%',
-            padding: '10px 12px',
-            border: '1px solid #e2e8f0',
-            borderRadius: '6px',
-            fontSize: '14px',
-            backgroundColor: 'white',
-            cursor: 'pointer',
-            color: '#2c3e50',
-            appearance: 'none'
-          });
-
-          ['', 'Rescue Planned', 'Support Requested', 'Monitoring', 'No Action Required'].forEach(option => {
-            const optionElement = createElement('option', {
-              value: option,
-              textContent: option || 'Select a point of action...'
-            });
-            poaSelect.appendChild(optionElement);
-          });
-
-          // Assemble all elements
-          rcSection.appendChild(rcLabel);
-          rcSection.appendChild(rcCheckboxes);
-          poaSection.appendChild(poaLabel);
-          poaSection.appendChild(poaSelect);
-          content.appendChild(rcSection);
-          content.appendChild(poaSection);
-          container.appendChild(header);
-          container.appendChild(content);
-
-          routeDetails.appendChild(container);
-
-          // Add event listener for Other checkbox
-          const otherCheckbox = container.querySelector('.other-checkbox');
-          otherCheckbox.addEventListener('change', (e) => {
-            otherInputContainer.style.display = e.target.checked ? 'block' : 'none';
-          });
-        });
-
-        // Add change event listeners to all DA dropdowns
-        const allDropdowns = daDropdowns.querySelectorAll('select');
-        allDropdowns.forEach(select => {
-          select.addEventListener('change', (e) => {
-            const routeCode = e.target.dataset.routeCode;
-            const container = routeDetails.querySelector(`div[data-route-code="${routeCode}"]`);
-            if (container) {
-              const h4 = container.querySelector('h4');
-              const progress = h4.textContent.match(/\((.*?)\)/)[0]; // Get the progress part
-              h4.textContent = `${routeCode}: ${e.target.value} ${progress}`;
-            }
-          });
-        });
+        const hasMultipleDAs = behindRoutes.some(route => route.associateInfo.split(", ").length > 1);
+        
+        if (hasMultipleDAs) {
+          daSelectionSection.style.display = "block";
+          previewSection.style.display = "none";
+          dspProgressSection.style.display = "none";
+        } else {
+          daSelectionSection.style.display = "none";
+          previewSection.style.display = "block";
+          dspProgressSection.style.display = "none";
+        }
       });
 
-      // Update download functionality to include RC and POA
-      downloadBtn.onclick = () => {
-        // Get current date and time
-        const now = new Date();
-        const formattedDate = `${now.getMonth() + 1}/${now.getDate()}/${now.getFullYear().toString().substr(-2)}`;
-        const hour = now.getHours();
-        const roundedHour = hour >= 12 ? `${hour === 12 ? 12 : hour - 12}PM` : `${hour === 0 ? 12 : hour}AM`;
-        
-        // Get values from input fields
-        const inProgress = document.getElementById('in-progress-input').value || '0';
-        const atRisk = document.getElementById('at-risk-input').value || '0';
-        const behind = document.getElementById('behind-input').value || '0';
-        const packageProgress = document.getElementById('package-progress-input').value || '0';
-
-        // Create header
-        const header = `/md\n@\n## CRDR UPDATE - ${formattedDate} ${roundedHour}\n\n` +
-                      `**IN PROGRESS: ${inProgress.toString().padStart(2, '0')}**\n` +
-                      `**AT RISK: ${atRisk.toString().padStart(2, '0')}**\n` +
-                      `**BEHIND: ${behind.toString().padStart(2, '0')}**\n` +
-                      `**PACKAGE PROGRESS: ${packageProgress}%**\n\n` +
-                      `---\n\n`;
-
-        const routeContent = behindRoutes.map((route) => {
-          const select = daDropdowns.querySelector(`select[data-route-code="${route.routeCode}"]`);
-          const associateInfo = select ? select.value : route.associateInfo;
-          
-          // Find the container by iterating through all containers and matching the route code
-          const containers = document.querySelectorAll('#route-details > div');
-          const container = Array.from(containers).find(div => {
-            const h4 = div.querySelector('h4 span');
-            return h4 && h4.textContent.includes(route.routeCode);
-          });
-          
-          if (!container) return `${route.routeCode}: ${associateInfo} (${route.progress})\n`;
-          
-          // Get all checked root causes
-          const checkedBoxes = container.querySelectorAll('input[type="checkbox"]:checked');
-          const rootCauses = Array.from(checkedBoxes).map(checkbox => {
-            if (checkbox.classList.contains('other-checkbox') && checkbox.checked) {
-              const otherInput = container.querySelector('.other-input');
-              return otherInput.value.trim() || 'Other (unspecified)';
-            }
-            return checkbox.value;
-          }).filter(Boolean); // Remove any empty values
-          
-          const rc = rootCauses.length > 0 ? rootCauses.join(', ') : 'N/A';
-          
-          // Get POA value
-          const poaSelect = container.querySelector('.poa-select');
-          let poa = poaSelect ? poaSelect.value : 'N/A';
-          if (poa === 'Other') {
-            const poaOtherInput = container.querySelector('.poa-other-input');
-            poa = poaOtherInput && poaOtherInput.value.trim() || 'Other (unspecified)';
+      // Add change event listeners to all DA dropdowns
+      const allDropdowns = daDropdowns.querySelectorAll('select');
+      allDropdowns.forEach(select => {
+        select.addEventListener('change', (e) => {
+          const routeCode = e.target.dataset.routeCode;
+          const container = routeDetails.querySelector(`div[data-route-code="${routeCode}"]`);
+          if (container) {
+            const h4 = container.querySelector('h4');
+            const progress = h4.textContent.match(/\((.*?)\)/)[0]; // Get the progress part
+            h4.textContent = `${routeCode}: ${e.target.value} ${progress}`;
           }
-          poa = poa || 'N/A';
-          
-          return `**${route.routeCode}** | ${associateInfo} | **${route.progress}**\nRC: ${rc}\nPOA: ${poa}\n`;
-        }).join('\n');
-
-        const fileContent = header + routeContent;
-
-        const blob = new Blob([fileContent], { type: "text/plain" });
-        const blobURL = URL.createObjectURL(blob);
-
-        const link = document.createElement("a");
-        link.href = blobURL;
-        link.download = "behind_routes.txt";
-        link.click();
-        URL.revokeObjectURL(blobURL);
-      };
+        });
+      });
     }
+
+    // Update download functionality to include RC and POA
+    downloadBtn.onclick = () => {
+      // Get current date and time
+      const now = new Date();
+      const formattedDate = `${now.getMonth() + 1}/${now.getDate()}/${now.getFullYear().toString().substr(-2)}`;
+      const hour = now.getHours();
+      const roundedHour = hour >= 12 ? `${hour === 12 ? 12 : hour - 12}PM` : `${hour === 0 ? 12 : hour}AM`;
+      
+      // Get values from input fields
+      const inProgress = document.getElementById('in-progress-input').value || '0';
+      const atRisk = document.getElementById('at-risk-input').value || '0';
+      const behind = document.getElementById('behind-input').value || '0';
+      const packageProgress = document.getElementById('package-progress-input').value || '0';
+
+      // Create header
+      const header = `/md\n@\n## CRDR UPDATE - ${formattedDate} ${roundedHour}\n\n` +
+                    `**IN PROGRESS: ${inProgress.toString().padStart(2, '0')}**\n` +
+                    `**AT RISK: ${atRisk.toString().padStart(2, '0')}**\n` +
+                    `**BEHIND: ${behind.toString().padStart(2, '0')}**\n` +
+                    `**PACKAGE PROGRESS: ${packageProgress}%**\n\n` +
+                    `---\n\n`;
+
+      const routeContent = behindRoutes.map((route) => {
+        const select = daDropdowns.querySelector(`select[data-route-code="${route.routeCode}"]`);
+        const associateInfo = select ? select.value : route.associateInfo;
+        
+        // Find the container by iterating through all containers and matching the route code
+        const containers = document.querySelectorAll('#route-details > div');
+        const container = Array.from(containers).find(div => {
+          const h4 = div.querySelector('h4 span');
+          return h4 && h4.textContent.includes(route.routeCode);
+        });
+        
+        if (!container) return `${route.routeCode}: ${associateInfo} (${route.progress})\n`;
+        
+        // Get all checked root causes
+        const checkedBoxes = container.querySelectorAll('input[type="checkbox"]:checked');
+        const rootCauses = Array.from(checkedBoxes).map(checkbox => {
+          if (checkbox.classList.contains('other-checkbox') && checkbox.checked) {
+            const otherInput = container.querySelector('.other-input');
+            return otherInput.value.trim() || 'Other (unspecified)';
+          }
+          return checkbox.value;
+        }).filter(Boolean); // Remove any empty values
+        
+        const rc = rootCauses.length > 0 ? rootCauses.join(', ') : 'N/A';
+        
+        // Get POA value
+        const poaSelect = container.querySelector('.poa-select');
+        let poa = poaSelect ? poaSelect.value : 'N/A';
+        if (poa === 'Other') {
+          const poaOtherInput = container.querySelector('.poa-other-input');
+          poa = poaOtherInput && poaOtherInput.value.trim() || 'Other (unspecified)';
+        }
+        poa = poa || 'N/A';
+        
+        return `**${route.routeCode}** | ${associateInfo} | **${route.progress}**\nRC: ${rc}\nPOA: ${poa}\n`;
+      }).join('\n');
+
+      const fileContent = header + routeContent;
+
+      const blob = new Blob([fileContent], { type: "text/plain" });
+      const blobURL = URL.createObjectURL(blob);
+
+      const link = document.createElement("a");
+      link.href = blobURL;
+      link.download = "behind_routes.txt";
+      link.click();
+      URL.revokeObjectURL(blobURL);
+    };
   } catch (error) {
     console.error("Error during route data processing:", error);
     updateProgress(`Error: ${error.message}`);
@@ -881,4 +744,38 @@
     progressBackBtn.style.backgroundColor = "#6c757d";
     progressBackBtn.style.boxShadow = "0 2px 4px rgba(108, 117, 125, 0.2)";
   });
+
+  // Add resize handle styles
+  const style = document.createElement('style');
+  style.textContent = `
+    #custom-modal {
+      resize: both;
+      overflow: auto;
+    }
+    #custom-modal::-webkit-resizer {
+      border-radius: 0 0 16px 0;
+      background-color: #f0f0f0;
+    }
+    .route-detail-container {
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .rc-checkboxes {
+      max-height: 300px;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: #cbd5e0 #f8f9fa;
+    }
+    .rc-checkboxes::-webkit-scrollbar {
+      width: 8px;
+    }
+    .rc-checkboxes::-webkit-scrollbar-track {
+      background: #f8f9fa;
+    }
+    .rc-checkboxes::-webkit-scrollbar-thumb {
+      background-color: #cbd5e0;
+      border-radius: 4px;
+    }
+  `;
+  document.head.appendChild(style);
 })();
