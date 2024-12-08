@@ -102,9 +102,6 @@
     const modal = document.createElement("div");
     modal.id = "custom-modal";
     modal.style.position = "fixed";
-    modal.style.top = "50%";
-    modal.style.left = "50%";
-    modal.style.transform = "translate(-50%, -50%)";
     modal.style.width = "600px";
     modal.style.minWidth = "400px";
     modal.style.height = "600px";
@@ -118,29 +115,86 @@
     modal.style.textAlign = "center";
     modal.style.maxHeight = "90vh";
     modal.style.overflowY = "auto";
-    modal.style.willChange = "transform";
-    modal.style.isolation = "isolate";
     modal.style.cursor = "move";
-    modal.style.resize = "both";
-    modal.style.overflow = "auto";
+
+    // Position modal in center of screen
+    const centerModal = () => {
+      const left = Math.max(20, (window.innerWidth - modal.offsetWidth) / 2);
+      const top = Math.max(20, (window.innerHeight - modal.offsetHeight) / 2);
+      modal.style.left = `${left}px`;
+      modal.style.top = `${top}px`;
+    };
+
+    // Call after modal is added to DOM
+    requestAnimationFrame(() => {
+      centerModal();
+    });
 
     // Initialize state
     let isDragging = false;
     let isResizing = false;
     let currentHandle = null;
-    let currentX = 0;
-    let currentY = 0;
-    let initialX = 0;
-    let initialY = 0;
-    let initialMouseX = 0;
-    let initialMouseY = 0;
+    let offsetX = 0;
+    let offsetY = 0;
 
-    // After initial render, position the modal
-    requestAnimationFrame(() => {
-      const rect = modal.getBoundingClientRect();
-      modal.style.transform = "none";
-      modal.style.top = `${window.innerHeight/2 - rect.height/2}px`;
-      modal.style.left = `${window.innerWidth/2 - rect.width/2}px`;
+    // Drag functionality
+    const dragStart = (e) => {
+      if (e.target.closest('.resize-handle')) return;
+      e.preventDefault();
+      
+      if (e.type === "touchstart") {
+        offsetX = e.touches[0].clientX - modal.offsetLeft;
+        offsetY = e.touches[0].clientY - modal.offsetTop;
+      } else {
+        offsetX = e.clientX - modal.offsetLeft;
+        offsetY = e.clientY - modal.offsetTop;
+      }
+      
+      isDragging = true;
+    };
+
+    const drag = (e) => {
+      if (!isDragging) return;
+      e.preventDefault();
+      
+      let left, top;
+      
+      if (e.type === "touchmove") {
+        left = e.touches[0].clientX - offsetX;
+        top = e.touches[0].clientY - offsetY;
+      } else {
+        left = e.clientX - offsetX;
+        top = e.clientY - offsetY;
+      }
+
+      // Apply bounds checking
+      left = Math.max(20, Math.min(left, window.innerWidth - modal.offsetWidth - 20));
+      top = Math.max(20, Math.min(top, window.innerHeight - modal.offsetHeight - 20));
+
+      modal.style.left = `${left}px`;
+      modal.style.top = `${top}px`;
+    };
+
+    const dragEnd = () => {
+      isDragging = false;
+    };
+
+    // Event Listeners for drag
+    modal.addEventListener("mousedown", dragStart);
+    document.addEventListener("mousemove", drag);
+    document.addEventListener("mouseup", dragEnd);
+    modal.addEventListener("touchstart", dragStart, { passive: false });
+    document.addEventListener("touchmove", drag, { passive: false });
+    document.addEventListener("touchend", dragEnd);
+
+    // Register cleanup for event listeners
+    registerCleanup('eventListeners', () => {
+      modal.removeEventListener("mousedown", dragStart);
+      document.removeEventListener("mousemove", drag);
+      document.removeEventListener("mouseup", dragEnd);
+      modal.removeEventListener("touchstart", dragStart);
+      document.removeEventListener("touchmove", drag);
+      document.removeEventListener("touchend", dragEnd);
     });
 
     // Add resize handles
@@ -194,18 +248,18 @@
       currentHandle = handle;
       
       const rect = modal.getBoundingClientRect();
-      initialX = rect.left;
-      initialY = rect.top;
-      initialWidth = rect.width;
-      initialHeight = rect.height;
+      let initialX, initialY, initialWidth, initialHeight;
       
       if (e.type === "touchstart") {
-        initialMouseX = e.touches[0].clientX;
-        initialMouseY = e.touches[0].clientY;
+        initialX = e.touches[0].clientX;
+        initialY = e.touches[0].clientY;
       } else {
-        initialMouseX = e.clientX;
-        initialMouseY = e.clientY;
+        initialX = e.clientX;
+        initialY = e.clientY;
       }
+
+      initialWidth = rect.width;
+      initialHeight = rect.height;
     };
 
     const resize = (e) => {
@@ -222,14 +276,14 @@
         mouseY = e.clientY;
       }
 
-      const dx = mouseX - initialMouseX;
-      const dy = mouseY - initialMouseY;
+      const dx = mouseX - initialX;
+      const dy = mouseY - initialY;
       const direction = currentHandle.className.split('resize-')[1];
 
       let newWidth = initialWidth;
       let newHeight = initialHeight;
-      let newX = initialX;
-      let newY = initialY;
+      let newX = 0;
+      let newY = 0;
 
       // Handle resizing based on direction
       if (direction.includes('e')) {
@@ -287,101 +341,6 @@
         handle.removeEventListener('mousedown', startResize);
         handle.removeEventListener('touchstart', startResize);
       });
-    });
-
-    // Drag functionality
-    const dragStart = (e) => {
-      if (e.target.closest('.resize-handle')) return;
-      e.preventDefault();
-      
-      const rect = modal.getBoundingClientRect();
-      let mouseX, mouseY;
-      
-      if (e.type === "touchstart") {
-        mouseX = e.touches[0].clientX;
-        mouseY = e.touches[0].clientY;
-      } else {
-        mouseX = e.clientX;
-        mouseY = e.clientY;
-      }
-
-      // Calculate offset of mouse position relative to modal position
-      initialMouseX = mouseX - rect.left;
-      initialMouseY = mouseY - rect.top;
-      
-      initialX = rect.left;
-      initialY = rect.top;
-      isDragging = true;
-
-      // Create a transparent overlay to prevent text selection during drag
-      const overlay = document.createElement('div');
-      overlay.id = 'drag-overlay';
-      overlay.style.position = 'fixed';
-      overlay.style.top = '0';
-      overlay.style.left = '0';
-      overlay.style.width = '100%';
-      overlay.style.height = '100%';
-      overlay.style.zIndex = '9999';
-      document.body.appendChild(overlay);
-    };
-
-    const drag = (e) => {
-      if (!isDragging) return;
-      e.preventDefault();
-      
-      let mouseX, mouseY;
-      if (e.type === "touchmove") {
-        mouseX = e.touches[0].clientX;
-        mouseY = e.touches[0].clientY;
-      } else {
-        mouseX = e.clientX;
-        mouseY = e.clientY;
-      }
-
-      // Calculate new position based on mouse position minus initial click offset
-      currentX = mouseX - initialMouseX;
-      currentY = mouseY - initialMouseY;
-
-      // Apply bounds checking
-      const rect = modal.getBoundingClientRect();
-      const maxX = window.innerWidth - rect.width - 20;
-      const maxY = window.innerHeight - rect.height - 20;
-      
-      currentX = Math.max(20, Math.min(currentX, maxX));
-      currentY = Math.max(20, Math.min(currentY, maxY));
-
-      modal.style.left = `${currentX}px`;
-      modal.style.top = `${currentY}px`;
-    };
-
-    const dragEnd = () => {
-      isDragging = false;
-      const overlay = document.getElementById('drag-overlay');
-      if (overlay) {
-        overlay.remove();
-      }
-    };
-
-    // Event Listeners for drag
-    modal.addEventListener("mousedown", dragStart);
-    document.addEventListener("mousemove", drag);
-    document.addEventListener("mouseup", dragEnd);
-    modal.addEventListener("touchstart", dragStart, { passive: false });
-    document.addEventListener("touchmove", drag, { passive: false });
-    document.addEventListener("touchend", dragEnd);
-
-    // Register cleanup for event listeners
-    registerCleanup('eventListeners', () => {
-      modal.removeEventListener("mousedown", dragStart);
-      document.removeEventListener("mousemove", drag);
-      document.removeEventListener("mouseup", dragEnd);
-      modal.removeEventListener("touchstart", dragStart);
-      document.removeEventListener("touchmove", drag);
-      document.removeEventListener("touchend", dragEnd);
-      const overlay = document.getElementById('drag-overlay');
-      if (overlay) {
-        overlay.remove();
-      }
     });
 
     // Create entrance animation
