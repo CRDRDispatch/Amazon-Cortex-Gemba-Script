@@ -779,7 +779,7 @@
         
         const progressElem = isV1
           ? getElement('.complete.h-100.d-flex.justify-content-center.align-items-center.progressStatusBar', el)
-          : getElement('.css-1xac89n.font-weight-bold', el);
+          : getElement('.css-11ibtj8', el);
 
         const routeCode = routeCodeElem?.textContent?.trim() || routeCodeElem?.getAttribute('title');
         if (!routeCode) {
@@ -855,37 +855,79 @@
     updateProgress("Script started...");
 
     const isV1 = document.querySelector(".css-hkr77h")?.checked;
-    updateProgress(`Detected Cortex Version: ${isV1 ? "V1" : "V2"}`);
-    console.log(`Cortex Version: ${isV1 ? "V1" : "V2"}`);
+    console.log("Interface version:", isV1 ? "V1" : "V2");
+    updateProgress(`Detected interface version: ${isV1 ? "V1" : "V2"}`);
 
+    // Version-specific click handling
+    const clickVersionSpecificElement = async () => {
+      if (isV1) {
+        const container = document.querySelector(".css-1bovypj");
+        if (!container) {
+          throw new Error("Could not find V1 container element");
+        }
+
+        const values = container.querySelectorAll(".cortex-summary-bar-data-value");
+        if (values.length < 3) {
+          throw new Error("Could not find enough V1 data value elements");
+        }
+
+        // Click the third value element
+        values[2].click();
+      } else {
+        const container = document.querySelector(".css-11ofut8");
+        if (!container) {
+          throw new Error("Could not find V2 container element");
+        }
+
+        const values = container.querySelectorAll(".css-11ibtj8");
+        if (values.length < 2) {
+          throw new Error("Could not find enough V2 data value elements");
+        }
+
+        // Click the second value element
+        values[1].click();
+      }
+    };
+
+    // Execute click and wait
+    try {
+      await clickVersionSpecificElement();
+      await new Promise(resolve => setTimeout(resolve, 500)); // Wait 500ms
+      updateProgress("Successfully clicked version-specific element");
+    } catch (error) {
+      console.error("Error clicking version-specific element:", error);
+      updateProgress(`Warning: ${error.message}. Continuing with process...`);
+    }
+
+    // Continue with existing route collection process
+    const behindRoutes = [];
     const routeSelector = isV1
       ? '[class^="af-link routes-list-item p-2 d-flex align-items-center w-100 route-"]'
       : ".css-1muusaa";
-    const routes = [];
 
     updateProgress("Scrolling to collect routes...");
-    await collectRoutes(routeSelector, routes, 20, 100, isV1);
+    await collectRoutes(routeSelector, behindRoutes, 20, 100, isV1);
 
     updateProgress("Scrolling back to the top...");
     window.scrollTo({ top: 0, behavior: "smooth" });
-    await new Promise((resolve) => setTimeout(resolve, 2000)); // Wait for everything to load again
+    await new Promise(resolve => setTimeout(resolve, 1000));
 
     updateProgress("Rechecking routes...");
-    await collectRoutes(routeSelector, routes, 20, 100, isV1);
+    await collectRoutes(routeSelector, behindRoutes, 20, 100, isV1);
 
-    updateProgress(`Final collection complete. Found ${routes.length} total routes.`);
-    console.log("Final routes collected:", routes);
+    updateProgress(`Final collection complete. Found ${behindRoutes.length} total routes.`);
+    console.log("Final routes collected:", behindRoutes);
 
-    const behindRoutes = routes.filter(route => {
+    const behindRoutesFiltered = behindRoutes.filter(route => {
       const progressText = extractBehindProgress(route.progress);
       // Only include routes if they have a non-zero BEHIND count
       return progressText && !progressText.startsWith('0 BEHIND');
     });
-    console.log("Behind Routes:", behindRoutes);
+    console.log("Behind Routes:", behindRoutesFiltered);
 
-    updateProgress(`Found ${behindRoutes.length} routes that are behind schedule.`, true, true);
+    updateProgress(`Found ${behindRoutesFiltered.length} routes that are behind schedule.`, true, true);
 
-    if (behindRoutes.length > 0) {
+    if (behindRoutesFiltered.length > 0) {
       const daSelectionSection = modal.querySelector("#da-selection-section");
       const daDropdowns = modal.querySelector("#da-dropdowns");
       
@@ -893,7 +935,7 @@
       daSelectionSection.style.display = "block";
 
       // Create dropdowns for routes with multiple DAs
-      behindRoutes.forEach((route) => {
+      behindRoutesFiltered.forEach((route) => {
         const das = route.associateInfo.split(", ");
         if (das.length > 1) {
           const container = document.createElement("div");
@@ -945,7 +987,7 @@
         previewSection.style.display = "block";
 
         // Create route detail inputs
-        behindRoutes.forEach((route) => {
+        behindRoutesFiltered.forEach((route) => {
           const select = daDropdowns.querySelector(`select[data-route-code="${route.routeCode}"]`);
           const associateInfo = select ? select.value : route.associateInfo;
 
@@ -1073,7 +1115,7 @@
                       `**PACKAGE PROGRESS: ${packageProgress}%**\n\n` +
                       `---\n\n`;
 
-        const routeContent = behindRoutes.map((route) => {
+        const routeContent = behindRoutesFiltered.map((route) => {
           const select = daDropdowns.querySelector(`select[data-route-code="${route.routeCode}"]`);
           const associateInfo = select ? select.value : route.associateInfo;
           
