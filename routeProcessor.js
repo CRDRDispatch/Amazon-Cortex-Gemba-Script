@@ -1,29 +1,336 @@
+/**
+ * @fileoverview Route Processor for Amazon DSP logistics page
+ * Analyzes and reports on routes that are behind schedule
+ * @version 1.1.0
+ */
+
 (async function () {
+  /** @type {Object.<string, Function[]>} Store for cleanup functions */
+  const cleanupRegistry = {
+    eventListeners: [],
+    animations: [],
+    observers: [],
+    timers: []
+  };
+
+  /**
+   * Registers a cleanup function for later execution
+   * @param {string} type - Type of cleanup ('eventListeners', 'animations', 'observers', 'timers')
+   * @param {Function} fn - Cleanup function to register
+   */
+  const registerCleanup = (type, fn) => {
+    if (cleanupRegistry[type]) {
+      cleanupRegistry[type].push(fn);
+    }
+  };
+
+  /**
+   * Executes all registered cleanup functions
+   */
+  const executeCleanup = () => {
+    Object.values(cleanupRegistry).forEach(fns => {
+      fns.forEach(fn => {
+        try {
+          fn();
+        } catch (error) {
+          console.error('Cleanup function failed:', error);
+        }
+      });
+    });
+    // Clear all registries after cleanup
+    Object.keys(cleanupRegistry).forEach(key => {
+      cleanupRegistry[key] = [];
+    });
+  };
+
+  /**
+   * Cached DOM elements to prevent repeated queries
+   * @type {Object.<string, Element>}
+   */
+  const domCache = new Map();
+
+  /**
+   * Gets a DOM element, using cache if available
+   * @param {string} selector - CSS selector
+   * @param {Element} [context=document] - Context element for query
+   * @returns {Element} Found element or null
+   */
+  const getElement = (selector, context = document) => {
+    const cacheKey = `${context === document ? 'doc' : context.id || 'ctx'}-${selector}`;
+    if (!domCache.has(cacheKey)) {
+      domCache.set(cacheKey, context.querySelector(selector));
+    }
+    return domCache.get(cacheKey);
+  };
+
+  /**
+   * Gets multiple DOM elements, using cache if available
+   * @param {string} selector - CSS selector
+   * @param {Element} [context=document] - Context element for query
+   * @returns {Element[]} Array of found elements
+   */
+  const getElements = (selector, context = document) => {
+    const cacheKey = `${context === document ? 'doc' : context.id || 'ctx'}-${selector}-all`;
+    if (!domCache.has(cacheKey)) {
+      domCache.set(cacheKey, [...context.querySelectorAll(selector)]);
+    }
+    return domCache.get(cacheKey);
+  };
+
+  /**
+   * Safely executes a function with error boundary
+   * @param {Function} fn - Function to execute
+   * @param {*} fallbackValue - Value to return if execution fails
+   * @param {string} [errorMessage] - Optional error message to log
+   * @returns {*} Function result or fallback value
+   */
+  const withErrorBoundary = async (fn, fallbackValue, errorMessage) => {
+    try {
+      return await fn();
+    } catch (error) {
+      console.error(errorMessage || 'Operation failed:', error);
+      updateProgress(`Error: ${errorMessage || error.message}`, true);
+      return fallbackValue;
+    }
+  };
+
+  /**
+   * Creates and returns the main modal element
+   * @returns {HTMLElement} The created modal element
+   */
   const createModal = () => {
     const modal = document.createElement("div");
     modal.id = "custom-modal";
-    modal.style.position = "fixed";
-    modal.style.top = "50%";
-    modal.style.left = "50%";
-    modal.style.transform = "translate(-50%, -50%) translateZ(0)";
-    modal.style.webkitTransform = "translate(-50%, -50%) translateZ(0)";
-    modal.style.backfaceVisibility = "hidden";
-    modal.style.webkitBackfaceVisibility = "hidden";
-    modal.style.perspective = "1000";
-    modal.style.webkitPerspective = "1000";
-    modal.style.width = "400px";
-    modal.style.background = "white";
-    modal.style.border = "none";
-    modal.style.boxShadow = "0 10px 25px rgba(0, 0, 0, 0.2), 0 2px 10px rgba(0, 0, 0, 0.1)";
-    modal.style.padding = "25px";
-    modal.style.borderRadius = "16px";
-    modal.style.zIndex = "10000";
-    modal.style.textAlign = "center";
-    modal.style.maxHeight = "90vh";
-    modal.style.overflowY = "auto";
-    modal.style.willChange = "transform";
-    modal.style.isolation = "isolate";
-    modal.style.cursor = "move";  // Indicate draggable
+    
+    // Apply base styles with responsive design
+    Object.assign(modal.style, {
+      position: "fixed",
+      top: "50%",
+      left: "50%",
+      transform: "translate(-50%, -50%) translateZ(0)",
+      webkitTransform: "translate(-50%, -50%) translateZ(0)",
+      backfaceVisibility: "hidden",
+      webkitBackfaceVisibility: "hidden",
+      perspective: "1000",
+      webkitPerspective: "1000",
+      width: "min(90vw, 500px)",  // Responsive width
+      minWidth: "320px",          // Minimum width for usability
+      minHeight: "400px",         // Minimum height for usability
+      maxHeight: "90vh",          // Maximum height constraint
+      background: "white",
+      border: "none",
+      boxShadow: "0 10px 25px rgba(0, 0, 0, 0.2), 0 2px 10px rgba(0, 0, 0, 0.1)",
+      padding: "clamp(15px, 3vw, 25px)",  // Responsive padding
+      borderRadius: "16px",
+      zIndex: "10000",
+      textAlign: "center",
+      overflowY: "auto",
+      willChange: "transform",
+      isolation: "isolate",
+      cursor: "move",
+      resize: "both",             // Make resizable
+      overflow: "auto"            // Enable resize overflow
+    });
+
+    // Initialize drag and resize state
+    let isDragging = false;
+    let isResizing = false;
+    let currentHandle = null;
+    let currentX = 0;
+    let currentY = 0;
+    let initialX = 0;
+    let initialY = 0;
+    let xOffset = 0;
+    let yOffset = 0;
+    let initialWidth = 0;
+    let initialHeight = 0;
+
+    const dragStart = (e) => {
+      if (e.type === "touchstart") {
+        initialX = e.touches[0].clientX - xOffset;
+        initialY = e.touches[0].clientY - yOffset;
+      } else {
+        initialX = e.clientX - xOffset;
+        initialY = e.clientY - yOffset;
+      }
+
+      if (e.target === modal || e.target.closest('[style*="cursor: move"]')) {
+        isDragging = true;
+      }
+    };
+
+    const drag = (e) => {
+      if (isDragging) {
+        e.preventDefault();
+        
+        if (e.type === "touchmove") {
+          currentX = e.touches[0].clientX - initialX;
+          currentY = e.touches[0].clientY - initialY;
+        } else {
+          currentX = e.clientX - initialX;
+          currentY = e.clientY - initialY;
+        }
+
+        xOffset = currentX;
+        yOffset = currentY;
+
+        requestAnimationFrame(() => {
+          const bounds = {
+            top: 20,
+            bottom: window.innerHeight - modal.offsetHeight - 20,
+            left: 20,
+            right: window.innerWidth - modal.offsetWidth - 20
+          };
+
+          const newY = Math.min(Math.max(currentY, bounds.top - window.innerHeight/2), bounds.bottom - window.innerHeight/2);
+          const newX = Math.min(Math.max(currentX, bounds.left - window.innerWidth/2), bounds.right - window.innerWidth/2);
+
+          modal.style.transform = `translate(calc(-50% + ${newX}px), calc(-50% + ${newY}px)) translateZ(0)`;
+        });
+      }
+    };
+
+    const dragEnd = () => {
+      isDragging = false;
+    };
+
+    // Add resize handles
+    const handles = ['n', 's', 'e', 'w', 'ne', 'nw', 'se', 'sw'].map(dir => {
+      const handle = document.createElement('div');
+      handle.className = `resize-handle resize-${dir}`;
+      Object.assign(handle.style, {
+        position: 'absolute',
+        width: dir.includes('e') || dir.includes('w') ? '10px' : '100%',
+        height: dir.includes('n') || dir.includes('s') ? '10px' : '100%',
+        [dir.includes('n') ? 'top' : dir.includes('s') ? 'bottom' : '']: '0',
+        [dir.includes('e') ? 'right' : dir.includes('w') ? 'left' : '']: '0',
+        cursor: `${dir}-resize`,
+        zIndex: '10001'
+      });
+      return handle;
+    });
+
+    const startResize = (e, handle) => {
+      if (e.target !== handle) return;
+      isResizing = true;
+      currentHandle = handle;
+      initialWidth = modal.offsetWidth;
+      initialHeight = modal.offsetHeight;
+      initialX = e.clientX;
+      initialY = e.clientY;
+      e.preventDefault();
+    };
+
+    const resize = (e) => {
+      if (!isResizing) return;
+      e.preventDefault();
+
+      requestAnimationFrame(() => {
+        const deltaX = e.clientX - initialX;
+        const deltaY = e.clientY - initialY;
+        const dir = currentHandle.className.split('-')[2];
+
+        let newWidth = initialWidth;
+        let newHeight = initialHeight;
+        let newX = xOffset;
+        let newY = yOffset;
+
+        if (dir.includes('e')) newWidth = initialWidth + deltaX;
+        if (dir.includes('w')) {
+          newWidth = initialWidth - deltaX;
+          newX += deltaX / 2;
+        }
+        if (dir.includes('s')) newHeight = initialHeight + deltaY;
+        if (dir.includes('n')) {
+          newHeight = initialHeight - deltaY;
+          newY += deltaY / 2;
+        }
+
+        // Apply size constraints
+        newWidth = Math.min(Math.max(newWidth, 320), window.innerWidth * 0.9);
+        newHeight = Math.min(Math.max(newHeight, 400), window.innerHeight * 0.9);
+
+        modal.style.width = `${newWidth}px`;
+        modal.style.height = `${newHeight}px`;
+        modal.style.transform = `translate(calc(-50% + ${newX}px), calc(-50% + ${newY}px)) translateZ(0)`;
+
+        // Update inner content layout
+        updateInnerLayout();
+      });
+    };
+
+    const stopResize = () => {
+      isResizing = false;
+      currentHandle = null;
+    };
+
+    // Add drag event listeners
+    modal.addEventListener("touchstart", dragStart, { passive: false });
+    modal.addEventListener("touchend", dragEnd, { passive: false });
+    modal.addEventListener("touchmove", drag, { passive: false });
+    modal.addEventListener("mousedown", dragStart);
+    modal.addEventListener("mouseup", dragEnd);
+    modal.addEventListener("mousemove", drag);
+
+    // Add resize event listeners
+    handles.forEach(handle => {
+      modal.appendChild(handle);
+      handle.addEventListener('mousedown', (e) => startResize(e, handle));
+    });
+
+    document.addEventListener('mousemove', resize);
+    document.addEventListener('mouseup', stopResize);
+
+    // Register cleanup for all event listeners
+    registerCleanup('eventListeners', () => {
+      modal.removeEventListener("touchstart", dragStart);
+      modal.removeEventListener("touchend", dragEnd);
+      modal.removeEventListener("touchmove", drag);
+      modal.removeEventListener("mousedown", dragStart);
+      modal.removeEventListener("mouseup", dragEnd);
+      modal.removeEventListener("mousemove", drag);
+      document.removeEventListener('mousemove', resize);
+      document.removeEventListener('mouseup', stopResize);
+      handles.forEach(handle => {
+        handle.removeEventListener('mousedown', startResize);
+      });
+    });
+
+    // Function to update inner layout
+    const updateInnerLayout = () => {
+      const width = modal.offsetWidth;
+      const height = modal.offsetHeight;
+
+      // Update grid layout for DSP progress section
+      const progressGrid = modal.querySelector('#dsp-progress-section > div:nth-child(2)');
+      if (progressGrid) {
+        progressGrid.style.gridTemplateColumns = width < 400 ? '1fr' : 'repeat(2, 1fr)';
+      }
+
+      // Update route details max height
+      const routeDetails = modal.querySelector('#route-details');
+      if (routeDetails) {
+        routeDetails.style.maxHeight = `${height * 0.6}px`;
+      }
+
+      // Update DA dropdowns max height
+      const daDropdowns = modal.querySelector('#da-dropdowns');
+      if (daDropdowns) {
+        daDropdowns.style.maxHeight = `${height * 0.6}px`;
+      }
+    };
+
+    // Create entrance animation
+    const fadeIn = modal.animate([
+      { opacity: 0, transform: 'translate(-50%, -60%) translateZ(0)' },
+      { opacity: 1, transform: 'translate(-50%, -50%) translateZ(0)' }
+    ], {
+      duration: 300,
+      easing: 'ease-out',
+      fill: 'forwards'
+    });
+
+    registerCleanup('animations', () => fadeIn.cancel());
 
     modal.innerHTML = `
       <button id="close-btn" style="position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 18px; cursor: pointer; color: #666; transition: color 0.2s ease;">✖</button>
@@ -102,21 +409,63 @@
       </div>
     `;
 
-    // Add hover effects
-    const closeBtn = modal.querySelector("#close-btn");
-    closeBtn.addEventListener("mouseover", () => closeBtn.style.color = "#ff4444");
-    closeBtn.addEventListener("mouseout", () => closeBtn.style.color = "#666");
+    // Add hover effects and event listeners
+    const closeBtn = getElement("#close-btn", modal);
+    const modalToggleBtn = getElement("#toggle-progress", modal);
+    const progressDetails = getElement("#progress-details", modal);
+    const nextButtons = getElements("#da-next-btn, #preview-next-btn", modal);
 
-    const modalToggleBtn = modal.querySelector("#toggle-progress");
-    const progressDetails = modal.querySelector("#progress-details");
-    
-    modalToggleBtn.addEventListener("mouseover", () => {
-      modalToggleBtn.style.backgroundColor = "#f0f0f0";
+    // Register hover effects with cleanup
+    const addHoverEffect = (element, enterStyles, leaveStyles) => {
+      const mouseenter = () => Object.assign(element.style, enterStyles);
+      const mouseleave = () => Object.assign(element.style, leaveStyles);
+      
+      element.addEventListener("mouseenter", mouseenter);
+      element.addEventListener("mouseleave", mouseleave);
+      
+      registerCleanup('eventListeners', () => {
+        element.removeEventListener("mouseenter", mouseenter);
+        element.removeEventListener("mouseleave", mouseleave);
+      });
+    };
+
+    // Add hover effects
+    addHoverEffect(closeBtn, 
+      { color: "#ff4444" }, 
+      { color: "#666" }
+    );
+
+    addHoverEffect(modalToggleBtn,
+      { backgroundColor: "#f0f0f0" },
+      { backgroundColor: "transparent" }
+    );
+
+    nextButtons.forEach(btn => {
+      addHoverEffect(btn,
+        { 
+          backgroundColor: "#45a049",
+          boxShadow: "0 6px 8px rgba(76, 175, 80, 0.3)"
+        },
+        {
+          backgroundColor: "#4CAF50",
+          boxShadow: "0 4px 6px rgba(76, 175, 80, 0.2)"
+        }
+      );
     });
-    modalToggleBtn.addEventListener("mouseout", () => {
-      modalToggleBtn.style.backgroundColor = "transparent";
-    });
-    
+
+    // Add download button hover effect
+    const downloadBtn = getElement("#download-btn", modal);
+    addHoverEffect(downloadBtn,
+      { 
+        backgroundColor: "#45a049",
+        boxShadow: "0 6px 8px rgba(76, 175, 80, 0.3)"
+      },
+      {
+        backgroundColor: "#4CAF50",
+        boxShadow: "0 4px 6px rgba(76, 175, 80, 0.2)"
+      }
+    );
+
     // Add toggle functionality
     modalToggleBtn.addEventListener("click", () => {
       if (progressDetails.style.display === "none") {
@@ -128,216 +477,374 @@
       }
     });
 
-    const nextButtons = modal.querySelectorAll("#da-next-btn, #preview-next-btn");
-    nextButtons.forEach(btn => {
-      btn.addEventListener("mouseover", () => {
-        btn.style.backgroundColor = "#45a049";
-        btn.style.boxShadow = "0 6px 8px rgba(76, 175, 80, 0.3)";
+    registerCleanup('eventListeners', () => {
+      modalToggleBtn.removeEventListener("click", toggleProgress);
+    });
+
+    // Navigation handlers
+    const backBtn = getElement("#back-btn", modal);
+    const progressBackBtn = getElement("#progress-back-btn", modal);
+    const daSelectionSection = getElement("#da-selection-section", modal);
+    const previewSection = getElement("#preview-section", modal);
+    const dspProgressSection = getElement("#dsp-progress-section", modal);
+
+    backBtn?.addEventListener("click", () => {
+      previewSection.style.display = "none";
+      daSelectionSection.style.display = "block";
+    });
+
+    progressBackBtn?.addEventListener("click", () => {
+      dspProgressSection.style.display = "none";
+      previewSection.style.display = "block";
+    });
+
+    registerCleanup('eventListeners', () => {
+      backBtn?.removeEventListener("click", () => {});
+      progressBackBtn?.removeEventListener("click", () => {});
+    });
+
+    // Add input validation for DSP progress
+    const progressInputs = modal.querySelectorAll('.progress-input');
+    progressInputs.forEach(input => {
+      input.addEventListener('input', (e) => {
+        const value = parseInt(e.target.value);
+        const min = parseInt(e.target.min);
+        const max = parseInt(e.target.max) || Infinity;
+        
+        if (isNaN(value)) {
+          e.target.value = min;
+        } else {
+          e.target.value = Math.min(Math.max(value, min), max);
+        }
       });
-      
-      btn.addEventListener("mouseout", () => {
-        btn.style.backgroundColor = "#4CAF50";
-        btn.style.boxShadow = "0 4px 6px rgba(76, 175, 80, 0.2)";
+
+      // Register cleanup
+      registerCleanup('eventListeners', () => {
+        input.removeEventListener('input', null);
       });
     });
 
-    const downloadBtn = modal.querySelector("#download-btn");
-    downloadBtn.addEventListener("mouseover", () => {
-      downloadBtn.style.backgroundColor = "#45a049";
-      downloadBtn.style.boxShadow = "0 6px 8px rgba(76, 175, 80, 0.3)";
+    // Enhanced download functionality with proper format and time rounding
+    downloadBtn.onclick = () => {
+      try {
+        updateProgress("Preparing download...", true);
+        
+        // Round current time to nearest hour
+        const now = new Date('2024-12-08T14:05:46-08:00'); // Using provided time
+        const minutes = now.getMinutes();
+        if (minutes >= 30) {
+          now.setHours(now.getHours() + 1);
+        }
+        now.setMinutes(0);
+        now.setSeconds(0);
+        now.setMilliseconds(0);
+
+        // Format date and time
+        const formattedDate = `${now.getMonth() + 1}/${now.getDate()}/${now.getFullYear().toString().substr(-2)}`;
+        const hour = now.getHours();
+        const roundedHour = hour >= 12 ? `${hour === 12 ? 12 : hour - 12}PM` : `${hour === 0 ? 12 : hour}AM`;
+
+        // Get values from input fields with fallbacks
+        const inProgress = getElement("#in-progress-input").value || '0';
+        const atRisk = getElement("#at-risk-input").value || '0';
+        const behind = getElement("#behind-input").value || '0';
+        const packageProgress = getElement("#package-progress-input").value || '0';
+
+        // Create header in markdown format
+        const header = `/md\n@\n## CRDR UPDATE - ${formattedDate} ${roundedHour}\n\n` +
+                      `**IN PROGRESS: ${inProgress.toString().padStart(2, '0')}**\n` +
+                      `**AT RISK: ${atRisk.toString().padStart(2, '0')}**\n` +
+                      `**BEHIND: ${behind.toString().padStart(2, '0')}**\n` +
+                      `**PACKAGE PROGRESS: ${packageProgress}%**\n\n` +
+                      `---\n\n`;
+
+        // Get route details in the correct format
+        const routeContent = Array.from(getElements("#route-details > div")).map(container => {
+          const routeHeader = container.querySelector("h4");
+          const routeInfo = routeHeader.querySelector("span").textContent.split(":");
+          const routeCode = routeInfo[0].trim();
+          const associateInfo = routeInfo[1].trim();
+          const progress = routeHeader.lastElementChild.textContent;
+          
+          // Get selected root causes
+          const checkedBoxes = container.querySelectorAll('input[type="checkbox"]:checked');
+          const rootCauses = Array.from(checkedBoxes)
+            .map(checkbox => {
+              if (checkbox.classList.contains('other-checkbox') && checkbox.checked) {
+                const otherInput = container.querySelector('.other-input');
+                return otherInput && otherInput.value.trim() || 'Other (unspecified)';
+              }
+              return checkbox.value;
+            })
+            .filter(Boolean);
+          
+          const rc = rootCauses.length > 0 ? rootCauses.join(', ') : 'N/A';
+          
+          // Get point of action
+          const poaSelect = container.querySelector('.poa-select');
+          let poa = poaSelect ? poaSelect.value : 'N/A';
+          if (poa === 'Other') {
+            const poaOtherInput = container.querySelector('.poa-other-input');
+            poa = poaOtherInput && poaOtherInput.value.trim() || 'Other (unspecified)';
+          }
+          poa = poa || 'N/A';
+          
+          return `**${routeCode}** | ${associateInfo} | **${progress}**\nRC: ${rc}\nPOA: ${poa}\n`;
+        }).join('\n');
+
+        const fileContent = header + routeContent;
+
+        // Create and download file
+        const blob = new Blob([fileContent], { type: "text/plain;charset=utf-8" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        
+        link.setAttribute("href", url);
+        link.setAttribute("download", "behind_routes.txt");
+        document.body.appendChild(link);
+        
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+
+        updateProgress("Download complete!", true, true);
+      } catch (error) {
+        console.error("Download failed:", error);
+        updateProgress(`Download failed: ${error.message}`, true);
+      }
+    };
+
+    // Register cleanup for download button
+    registerCleanup('eventListeners', () => {
+      downloadBtn.removeEventListener("click", null);
     });
-    downloadBtn.addEventListener("mouseout", () => {
-      downloadBtn.style.backgroundColor = "#4CAF50";
-      downloadBtn.style.boxShadow = "0 4px 6px rgba(76, 175, 80, 0.2)";
-    });
+
+    // Close button handler with animation
+    const closeModal = async () => {
+      const fadeOut = modal.animate([
+        { opacity: 1, transform: 'translate(-50%, -50%) translateZ(0)' },
+        { opacity: 0, transform: 'translate(-50%, -40%) translateZ(0)' }
+      ], {
+        duration: 200,
+        easing: 'ease-in',
+        fill: 'forwards'
+      });
+
+      await fadeOut.finished;
+      executeCleanup();
+      modal.remove();
+    };
 
     document.body.appendChild(modal);
 
-    // Make modal draggable
-    let isDragging = false;
-    let startX;
-    let startY;
-    let modalRect;
-
-    const dragStart = (e) => {
-      if (e.target.closest('button') || e.target.closest('select')) return;  // Don't drag when clicking buttons or dropdowns
-
-      isDragging = true;
-      modalRect = modal.getBoundingClientRect();
-      
-      if (e.type === "touchstart") {
-        startX = e.touches[0].clientX - modalRect.left;
-        startY = e.touches[0].clientY - modalRect.top;
-      } else {
-        startX = e.clientX - modalRect.left;
-        startY = e.clientY - modalRect.top;
-      }
-      
-      modal.style.cursor = 'grabbing';
-    };
-
-    const dragEnd = () => {
-      isDragging = false;
-      modal.style.cursor = 'move';
-    };
-
-    const drag = (e) => {
-      if (!isDragging) return;
-      e.preventDefault();
-
-      let x, y;
-      if (e.type === "touchmove") {
-        x = e.touches[0].clientX - startX;
-        y = e.touches[0].clientY - startY;
-      } else {
-        x = e.clientX - startX;
-        y = e.clientY - startY;
-      }
-
-      // Keep modal within viewport bounds
-      const modalWidth = modalRect.width;
-      const modalHeight = modalRect.height;
-      const maxX = window.innerWidth - modalWidth;
-      const maxY = window.innerHeight - modalHeight;
-
-      x = Math.max(0, Math.min(x, maxX));
-      y = Math.max(0, Math.min(y, maxY));
-
-      modal.style.left = x + 'px';
-      modal.style.top = y + 'px';
-      modal.style.transform = 'none';
-      modal.style.webkitTransform = 'none';
-    };
-
-    // Add passive event listeners for better performance
-    modal.addEventListener("touchstart", dragStart, { passive: false });
-    modal.addEventListener("touchend", dragEnd);
-    modal.addEventListener("touchmove", drag, { passive: false });
-    document.addEventListener("mousedown", (e) => {
-      if (modal.contains(e.target)) dragStart(e);
-    });
-    document.addEventListener("mouseup", dragEnd);
-    document.addEventListener("mousemove", drag);
-
-    // Clean up event listeners when modal is closed
-    modal.querySelector("#close-btn").addEventListener("click", () => {
-      document.removeEventListener("mousedown", dragStart);
-      document.removeEventListener("mouseup", dragEnd);
-      document.removeEventListener("mousemove", drag);
-      modal.remove();
-    });
+    // Close button handler
+    modal.querySelector("#close-btn").addEventListener("click", closeModal);
 
     return modal;
   };
 
+  /**
+   * Updates the progress display in the modal
+   * @param {string} message - Message to display
+   * @param {boolean} append - Whether to append or replace existing message
+   * @param {boolean} complete - Whether the process is complete
+   */
   const updateProgress = (message, append = true, complete = false) => {
-    const progressDetails = document.getElementById("progress-details");
-    const progressStatus = document.getElementById("progress-status");
-    const toggleBtn = document.getElementById("toggle-progress");
+    return withErrorBoundary(() => {
+      const progressDetails = getElement("#progress-details");
+      const progressStatus = getElement("#progress-status");
+      const toggleBtn = getElement("#toggle-progress");
 
-    if (progressDetails) {
-      if (append) {
-        progressDetails.innerHTML += `<p>${message}</p>`;
-      } else {
-        progressDetails.innerHTML = `<p>${message}</p>`;
-      }
-    }
-
-    if (complete && progressStatus && toggleBtn) {
-      progressStatus.style.display = "inline-block";
-      progressDetails.style.display = "none";
-      toggleBtn.textContent = "Show";
-    }
-
-    console.log(message);
-  };
-
-  const extractBehindProgress = (progressText) => {
-    console.log("Extracting progress from text:", progressText);
-    const match = progressText?.match(/(\d+)\s*BEHIND/i);
-    const result = match ? `${match[1]} BEHIND` : null;
-    console.log("Extracted progress:", result);
-    return result;
-  };
-
-  const cleanAssociateNames = (names) => {
-    console.log("Cleaning associate names:", names);
-    const cleanedNames = names.replace(/\(Cornerstone Delivery Service\)/g, "").trim();
-    console.log("Cleaned associate names:", cleanedNames);
-    return cleanedNames;
-  };
-
-  const extractAssociates = (container, isV1) => {
-    console.log("Extracting associates. Version:", isV1 ? "V1" : "V2");
-    if (isV1) {
-      const associateContainer = container.querySelector(".ml-lg-4.ml-2.mr-2.mr-lg-auto.normal-white-space");
-      const tooltip = associateContainer?.nextElementSibling?.classList.contains("af-tooltip")
-        ? Array.from(associateContainer.nextElementSibling.querySelectorAll("div")).map((el) =>
-            cleanAssociateNames(el.textContent.trim())
-          )
-        : null;
-
-      if (tooltip) {
-        console.log("Extracted associates from tooltip (V1):", tooltip.join(", "));
-        return tooltip.join(", ");
-      }
-
-      const associateInfo = cleanAssociateNames(associateContainer?.querySelector(".text-truncate")?.textContent.trim() || "No associate info");
-      console.log("Extracted associates (V1):", associateInfo);
-      return associateInfo;
-    } else {
-      const associates = Array.from(container.querySelectorAll(".css-1kttr4w"))
-        .map((el) => cleanAssociateNames(el.textContent.trim()))
-        .join(", ");
-      console.log("Extracted associates (V2):", associates);
-      return associates;
-    }
-  };
-
-  const collectRoutes = async (selector, routes, maxScrolls = 20, scrollDelay = 100, isV1 = false) => {
-    console.log("Starting route collection. Selector:", selector);
-    for (let i = 0; i < maxScrolls; i++) {
-      console.log(`Scroll iteration ${i + 1} of ${maxScrolls}`);
-      const elements = document.querySelectorAll(selector);
-      console.log(`Found ${elements.length} route elements`);
-
-      elements.forEach((el, index) => {
-        console.log(`Processing element ${index + 1} of ${elements.length}`);
-        const routeCodeElem = isV1
-          ? el.querySelector(".left-column.text-sm")?.firstElementChild
-          : el.querySelector(".css-1nqzkik");
-        const progressElem = isV1
-          ? el.querySelector(".complete.h-100.d-flex.justify-content-center.align-items-center.progressStatusBar")
-          : el.querySelector(".css-1xac89n.font-weight-bold");
-
-        const routeCode = routeCodeElem?.textContent.trim() || routeCodeElem?.getAttribute("title");
-        const associateInfo = extractAssociates(el, isV1);
-        const progressRaw = progressElem?.textContent.trim();
-        const progress = extractBehindProgress(progressRaw); // Extract only "X behind"
-
-        console.log("Route Code:", routeCode);
-        console.log("Associate Info:", associateInfo);
-        console.log("Progress:", progress);
-
-        if (routeCode) {
-          const existingRouteIndex = routes.findIndex(route => route.routeCode === routeCode);
-          if (existingRouteIndex === -1) {
-            routes.push({ routeCode, associateInfo, progress });
-            console.log("Added route:", { routeCode, associateInfo, progress });
-          } else {
-            console.log("Skipped duplicate route with code:", routeCode);
-          }
+      if (progressDetails) {
+        if (append) {
+          progressDetails.innerHTML += `<p>${message}</p>`;
         } else {
-          console.log("Skipped route due to missing code.");
+          progressDetails.innerHTML = `<p>${message}</p>`;
+        }
+      }
+
+      if (complete && progressStatus && toggleBtn) {
+        progressStatus.style.display = "inline-block";
+        progressDetails.style.display = "none";
+        toggleBtn.textContent = "Show";
+      }
+
+      console.log(message);
+    }, null, "Failed to update progress");
+  };
+
+  /**
+   * Extracts the "BEHIND" count from progress text
+   * @param {string} progressText - Progress text to parse
+   * @returns {string|null} Extracted "X BEHIND" text or null
+   */
+  const extractBehindProgress = (progressText) => {
+    return withErrorBoundary(() => {
+      console.log("Extracting progress from text:", progressText);
+      const match = progressText?.match(/(\d+)\s*BEHIND/i);
+      const result = match ? `${match[1]} BEHIND` : null;
+      console.log("Extracted progress:", result);
+      return result;
+    }, null, "Failed to extract behind progress");
+  };
+
+  /**
+   * Cleans associate names by removing company information
+   * @param {string} names - Names to clean
+   * @returns {string} Cleaned names
+   */
+  const cleanAssociateNames = (names) => {
+    return withErrorBoundary(() => {
+      console.log("Cleaning associate names:", names);
+      const cleanedNames = names.replace(/\(Cornerstone Delivery Service\)/g, "").trim();
+      console.log("Cleaned associate names:", cleanedNames);
+      return cleanedNames;
+    }, names, "Failed to clean associate names");
+  };
+
+  /**
+   * Extracts associate information from a route container
+   * @param {Element} container - Container element
+   * @param {boolean} isV1 - Whether using V1 interface
+   * @returns {string} Extracted associate information
+   */
+  const extractAssociates = (container, isV1) => {
+    return withErrorBoundary(() => {
+      console.log("Extracting associates. Version:", isV1 ? "V1" : "V2");
+      if (isV1) {
+        const associateContainer = getElement(".ml-lg-4.ml-2.mr-2.mr-lg-auto.normal-white-space", container);
+        const tooltip = associateContainer?.nextElementSibling?.classList.contains("af-tooltip")
+          ? Array.from(associateContainer.nextElementSibling.querySelectorAll("div")).map((el) =>
+              cleanAssociateNames(el.textContent.trim())
+            )
+          : null;
+
+        if (tooltip) {
+          console.log("Extracted associates from tooltip (V1):", tooltip.join(", "));
+          return tooltip.join(", ");
+        }
+
+        const associateInfo = cleanAssociateNames(
+          getElement(".text-truncate", associateContainer)?.textContent.trim() || "No associate info"
+        );
+        console.log("Extracted associates (V1):", associateInfo);
+        return associateInfo;
+      } else {
+        const associates = Array.from(getElements(".css-1kttr4w", container))
+          .map((el) => cleanAssociateNames(el.textContent.trim()))
+          .join(", ");
+        console.log("Extracted associates (V2):", associates);
+        return associates || "No associate info";
+      }
+    }, "No associate info", "Failed to extract associates");
+  };
+
+  /**
+   * Collects route information from the page with improved performance and error handling
+   * @param {string} selector - CSS selector for route elements
+   * @param {Array} routes - Array to store collected routes
+   * @param {number} maxScrolls - Maximum number of scroll iterations
+   * @param {number} scrollDelay - Delay between scrolls in ms
+   * @param {boolean} isV1 - Whether using V1 or V2 interface
+   * @returns {Promise<void>}
+   */
+  const collectRoutes = async (selector, routes, maxScrolls = 20, scrollDelay = 100, isV1 = false) => {
+    // Create intersection observer for smooth scrolling
+    const observerCallback = (entries, observer) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          registerCleanup('observers', () => observer.disconnect());
+          processRouteElement(entry.target, routes, isV1);
         }
       });
+    };
 
-      elements[elements.length - 1]?.scrollIntoView({ behavior: "smooth", block: "end" });
-      await new Promise((resolve) => setTimeout(resolve, scrollDelay));
+    const observer = new IntersectionObserver(observerCallback, {
+      root: null,
+      rootMargin: '0px',
+      threshold: 0.1
+    });
+
+    /**
+     * Processes a single route element
+     * @param {Element} el - Route element to process
+     * @param {Array} routes - Array to store route data
+     * @param {boolean} isV1 - Interface version flag
+     */
+    const processRouteElement = (el, routes, isV1) => {
+      return withErrorBoundary(async () => {
+        const routeCodeElem = isV1
+          ? getElement('.left-column.text-sm', el)?.firstElementChild
+          : getElement('.css-1nqzkik', el);
+        
+        const progressElem = isV1
+          ? getElement('.complete.h-100.d-flex.justify-content-center.align-items-center.progressStatusBar', el)
+          : getElement('.css-1xac89n.font-weight-bold', el);
+
+        const routeCode = routeCodeElem?.textContent?.trim() || routeCodeElem?.getAttribute('title');
+        if (!routeCode) {
+          console.warn('Skipping route due to missing code');
+          return;
+        }
+
+        const associateInfo = await withErrorBoundary(
+          () => extractAssociates(el, isV1),
+          'No associate info',
+          'Failed to extract associate information'
+        );
+
+        const progressRaw = progressElem?.textContent?.trim();
+        const progress = extractBehindProgress(progressRaw);
+
+        // Avoid duplicates
+        const existingRouteIndex = routes.findIndex(route => route.routeCode === routeCode);
+        if (existingRouteIndex === -1) {
+          routes.push({ routeCode, associateInfo, progress });
+          console.log('Added route:', { routeCode, associateInfo, progress });
+        }
+      }, null, `Failed to process route element`);
+    };
+
+    let scrollCount = 0;
+    const processNextBatch = async () => {
+      if (scrollCount >= maxScrolls) {
+        return;
+      }
+
+      const elements = getElements(selector);
+      console.log(`Found ${elements.length} route elements in batch ${scrollCount + 1}`);
+
+      // Observe all elements
+      elements.forEach(el => observer.observe(el));
+
+      // Smooth scroll to last element
+      const lastElement = elements[elements.length - 1];
+      if (lastElement) {
+        await new Promise((resolve) => {
+          lastElement.scrollIntoView({
+            behavior: 'smooth',
+            block: 'end'
+          });
+          // Use requestAnimationFrame for smoother scrolling
+          requestAnimationFrame(() => {
+            setTimeout(resolve, scrollDelay);
+          });
+        });
+      }
+
+      scrollCount++;
+      await processNextBatch();
+    };
+
+    try {
+      await processNextBatch();
+      updateProgress(`Collected ${routes.length} unique routes.`);
+    } catch (error) {
+      console.error('Error during route collection:', error);
+      updateProgress(`Error during route collection: ${error.message}`);
+    } finally {
+      observer.disconnect();
     }
-
-    updateProgress(`Collected ${routes.length} unique routes so far.`);
-    console.log("Completed route collection. Total routes:", routes.length);
   };
 
   const modal = createModal();
@@ -584,7 +1091,7 @@
           const rootCauses = Array.from(checkedBoxes).map(checkbox => {
             if (checkbox.classList.contains('other-checkbox') && checkbox.checked) {
               const otherInput = container.querySelector('.other-input');
-              return otherInput.value.trim() || 'Other (unspecified)';
+              return otherInput && otherInput.value.trim() || 'Other (unspecified)';
             }
             return checkbox.value;
           }).filter(Boolean); // Remove any empty values
@@ -609,9 +1116,13 @@
         const blobURL = URL.createObjectURL(blob);
 
         const link = document.createElement("a");
-        link.href = blobURL;
-        link.download = "behind_routes.txt";
+        
+        link.setAttribute("href", blobURL);
+        link.setAttribute("download", "behind_routes.txt");
+        document.body.appendChild(link);
+        
         link.click();
+        document.body.removeChild(link);
         URL.revokeObjectURL(blobURL);
       };
     }
