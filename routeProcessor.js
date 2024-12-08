@@ -295,13 +295,19 @@
       e.preventDefault();
       
       const rect = modal.getBoundingClientRect();
+      let mouseX, mouseY;
+      
       if (e.type === "touchstart") {
-        initialMouseX = e.touches[0].clientX;
-        initialMouseY = e.touches[0].clientY;
+        mouseX = e.touches[0].clientX;
+        mouseY = e.touches[0].clientY;
       } else {
-        initialMouseX = e.clientX;
-        initialMouseY = e.clientY;
+        mouseX = e.clientX;
+        mouseY = e.clientY;
       }
+
+      // Calculate offset of mouse position relative to modal position
+      initialMouseX = mouseX - rect.left;
+      initialMouseY = mouseY - rect.top;
       
       initialX = rect.left;
       initialY = rect.top;
@@ -316,7 +322,6 @@
       overlay.style.width = '100%';
       overlay.style.height = '100%';
       overlay.style.zIndex = '9999';
-      overlay.style.cursor = 'move';
       document.body.appendChild(overlay);
     };
 
@@ -333,11 +338,9 @@
         mouseY = e.clientY;
       }
 
-      const dx = mouseX - initialMouseX;
-      const dy = mouseY - initialMouseY;
-      
-      currentX = initialX + dx;
-      currentY = initialY + dy;
+      // Calculate new position based on mouse position minus initial click offset
+      currentX = mouseX - initialMouseX;
+      currentY = mouseY - initialMouseY;
 
       // Apply bounds checking
       const rect = modal.getBoundingClientRect();
