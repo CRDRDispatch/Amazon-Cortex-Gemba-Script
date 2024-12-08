@@ -123,6 +123,8 @@
     modal.style.willChange = "transform";
     modal.style.isolation = "isolate";
     modal.style.cursor = "move";
+    modal.style.resize = "both";
+    modal.style.overflow = "auto";
 
     // Add drag functionality
     let isDragging = false;
@@ -133,45 +135,105 @@
     let xOffset = 0;
     let yOffset = 0;
 
-    function dragStart(e) {
-      initialX = e.clientX - xOffset;
-      initialY = e.clientY - yOffset;
-      if (e.target === modal || e.target.tagName === "H2" || e.target.parentNode === modal) {
+    const dragStart = (e) => {
+      if (e.type === "touchstart") {
+        initialX = e.touches[0].clientX - xOffset;
+        initialY = e.touches[0].clientY - yOffset;
+      } else {
+        initialX = e.clientX - xOffset;
+        initialY = e.clientY - yOffset;
+      }
+
+      if (e.target === modal || e.target.closest('[style*="cursor: move"]')) {
         isDragging = true;
       }
-    }
+    };
 
-    function drag(e) {
+    const drag = (e) => {
       if (isDragging) {
         e.preventDefault();
-        currentX = e.clientX - initialX;
-        currentY = e.clientY - initialY;
+        
+        if (e.type === "touchmove") {
+          currentX = e.touches[0].clientX - initialX;
+          currentY = e.touches[0].clientY - initialY;
+        } else {
+          currentX = e.clientX - initialX;
+          currentY = e.clientY - initialY;
+        }
+
         xOffset = currentX;
         yOffset = currentY;
-        setTranslate(currentX, currentY, modal);
+
+        requestAnimationFrame(() => {
+          const bounds = {
+            top: 20,
+            bottom: window.innerHeight - modal.offsetHeight - 20,
+            left: 20,
+            right: window.innerWidth - modal.offsetWidth - 20
+          };
+
+          const newY = Math.min(Math.max(currentY, bounds.top - window.innerHeight/2), bounds.bottom - window.innerHeight/2);
+          const newX = Math.min(Math.max(currentX, bounds.left - window.innerWidth/2), bounds.right - window.innerWidth/2);
+
+          modal.style.transform = `translate(calc(-50% + ${newX}px), calc(-50% + ${newY}px)) translateZ(0)`;
+          modal.style.webkitTransform = `translate(calc(-50% + ${newX}px), calc(-50% + ${newY}px)) translateZ(0)`;
+        });
       }
-    }
+    };
 
-    function dragEnd() {
-      initialX = currentX;
-      initialY = currentY;
+    const dragEnd = () => {
       isDragging = false;
-    }
+    };
 
-    function setTranslate(xPos, yPos, el) {
-      el.style.transform = `translate(calc(-50% + ${xPos}px), calc(-50% + ${yPos}px)) translateZ(0)`;
-      el.style.webkitTransform = `translate(calc(-50% + ${xPos}px), calc(-50% + ${yPos}px)) translateZ(0)`;
-    }
-
+    // Add drag event listeners
+    modal.addEventListener("touchstart", dragStart, { passive: false });
+    modal.addEventListener("touchend", dragEnd, { passive: false });
+    modal.addEventListener("touchmove", drag, { passive: false });
     modal.addEventListener("mousedown", dragStart);
-    document.addEventListener("mousemove", drag);
-    document.addEventListener("mouseup", dragEnd);
+    modal.addEventListener("mouseup", dragEnd);
+    modal.addEventListener("mousemove", drag);
 
     // Initialize drag and resize state
     let isResizing = false;
     let currentHandle = null;
     let initialWidth = 0;
     let initialHeight = 0;
+
+    // Add resize handles
+    const handles = ['n', 's', 'e', 'w', 'ne', 'nw', 'se', 'sw'].map(dir => {
+      const handle = document.createElement('div');
+      handle.className = `resize-handle resize-${dir}`;
+      Object.assign(handle.style, {
+        position: 'absolute',
+        width: dir.includes('e') || dir.includes('w') ? '10px' : '100%',
+        height: dir.includes('n') || dir.includes('s') ? '10px' : '100%',
+        [dir.includes('n') ? 'top' : dir.includes('s') ? 'bottom' : '']: '0',
+        [dir.includes('e') ? 'right' : dir.includes('w') ? 'left' : '']: '0',
+        cursor: `${dir}-resize`,
+        zIndex: '10001'
+      });
+      return handle;
+    });
+
+    handles.forEach(handle => {
+      modal.appendChild(handle);
+      handle.addEventListener('mousedown', (e) => startResize(e, handle));
+    });
+
+    // Register cleanup
+    registerCleanup('eventListeners', () => {
+      modal.removeEventListener("touchstart", dragStart);
+      modal.removeEventListener("touchend", dragEnd);
+      modal.removeEventListener("touchmove", drag);
+      modal.removeEventListener("mousedown", dragStart);
+      modal.removeEventListener("mouseup", dragEnd);
+      modal.removeEventListener("mousemove", drag);
+      document.removeEventListener('mousemove', resize);
+      document.removeEventListener('mouseup', stopResize);
+      handles.forEach(handle => {
+        handle.removeEventListener('mousedown', startResize);
+      });
+    });
 
     const startResize = (e, handle) => {
       if (e.target !== handle) return;
@@ -226,27 +288,6 @@
       isResizing = false;
       currentHandle = null;
     };
-
-    // Add resize handles
-    const handles = ['n', 's', 'e', 'w', 'ne', 'nw', 'se', 'sw'].map(dir => {
-      const handle = document.createElement('div');
-      handle.className = `resize-handle resize-${dir}`;
-      Object.assign(handle.style, {
-        position: 'absolute',
-        width: dir.includes('e') || dir.includes('w') ? '10px' : '100%',
-        height: dir.includes('n') || dir.includes('s') ? '10px' : '100%',
-        [dir.includes('n') ? 'top' : dir.includes('s') ? 'bottom' : '']: '0',
-        [dir.includes('e') ? 'right' : dir.includes('w') ? 'left' : '']: '0',
-        cursor: `${dir}-resize`,
-        zIndex: '10001'
-      });
-      return handle;
-    });
-
-    handles.forEach(handle => {
-      modal.appendChild(handle);
-      handle.addEventListener('mousedown', (e) => startResize(e, handle));
-    });
 
     document.addEventListener('mousemove', resize);
     document.addEventListener('mouseup', stopResize);
@@ -492,24 +533,29 @@
     });
 
     // Enhanced download functionality with proper format and time rounding
-    downloadBtn.onclick = () => {
+    downloadBtn.onclick = async () => {
       try {
         updateProgress("Preparing download...", true);
         
         // Round current time to nearest hour
-        const now = new Date('2024-12-08T14:05:46-08:00'); // Using provided time
-        const minutes = now.getMinutes();
-        if (minutes >= 30) {
-          now.setHours(now.getHours() + 1);
-        }
-        now.setMinutes(0);
-        now.setSeconds(0);
-        now.setMilliseconds(0);
+        const now = new Date('2024-12-08T14:43:41-08:00');  // Using provided time
+        const roundedHour = new Date(now);
+        roundedHour.setMinutes(now.getMinutes() >= 30 ? 60 : 0);
+        roundedHour.setSeconds(0);
+        roundedHour.setMilliseconds(0);
 
-        // Format date and time
-        const formattedDate = `${now.getMonth() + 1}/${now.getDate()}/${now.getFullYear().toString().substr(-2)}`;
-        const hour = now.getHours();
-        const roundedHour = hour >= 12 ? `${hour === 12 ? 12 : hour - 12}PM` : `${hour === 0 ? 12 : hour}AM`;
+        const timeStr = roundedHour.toLocaleTimeString('en-US', {
+          hour: 'numeric',
+          minute: '2-digit',
+          hour12: true
+        });
+
+        const dateStr = roundedHour.toLocaleDateString('en-US', {
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        });
 
         // Get values from input fields with fallbacks
         const inProgress = getElement("#in-progress-input").value || '0';
@@ -518,7 +564,7 @@
         const packageProgress = getElement("#package-progress-input").value || '0';
 
         // Create header in markdown format
-        const header = `/md\n@\n## CRDR UPDATE - ${formattedDate} ${roundedHour}\n\n` +
+        const header = `/md\n@\n## CRDR UPDATE - ${dateStr} ${timeStr}\n\n` +
                       `**IN PROGRESS: ${inProgress.toString().padStart(2, '0')}**\n` +
                       `**AT RISK: ${atRisk.toString().padStart(2, '0')}**\n` +
                       `**BEHIND: ${behind.toString().padStart(2, '0')}**\n` +
@@ -562,7 +608,7 @@
         const fileContent = header + routeContent;
 
         // Create and download file
-        const blob = new Blob([fileContent], { type: "text/plain;charset=utf-8" });
+        const blob = new Blob([fileContent], { type: "text/plain" });
         const url = URL.createObjectURL(blob);
         const link = document.createElement("a");
         
@@ -975,13 +1021,27 @@
       });
 
       // Update download functionality to include RC and POA
-      downloadBtn.onclick = () => {
+      downloadBtn.onclick = async () => {
         // Get current date and time
-        const now = new Date();
-        const formattedDate = `${now.getMonth() + 1}/${now.getDate()}/${now.getFullYear().toString().substr(-2)}`;
-        const hour = now.getHours();
-        const roundedHour = hour >= 12 ? `${hour === 12 ? 12 : hour - 12}PM` : `${hour === 0 ? 12 : hour}AM`;
-        
+        const now = new Date('2024-12-08T14:43:41-08:00');  // Using provided time
+        const roundedHour = new Date(now);
+        roundedHour.setMinutes(now.getMinutes() >= 30 ? 60 : 0);
+        roundedHour.setSeconds(0);
+        roundedHour.setMilliseconds(0);
+
+        const timeStr = roundedHour.toLocaleTimeString('en-US', {
+          hour: 'numeric',
+          minute: '2-digit',
+          hour12: true
+        });
+
+        const dateStr = roundedHour.toLocaleDateString('en-US', {
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        });
+
         // Get values from input fields
         const inProgress = document.getElementById('in-progress-input').value || '0';
         const atRisk = document.getElementById('at-risk-input').value || '0';
@@ -989,7 +1049,7 @@
         const packageProgress = document.getElementById('package-progress-input').value || '0';
 
         // Create header
-        const header = `/md\n@\n## CRDR UPDATE - ${formattedDate} ${roundedHour}\n\n` +
+        const header = `/md\n@\n## CRDR UPDATE - ${dateStr} ${timeStr}\n\n` +
                       `**IN PROGRESS: ${inProgress.toString().padStart(2, '0')}**\n` +
                       `**AT RISK: ${atRisk.toString().padStart(2, '0')}**\n` +
                       `**BEHIND: ${behind.toString().padStart(2, '0')}**\n` +
