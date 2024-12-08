@@ -101,114 +101,77 @@
   const createModal = () => {
     const modal = document.createElement("div");
     modal.id = "custom-modal";
-    
-    // Apply base styles with responsive design
-    Object.assign(modal.style, {
-      position: "fixed",
-      top: "50%",
-      left: "50%",
-      transform: "translate(-50%, -50%) translateZ(0)",
-      webkitTransform: "translate(-50%, -50%) translateZ(0)",
-      backfaceVisibility: "hidden",
-      webkitBackfaceVisibility: "hidden",
-      perspective: "1000",
-      webkitPerspective: "1000",
-      width: "min(90vw, 500px)",  // Responsive width
-      minWidth: "320px",          // Minimum width for usability
-      minHeight: "400px",         // Minimum height for usability
-      maxHeight: "90vh",          // Maximum height constraint
-      background: "white",
-      border: "none",
-      boxShadow: "0 10px 25px rgba(0, 0, 0, 0.2), 0 2px 10px rgba(0, 0, 0, 0.1)",
-      padding: "clamp(15px, 3vw, 25px)",  // Responsive padding
-      borderRadius: "16px",
-      zIndex: "10000",
-      textAlign: "center",
-      overflowY: "auto",
-      willChange: "transform",
-      isolation: "isolate",
-      cursor: "move",
-      resize: "both",             // Make resizable
-      overflow: "auto"            // Enable resize overflow
-    });
+    modal.style.position = "fixed";
+    modal.style.top = "50%";
+    modal.style.left = "50%";
+    modal.style.transform = "translate(-50%, -50%) translateZ(0)";
+    modal.style.webkitTransform = "translate(-50%, -50%) translateZ(0)";
+    modal.style.backfaceVisibility = "hidden";
+    modal.style.webkitBackfaceVisibility = "hidden";
+    modal.style.perspective = "1000";
+    modal.style.webkitPerspective = "1000";
+    modal.style.width = "400px";
+    modal.style.background = "white";
+    modal.style.border = "none";
+    modal.style.boxShadow = "0 10px 25px rgba(0, 0, 0, 0.2), 0 2px 10px rgba(0, 0, 0, 0.1)";
+    modal.style.padding = "25px";
+    modal.style.borderRadius = "16px";
+    modal.style.zIndex = "10000";
+    modal.style.textAlign = "center";
+    modal.style.maxHeight = "90vh";
+    modal.style.overflowY = "auto";
+    modal.style.willChange = "transform";
+    modal.style.isolation = "isolate";
+    modal.style.cursor = "move";
 
-    // Initialize drag and resize state
+    // Add drag functionality
     let isDragging = false;
-    let isResizing = false;
-    let currentHandle = null;
-    let currentX = 0;
-    let currentY = 0;
-    let initialX = 0;
-    let initialY = 0;
+    let currentX;
+    let currentY;
+    let initialX;
+    let initialY;
     let xOffset = 0;
     let yOffset = 0;
-    let initialWidth = 0;
-    let initialHeight = 0;
 
-    const dragStart = (e) => {
-      if (e.type === "touchstart") {
-        initialX = e.touches[0].clientX - xOffset;
-        initialY = e.touches[0].clientY - yOffset;
-      } else {
-        initialX = e.clientX - xOffset;
-        initialY = e.clientY - yOffset;
-      }
-
-      if (e.target === modal || e.target.closest('[style*="cursor: move"]')) {
+    function dragStart(e) {
+      initialX = e.clientX - xOffset;
+      initialY = e.clientY - yOffset;
+      if (e.target === modal || e.target.tagName === "H2" || e.target.parentNode === modal) {
         isDragging = true;
       }
-    };
+    }
 
-    const drag = (e) => {
+    function drag(e) {
       if (isDragging) {
         e.preventDefault();
-        
-        if (e.type === "touchmove") {
-          currentX = e.touches[0].clientX - initialX;
-          currentY = e.touches[0].clientY - initialY;
-        } else {
-          currentX = e.clientX - initialX;
-          currentY = e.clientY - initialY;
-        }
-
+        currentX = e.clientX - initialX;
+        currentY = e.clientY - initialY;
         xOffset = currentX;
         yOffset = currentY;
-
-        requestAnimationFrame(() => {
-          const bounds = {
-            top: 20,
-            bottom: window.innerHeight - modal.offsetHeight - 20,
-            left: 20,
-            right: window.innerWidth - modal.offsetWidth - 20
-          };
-
-          const newY = Math.min(Math.max(currentY, bounds.top - window.innerHeight/2), bounds.bottom - window.innerHeight/2);
-          const newX = Math.min(Math.max(currentX, bounds.left - window.innerWidth/2), bounds.right - window.innerWidth/2);
-
-          modal.style.transform = `translate(calc(-50% + ${newX}px), calc(-50% + ${newY}px)) translateZ(0)`;
-        });
+        setTranslate(currentX, currentY, modal);
       }
-    };
+    }
 
-    const dragEnd = () => {
+    function dragEnd() {
+      initialX = currentX;
+      initialY = currentY;
       isDragging = false;
-    };
+    }
 
-    // Add resize handles
-    const handles = ['n', 's', 'e', 'w', 'ne', 'nw', 'se', 'sw'].map(dir => {
-      const handle = document.createElement('div');
-      handle.className = `resize-handle resize-${dir}`;
-      Object.assign(handle.style, {
-        position: 'absolute',
-        width: dir.includes('e') || dir.includes('w') ? '10px' : '100%',
-        height: dir.includes('n') || dir.includes('s') ? '10px' : '100%',
-        [dir.includes('n') ? 'top' : dir.includes('s') ? 'bottom' : '']: '0',
-        [dir.includes('e') ? 'right' : dir.includes('w') ? 'left' : '']: '0',
-        cursor: `${dir}-resize`,
-        zIndex: '10001'
-      });
-      return handle;
-    });
+    function setTranslate(xPos, yPos, el) {
+      el.style.transform = `translate(calc(-50% + ${xPos}px), calc(-50% + ${yPos}px)) translateZ(0)`;
+      el.style.webkitTransform = `translate(calc(-50% + ${xPos}px), calc(-50% + ${yPos}px)) translateZ(0)`;
+    }
+
+    modal.addEventListener("mousedown", dragStart);
+    document.addEventListener("mousemove", drag);
+    document.addEventListener("mouseup", dragEnd);
+
+    // Initialize drag and resize state
+    let isResizing = false;
+    let currentHandle = null;
+    let initialWidth = 0;
+    let initialHeight = 0;
 
     const startResize = (e, handle) => {
       if (e.target !== handle) return;
@@ -252,7 +215,7 @@
 
         modal.style.width = `${newWidth}px`;
         modal.style.height = `${newHeight}px`;
-        modal.style.transform = `translate(calc(-50% + ${newX}px), calc(-50% + ${newY}px)) translateZ(0)`;
+        modal.style.transform = `translate(${newX}px, ${newY}px)`;
 
         // Update inner content layout
         updateInnerLayout();
@@ -264,15 +227,22 @@
       currentHandle = null;
     };
 
-    // Add drag event listeners
-    modal.addEventListener("touchstart", dragStart, { passive: false });
-    modal.addEventListener("touchend", dragEnd, { passive: false });
-    modal.addEventListener("touchmove", drag, { passive: false });
-    modal.addEventListener("mousedown", dragStart);
-    modal.addEventListener("mouseup", dragEnd);
-    modal.addEventListener("mousemove", drag);
+    // Add resize handles
+    const handles = ['n', 's', 'e', 'w', 'ne', 'nw', 'se', 'sw'].map(dir => {
+      const handle = document.createElement('div');
+      handle.className = `resize-handle resize-${dir}`;
+      Object.assign(handle.style, {
+        position: 'absolute',
+        width: dir.includes('e') || dir.includes('w') ? '10px' : '100%',
+        height: dir.includes('n') || dir.includes('s') ? '10px' : '100%',
+        [dir.includes('n') ? 'top' : dir.includes('s') ? 'bottom' : '']: '0',
+        [dir.includes('e') ? 'right' : dir.includes('w') ? 'left' : '']: '0',
+        cursor: `${dir}-resize`,
+        zIndex: '10001'
+      });
+      return handle;
+    });
 
-    // Add resize event listeners
     handles.forEach(handle => {
       modal.appendChild(handle);
       handle.addEventListener('mousedown', (e) => startResize(e, handle));
@@ -283,12 +253,9 @@
 
     // Register cleanup for all event listeners
     registerCleanup('eventListeners', () => {
-      modal.removeEventListener("touchstart", dragStart);
-      modal.removeEventListener("touchend", dragEnd);
-      modal.removeEventListener("touchmove", drag);
       modal.removeEventListener("mousedown", dragStart);
-      modal.removeEventListener("mouseup", dragEnd);
-      modal.removeEventListener("mousemove", drag);
+      document.removeEventListener("mousemove", drag);
+      document.removeEventListener("mouseup", dragEnd);
       document.removeEventListener('mousemove', resize);
       document.removeEventListener('mouseup', stopResize);
       handles.forEach(handle => {
@@ -322,8 +289,8 @@
 
     // Create entrance animation
     const fadeIn = modal.animate([
-      { opacity: 0, transform: 'translate(-50%, -60%) translateZ(0)' },
-      { opacity: 1, transform: 'translate(-50%, -50%) translateZ(0)' }
+      { opacity: 0, transform: 'translate(-50%, -60%) translateZ(0)', webkitTransform: 'translate(-50%, -60%) translateZ(0)' },
+      { opacity: 1, transform: 'translate(-50%, -50%) translateZ(0)', webkitTransform: 'translate(-50%, -50%) translateZ(0)' }
     ], {
       duration: 300,
       easing: 'ease-out',
@@ -622,8 +589,8 @@
     // Close button handler with animation
     const closeModal = async () => {
       const fadeOut = modal.animate([
-        { opacity: 1, transform: 'translate(-50%, -50%) translateZ(0)' },
-        { opacity: 0, transform: 'translate(-50%, -40%) translateZ(0)' }
+        { opacity: 1, transform: 'translate(-50%, -50%) translateZ(0)', webkitTransform: 'translate(-50%, -50%) translateZ(0)' },
+        { opacity: 0, transform: 'translate(-50%, -40%) translateZ(0)', webkitTransform: 'translate(-50%, -40%) translateZ(0)' }
       ], {
         duration: 200,
         easing: 'ease-in',
@@ -679,13 +646,9 @@
    * @returns {string|null} Extracted "X BEHIND" text or null
    */
   const extractBehindProgress = (progressText) => {
-    return withErrorBoundary(() => {
-      console.log("Extracting progress from text:", progressText);
-      const match = progressText?.match(/(\d+)\s*BEHIND/i);
-      const result = match ? `${match[1]} BEHIND` : null;
-      console.log("Extracted progress:", result);
-      return result;
-    }, null, "Failed to extract behind progress");
+    if (!progressText || typeof progressText !== 'string') return null;
+    const match = progressText.match(/(\d+)\s*BEHIND/i);
+    return match ? match[0] : null;
   };
 
   /**
