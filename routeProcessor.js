@@ -640,174 +640,92 @@
     }, null, "Failed to update progress");
   };
 
-  /**
-   * Extracts the "BEHIND" count from progress text
-   * @param {string} progressText - Progress text to parse
-   * @returns {string|null} Extracted "X BEHIND" text or null
-   */
   const extractBehindProgress = (progressText) => {
-    if (!progressText || typeof progressText !== 'string') return null;
-    const match = progressText.match(/(\d+)\s*BEHIND/i);
-    return match ? match[0] : null;
+    console.log("Extracting progress from text:", progressText);
+    const match = progressText?.match(/(\d+)\s*BEHIND/i);
+    const result = match ? `${match[1]} BEHIND` : null;
+    console.log("Extracted progress:", result);
+    return result;
   };
 
-  /**
-   * Cleans associate names by removing company information
-   * @param {string} names - Names to clean
-   * @returns {string} Cleaned names
-   */
   const cleanAssociateNames = (names) => {
-    return withErrorBoundary(() => {
-      console.log("Cleaning associate names:", names);
-      const cleanedNames = names.replace(/\(Cornerstone Delivery Service\)/g, "").trim();
-      console.log("Cleaned associate names:", cleanedNames);
-      return cleanedNames;
-    }, names, "Failed to clean associate names");
+    console.log("Cleaning associate names:", names);
+    const cleanedNames = names.replace(/\(Cornerstone Delivery Service\)/g, "").trim();
+    console.log("Cleaned associate names:", cleanedNames);
+    return cleanedNames;
   };
 
-  /**
-   * Extracts associate information from a route container
-   * @param {Element} container - Container element
-   * @param {boolean} isV1 - Whether using V1 interface
-   * @returns {string} Extracted associate information
-   */
   const extractAssociates = (container, isV1) => {
-    return withErrorBoundary(() => {
-      console.log("Extracting associates. Version:", isV1 ? "V1" : "V2");
-      if (isV1) {
-        const associateContainer = getElement(".ml-lg-4.ml-2.mr-2.mr-lg-auto.normal-white-space", container);
-        const tooltip = associateContainer?.nextElementSibling?.classList.contains("af-tooltip")
-          ? Array.from(associateContainer.nextElementSibling.querySelectorAll("div")).map((el) =>
-              cleanAssociateNames(el.textContent.trim())
-            )
-          : null;
+    console.log("Extracting associates. Version:", isV1 ? "V1" : "V2");
+    if (isV1) {
+      const associateContainer = container.querySelector(".ml-lg-4.ml-2.mr-2.mr-lg-auto.normal-white-space");
+      const tooltip = associateContainer?.nextElementSibling?.classList.contains("af-tooltip")
+        ? Array.from(associateContainer.nextElementSibling.querySelectorAll("div")).map((el) =>
+            cleanAssociateNames(el.textContent.trim())
+          )
+        : null;
 
-        if (tooltip) {
-          console.log("Extracted associates from tooltip (V1):", tooltip.join(", "));
-          return tooltip.join(", ");
-        }
-
-        const associateInfo = cleanAssociateNames(
-          getElement(".text-truncate", associateContainer)?.textContent.trim() || "No associate info"
-        );
-        console.log("Extracted associates (V1):", associateInfo);
-        return associateInfo;
-      } else {
-        const associates = Array.from(getElements(".css-1kttr4w", container))
-          .map((el) => cleanAssociateNames(el.textContent.trim()))
-          .join(", ");
-        console.log("Extracted associates (V2):", associates);
-        return associates || "No associate info";
+      if (tooltip) {
+        console.log("Extracted associates from tooltip (V1):", tooltip.join(", "));
+        return tooltip.join(", ");
       }
-    }, "No associate info", "Failed to extract associates");
+
+      const associateInfo = cleanAssociateNames(associateContainer?.querySelector(".text-truncate")?.textContent.trim() || "No associate info");
+      console.log("Extracted associates (V1):", associateInfo);
+      return associateInfo;
+    } else {
+      const associates = Array.from(container.querySelectorAll(".css-1kttr4w"))
+        .map((el) => cleanAssociateNames(el.textContent.trim()))
+        .join(", ");
+      console.log("Extracted associates (V2):", associates);
+      return associates;
+    }
   };
 
-  /**
-   * Collects route information from the page with improved performance and error handling
-   * @param {string} selector - CSS selector for route elements
-   * @param {Array} routes - Array to store collected routes
-   * @param {number} maxScrolls - Maximum number of scroll iterations
-   * @param {number} scrollDelay - Delay between scrolls in ms
-   * @param {boolean} isV1 - Whether using V1 or V2 interface
-   * @returns {Promise<void>}
-   */
   const collectRoutes = async (selector, routes, maxScrolls = 20, scrollDelay = 100, isV1 = false) => {
-    // Create intersection observer for smooth scrolling
-    const observerCallback = (entries, observer) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          registerCleanup('observers', () => observer.disconnect());
-          processRouteElement(entry.target, routes, isV1);
-        }
-      });
-    };
+    console.log("Starting route collection. Selector:", selector);
+    for (let i = 0; i < maxScrolls; i++) {
+      console.log(`Scroll iteration ${i + 1} of ${maxScrolls}`);
+      const elements = document.querySelectorAll(selector);
+      console.log(`Found ${elements.length} route elements`);
 
-    const observer = new IntersectionObserver(observerCallback, {
-      root: null,
-      rootMargin: '0px',
-      threshold: 0.1
-    });
-
-    /**
-     * Processes a single route element
-     * @param {Element} el - Route element to process
-     * @param {Array} routes - Array to store route data
-     * @param {boolean} isV1 - Interface version flag
-     */
-    const processRouteElement = (el, routes, isV1) => {
-      return withErrorBoundary(async () => {
+      elements.forEach((el, index) => {
+        console.log(`Processing element ${index + 1} of ${elements.length}`);
         const routeCodeElem = isV1
-          ? getElement('.left-column.text-sm', el)?.firstElementChild
-          : getElement('.css-1nqzkik', el);
-        
+          ? el.querySelector(".left-column.text-sm")?.firstElementChild
+          : el.querySelector(".css-1nqzkik");
         const progressElem = isV1
-          ? getElement('.complete.h-100.d-flex.justify-content-center.align-items-center.progressStatusBar', el)
-          : getElement('.css-11ibtj8', el);
+          ? el.querySelector(".complete.h-100.d-flex.justify-content-center.align-items-center.progressStatusBar")
+          : el.querySelector(".css-1xac89n.font-weight-bold");
 
-        const routeCode = routeCodeElem?.textContent?.trim() || routeCodeElem?.getAttribute('title');
-        if (!routeCode) {
-          console.warn('Skipping route due to missing code');
-          return;
-        }
-
-        const associateInfo = await withErrorBoundary(
-          () => extractAssociates(el, isV1),
-          'No associate info',
-          'Failed to extract associate information'
-        );
-
-        const progressRaw = progressElem?.textContent?.trim();
+        const routeCode = routeCodeElem?.textContent.trim() || routeCodeElem?.getAttribute("title");
+        const associateInfo = extractAssociates(el, isV1);
+        const progressRaw = progressElem?.textContent.trim();
         const progress = extractBehindProgress(progressRaw);
 
-        // Avoid duplicates
-        const existingRouteIndex = routes.findIndex(route => route.routeCode === routeCode);
-        if (existingRouteIndex === -1) {
-          routes.push({ routeCode, associateInfo, progress });
-          console.log('Added route:', { routeCode, associateInfo, progress });
+        console.log("Route Code:", routeCode);
+        console.log("Associate Info:", associateInfo);
+        console.log("Progress:", progress);
+
+        if (routeCode) {
+          const existingRouteIndex = routes.findIndex(route => route.routeCode === routeCode);
+          if (existingRouteIndex === -1) {
+            routes.push({ routeCode, associateInfo, progress });
+            console.log("Added route:", { routeCode, associateInfo, progress });
+          } else {
+            console.log("Skipped duplicate route with code:", routeCode);
+          }
+        } else {
+          console.log("Skipped route due to missing code.");
         }
-      }, null, `Failed to process route element`);
-    };
+      });
 
-    let scrollCount = 0;
-    const processNextBatch = async () => {
-      if (scrollCount >= maxScrolls) {
-        return;
-      }
-
-      const elements = getElements(selector);
-      console.log(`Found ${elements.length} route elements in batch ${scrollCount + 1}`);
-
-      // Observe all elements
-      elements.forEach(el => observer.observe(el));
-
-      // Smooth scroll to last element
-      const lastElement = elements[elements.length - 1];
-      if (lastElement) {
-        await new Promise((resolve) => {
-          lastElement.scrollIntoView({
-            behavior: 'smooth',
-            block: 'end'
-          });
-          // Use requestAnimationFrame for smoother scrolling
-          requestAnimationFrame(() => {
-            setTimeout(resolve, scrollDelay);
-          });
-        });
-      }
-
-      scrollCount++;
-      await processNextBatch();
-    };
-
-    try {
-      await processNextBatch();
-      updateProgress(`Collected ${routes.length} unique routes.`);
-    } catch (error) {
-      console.error('Error during route collection:', error);
-      updateProgress(`Error during route collection: ${error.message}`);
-    } finally {
-      observer.disconnect();
+      elements[elements.length - 1]?.scrollIntoView({ behavior: "smooth", block: "end" });
+      await new Promise((resolve) => setTimeout(resolve, scrollDelay));
     }
+
+    updateProgress(`Collected ${routes.length} unique routes so far.`);
+    console.log("Completed route collection. Total routes:", routes.length);
   };
 
   const modal = createModal();
