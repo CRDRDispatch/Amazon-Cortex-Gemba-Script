@@ -190,6 +190,9 @@
       }
     });
 
+    // Add the modal to the document body
+    document.body.appendChild(modal);
+
     return modal;
   };
 
@@ -313,11 +316,9 @@
     }
   }
 
-  const modal = createModal();
-  const downloadBtn = modal.querySelector("#download-btn");
-
   try {
     console.log("Script started");
+    const modal = createModal();
     updateProgress("Script started...");
 
     const isV1 = document.querySelector(".css-hkr77h")?.checked;
@@ -518,6 +519,7 @@
       });
 
       // Update download functionality to include RC and POA
+      const downloadBtn = modal.querySelector("#download-btn");
       downloadBtn.onclick = () => {
         // Get current date and time
         const now = new Date();
@@ -634,8 +636,6 @@
     progressBackBtn.style.backgroundColor = "#6c757d";
     progressBackBtn.style.boxShadow = "0 2px 4px rgba(108, 117, 125, 0.2)";
   });
-
-  document.body.appendChild(modal);
 
   // Make modal draggable
   let isDragging = false;
