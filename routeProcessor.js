@@ -747,17 +747,8 @@
     modal.querySelector("#preview-section").style.display = "none";
     modal.querySelector("#dsp-progress-section").style.display = "block";
     
-    if (window.dspProgress && isV1) {
-      const inProgressInput = modal.querySelector('#in-progress-input');
-      const atRiskInput = modal.querySelector('#at-risk-input');
-      const behindInput = modal.querySelector('#behind-input');
-      const packageProgressInput = modal.querySelector('#package-progress-input');
-      
-      if (inProgressInput) inProgressInput.value = window.dspProgress.inProgress;
-      if (atRiskInput) atRiskInput.value = window.dspProgress.atRisk;
-      if (behindInput) behindInput.value = window.dspProgress.behind;
-      if (packageProgressInput) packageProgressInput.value = window.dspProgress.packageProgress;
-    } else if (window.dspProgress) {
+    // Populate DSP progress section with gathered data
+    if (window.dspProgress) {
       const inProgressInput = modal.querySelector('#in-progress-input');
       const atRiskInput = modal.querySelector('#at-risk-input');
       const behindInput = modal.querySelector('#behind-input');
