@@ -424,50 +424,22 @@
         
         // Get Package Progress from fourth container - Following exact path
         if (containersV2[3]) {  // Get 4th div with css-11ofut8
-          console.log('Found 4th container:', containersV2[3]);
-          
-          // Log all children of the fourth container
-          console.log('Children of 4th container:', Array.from(containersV2[3].children).map(child => ({
-            className: child.className,
-            index: Array.from(containersV2[3].children).indexOf(child)
-          })));
-          
           const thirdChild = Array.from(containersV2[3].children).find((child, index) => 
             index === 2 && child.classList.contains('css-1avovsw')
           );
-          console.log('Found third child with css-1avovsw:', thirdChild);
-          
           if (thirdChild) {
-            console.log('Children of third child:', Array.from(thirdChild.children).map(child => ({
-              className: child.className,
-              innerHTML: child.innerHTML.substring(0, 100) // First 100 chars for preview
-            })));
-            
             const firstChild = thirdChild.firstElementChild;
-            console.log('First child of third child:', firstChild);
-            
             if (firstChild) {
-              console.log('Looking for css-ql9057 within:', firstChild.innerHTML.substring(0, 100));
               const ql9057Div = firstChild.querySelector('.css-ql9057');
-              console.log('Found css-ql9057 div:', ql9057Div);
-              
               if (ql9057Div) {
-                const circularDiv = ql9057Div.querySelector('.mdn-circular-children');
-                console.log('Found circular div:', circularDiv);
-                
+                const circularDiv = ql9057Div.querySelector('[name="mdn-circular-children"]');
                 if (circularDiv) {
-                  const progressParagraph = circularDiv.querySelector('p');
-                  console.log('Found progress paragraph:', progressParagraph);
-                  const progressText = progressParagraph?.textContent || '0%';
-                  console.log('Progress text:', progressText);
+                  const progressText = circularDiv.querySelector('p')?.textContent || '0%';
                   packageProgress = parseInt(progressText.replace('%', '') || '0');
-                  console.log('Final package progress value:', packageProgress);
                 }
               }
             }
           }
-        } else {
-          console.log('Could not find 4th container with css-11ofut8');
         }
         
         // Store the values for later use
