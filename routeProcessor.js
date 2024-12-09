@@ -14,7 +14,7 @@
     modal.style.borderRadius = "16px";
     modal.style.zIndex = "10000";
     modal.style.maxHeight = "90vh";
-    modal.style.overflow = "auto";
+    modal.style.overflow = "hidden";
     modal.style.minWidth = "400px";
     modal.style.minHeight = "300px";
     modal.style.maxWidth = "90vw";
@@ -22,98 +22,108 @@
 
     modal.innerHTML = `
       <button id="close-btn" style="position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 18px; cursor: pointer; color: #666; transition: color 0.2s ease;">✖</button>
-      <div style="margin-bottom: 25px; cursor: move;">
-        <img src="https://crdrdispatch.github.io/GembaScript/Logo.svg" alt="Logo" style="height: 90px; display: block; margin: 0 auto; -webkit-transform: translateZ(0); transform: translateZ(0); pointer-events: none;">
-      </div>
-      <h2 style="font-family: Arial, sans-serif; margin-bottom: 25px; border-bottom: 2px solid #eee; padding-bottom: 15px; color: #2c3e50; font-size: 24px;">Gimme That GEMBA</h2>
-      <div id="progress-section" style="margin-bottom: 30px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-          <div style="display: flex; align-items: center; gap: 10px;">
-            <h3 style="font-family: Arial, sans-serif; font-size: 16px; color: #2c3e50; margin: 0; font-weight: 600;">Progress</h3>
-            <span id="progress-status" style="display: none; font-size: 12px; padding: 3px 10px; border-radius: 20px; background-color: #4CAF50; color: white; font-weight: 500; box-shadow: 0 2px 4px rgba(76, 175, 80, 0.2);">Complete</span>
+      <div id="modal-content" style="height: calc(100% - 20px); overflow-y: auto; padding: 20px; padding-right: 25px;">
+        <div style="margin-bottom: 25px; cursor: move;">
+          <img src="https://crdrdispatch.github.io/GembaScript/Logo.svg" alt="Logo" style="height: 90px; display: block; margin: 0 auto; -webkit-transform: translateZ(0); transform: translateZ(0); pointer-events: none;">
+        </div>
+        <h2 style="font-family: Arial, sans-serif; margin-bottom: 25px; border-bottom: 2px solid #eee; padding-bottom: 15px; color: #2c3e50; font-size: 24px;">Gimme That GEMBA</h2>
+        <div id="progress-section" style="margin-bottom: 30px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <h3 style="font-family: Arial, sans-serif; font-size: 16px; color: #2c3e50; margin: 0; font-weight: 600;">Progress</h3>
+              <span id="progress-status" style="display: none; font-size: 12px; padding: 3px 10px; border-radius: 20px; background-color: #4CAF50; color: white; font-weight: 500; box-shadow: 0 2px 4px rgba(76, 175, 80, 0.2);">Complete</span>
+            </div>
+            <button id="toggle-progress" style="background: none; border: none; color: #666; cursor: pointer; font-size: 14px; padding: 5px 10px; border-radius: 5px; transition: background-color 0.2s ease;">Hide</button>
           </div>
-          <button id="toggle-progress" style="background: none; border: none; color: #666; cursor: pointer; font-size: 14px; padding: 5px 10px; border-radius: 5px; transition: background-color 0.2s ease;">Hide</button>
-        </div>
-        <div id="progress-details" style="font-family: Arial, sans-serif; text-align: left; margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 12px; border: 1px solid #edf2f7;">
-          <p>Initializing...</p>
-        </div>
-      </div>
-      <div id="da-selection-section" style="display: none; margin-bottom: 30px;">
-        <h3 style="font-family: Arial, sans-serif; font-size: 16px; color: #2c3e50; margin-bottom: 12px; font-weight: 600;">These routes have multiple DAs. Please select the DA assigned to the route.</h3>
-        <div id="da-dropdowns" style="max-height: 400px; overflow-y: auto; padding: 15px; background: #f8f9fa; border-radius: 12px; border: 1px solid #edf2f7;">
-        </div>
-        <div style="margin-top: 20px; text-align: right;">
-          <button id="da-next-btn" style="padding: 12px 30px; background-color: #4CAF50; color: white; border: none; border-radius: 8px; cursor: pointer; font-family: Arial, sans-serif; font-weight: 500; font-size: 15px; box-shadow: 0 4px 6px rgba(76, 175, 80, 0.2); transition: all 0.2s ease;">Next</button>
-        </div>
-      </div>
-      <div id="preview-section" style="display: none; margin-bottom: 30px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-          <button id="back-btn" style="padding: 8px 16px; background-color: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer; font-family: Arial, sans-serif; font-weight: 500; font-size: 14px; box-shadow: 0 2px 4px rgba(108, 117, 125, 0.2); transition: all 0.2s ease; display: flex; align-items: center; gap: 6px;">
-            <span style="font-size: 18px;">←</span> Back
-          </button>
-          <h3 style="font-family: Arial, sans-serif; font-size: 16px; color: #2c3e50; margin: 0; font-weight: 600;">Route Details</h3>
-          <div style="width: 80px;"></div>
-        </div>
-        <div id="route-details" style="max-height: 400px; overflow-y: auto; padding: 15px; background: #f8f9fa; border-radius: 12px; border: 1px solid #edf2f7; scrollbar-width: thin; scrollbar-color: #cbd5e0 #f8f9fa;">
-        </div>
-        <div style="display: flex; justify-content: flex-end; margin-top: 20px;">
-          <button id="preview-next-btn" style="padding: 12px 30px; background-color: #4CAF50; color: white; border: none; border-radius: 8px; cursor: pointer; font-family: Arial, sans-serif; font-weight: 500; font-size: 15px; box-shadow: 0 4px 6px rgba(76, 175, 80, 0.2); transition: all 0.2s ease;">Next</button>
-        </div>
-      </div>
-      <div id="dsp-progress-section" style="display: none;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-          <button id="progress-back-btn" style="padding: 8px 16px; background-color: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer; font-family: Arial, sans-serif; font-weight: 500; font-size: 14px; box-shadow: 0 2px 4px rgba(108, 117, 125, 0.2); transition: all 0.2s ease; display: flex; align-items: center; gap: 6px;">
-            <span style="font-size: 18px;">←</span> Back
-          </button>
-          <h3 style="font-family: Arial, sans-serif; font-size: 16px; color: #2c3e50; margin: 0; font-weight: 600;">DSP Total Progress</h3>
-          <div style="width: 80px;"></div>
-        </div>
-        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin-bottom: 30px;">
-          <div class="input-group">
-            <label style="display: block; margin-bottom: 8px; color: #2c3e50; font-weight: 600; font-size: 14px;">In Progress:</label>
-            <input type="number" id="in-progress-input" class="progress-input" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px;" min="0">
-          </div>
-          <div class="input-group">
-            <label style="display: block; margin-bottom: 8px; color: #2c3e50; font-weight: 600; font-size: 14px;">At Risk:</label>
-            <input type="number" id="at-risk-input" class="progress-input" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px;" min="0">
-          </div>
-          <div class="input-group">
-            <label style="display: block; margin-bottom: 8px; color: #2c3e50; font-weight: 600; font-size: 14px;">Behind:</label>
-            <input type="number" id="behind-input" class="progress-input" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px;" min="0">
-          </div>
-          <div class="input-group">
-            <label style="display: block; margin-bottom: 8px; color: #2c3e50; font-weight: 600; font-size: 14px;">Package Progress:</label>
-            <input type="number" id="package-progress-input" class="progress-input" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px;" min="0" max="100">
+          <div id="progress-details" style="font-family: Arial, sans-serif; text-align: left; margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 12px; border: 1px solid #edf2f7;">
+            <p>Initializing...</p>
           </div>
         </div>
-        <div style="text-align: center;">
-          <button id="download-btn" style="padding: 12px 30px; background-color: #4CAF50; color: white; border: none; border-radius: 8px; cursor: pointer; font-family: Arial, sans-serif; font-weight: 500; font-size: 15px; box-shadow: 0 4px 6px rgba(76, 175, 80, 0.2); transition: all 0.2s ease; display: inline-flex; align-items: center; gap: 8px;">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M8 12L3 7L4.4 5.55L7 8.15V0H9V8.15L11.6 5.55L13 7L8 12ZM2 16C1.45 16 0.979333 15.8043 0.588 15.413C0.196667 15.0217 0.001333 14.5507 0 14V11H2V14H14V11H16V14C16 14.55 15.8043 15.021 15.413 15.413C15.0217 15.805 14.5507 16 14 16H2Z" fill="white"/>
-            </svg>
-            Download File
-          </button>
+        <div id="da-selection-section" style="display: none; margin-bottom: 30px;">
+          <h3 style="font-family: Arial, sans-serif; font-size: 16px; color: #2c3e50; margin-bottom: 12px; font-weight: 600;">These routes have multiple DAs. Please select the DA assigned to the route.</h3>
+          <div id="da-dropdowns" style="max-height: 400px; overflow-y: auto; padding: 15px; background: #f8f9fa; border-radius: 12px; border: 1px solid #edf2f7;">
+          </div>
+          <div style="margin-top: 20px; text-align: right;">
+            <button id="da-next-btn" style="padding: 12px 30px; background-color: #4CAF50; color: white; border: none; border-radius: 8px; cursor: pointer; font-family: Arial, sans-serif; font-weight: 500; font-size: 15px; box-shadow: 0 4px 6px rgba(76, 175, 80, 0.2); transition: all 0.2s ease;">Next</button>
+          </div>
+        </div>
+        <div id="preview-section" style="display: none; margin-bottom: 30px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <button id="back-btn" style="padding: 8px 16px; background-color: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer; font-family: Arial, sans-serif; font-weight: 500; font-size: 14px; box-shadow: 0 2px 4px rgba(108, 117, 125, 0.2); transition: all 0.2s ease; display: flex; align-items: center; gap: 6px;">
+              <span style="font-size: 18px;">←</span> Back
+            </button>
+            <h3 style="font-family: Arial, sans-serif; font-size: 16px; color: #2c3e50; margin: 0; font-weight: 600;">Route Details</h3>
+            <div style="width: 80px;"></div>
+          </div>
+          <div id="route-details" style="max-height: 400px; overflow-y: auto; padding: 15px; background: #f8f9fa; border-radius: 12px; border: 1px solid #edf2f7; scrollbar-width: thin; scrollbar-color: #cbd5e0 #f8f9fa;">
+          </div>
+          <div style="display: flex; justify-content: flex-end; margin-top: 20px;">
+            <button id="preview-next-btn" style="padding: 12px 30px; background-color: #4CAF50; color: white; border: none; border-radius: 8px; cursor: pointer; font-family: Arial, sans-serif; font-weight: 500; font-size: 15px; box-shadow: 0 4px 6px rgba(76, 175, 80, 0.2); transition: all 0.2s ease;">Next</button>
+          </div>
+        </div>
+        <div id="dsp-progress-section" style="display: none;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <button id="progress-back-btn" style="padding: 8px 16px; background-color: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer; font-family: Arial, sans-serif; font-weight: 500; font-size: 14px; box-shadow: 0 2px 4px rgba(108, 117, 125, 0.2); transition: all 0.2s ease; display: flex; align-items: center; gap: 6px;">
+              <span style="font-size: 18px;">←</span> Back
+            </button>
+            <h3 style="font-family: Arial, sans-serif; font-size: 16px; color: #2c3e50; margin: 0; font-weight: 600;">DSP Total Progress</h3>
+            <div style="width: 80px;"></div>
+          </div>
+          <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin-bottom: 30px;">
+            <div class="input-group">
+              <label style="display: block; margin-bottom: 8px; color: #2c3e50; font-weight: 600; font-size: 14px;">In Progress:</label>
+              <input type="number" id="in-progress-input" class="progress-input" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px;" min="0">
+            </div>
+            <div class="input-group">
+              <label style="display: block; margin-bottom: 8px; color: #2c3e50; font-weight: 600; font-size: 14px;">At Risk:</label>
+              <input type="number" id="at-risk-input" class="progress-input" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px;" min="0">
+            </div>
+            <div class="input-group">
+              <label style="display: block; margin-bottom: 8px; color: #2c3e50; font-weight: 600; font-size: 14px;">Behind:</label>
+              <input type="number" id="behind-input" class="progress-input" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px;" min="0">
+            </div>
+            <div class="input-group">
+              <label style="display: block; margin-bottom: 8px; color: #2c3e50; font-weight: 600; font-size: 14px;">Package Progress:</label>
+              <input type="number" id="package-progress-input" class="progress-input" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px;" min="0" max="100">
+            </div>
+          </div>
+          <div style="text-align: center;">
+            <button id="download-btn" style="padding: 12px 30px; background-color: #4CAF50; color: white; border: none; border-radius: 8px; cursor: pointer; font-family: Arial, sans-serif; font-weight: 500; font-size: 15px; box-shadow: 0 4px 6px rgba(76, 175, 80, 0.2); transition: all 0.2s ease; display: inline-flex; align-items: center; gap: 8px;">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M8 12L3 7L4.4 5.55L7 8.15V0H9V8.15L11.6 5.55L13 7L8 12ZM2 16C1.45 16 0.979333 15.8043 0.588 15.413C0.196667 15.0217 0.001333 14.5507 0 14V11H2V14H14V11H16V14C16 14.55 15.8043 15.021 15.413 15.413C15.0217 15.805 14.5507 16 14 16H2Z" fill="white"/>
+              </svg>
+              Download File
+            </button>
+          </div>
         </div>
       </div>
     `;
 
     // Add resize handle styles
     const resizeHandle = document.createElement('div');
-    resizeHandle.style.position = 'absolute';
-    resizeHandle.style.right = '2px';
-    resizeHandle.style.bottom = '2px';
+    resizeHandle.style.position = 'fixed';  
+    resizeHandle.style.right = modal.style.right;  
+    resizeHandle.style.bottom = modal.style.bottom;  
     resizeHandle.style.width = '20px';
     resizeHandle.style.height = '20px';
     resizeHandle.style.cursor = 'se-resize';
-    resizeHandle.style.zIndex = '10001';
+    resizeHandle.style.zIndex = '10002';  
     resizeHandle.innerHTML = '⟋';
     resizeHandle.style.color = '#666';
     resizeHandle.style.fontSize = '16px';
     resizeHandle.style.lineHeight = '20px';
     resizeHandle.style.textAlign = 'center';
     resizeHandle.style.userSelect = 'none';
+    resizeHandle.style.backgroundColor = 'white';  
 
     modal.appendChild(resizeHandle);
+
+    // Update resize handle position when modal moves
+    const updateResizeHandlePosition = () => {
+        const modalRect = modal.getBoundingClientRect();
+        resizeHandle.style.right = (window.innerWidth - modalRect.right) + 'px';
+        resizeHandle.style.bottom = (window.innerHeight - modalRect.bottom) + 'px';
+    };
 
     // Add resize functionality
     const resize = {
@@ -145,6 +155,7 @@
 
         modal.style.width = newWidth + 'px';
         modal.style.height = newHeight + 'px';
+        updateResizeHandlePosition();
     };
 
     const onMouseUp = function() {
@@ -157,6 +168,12 @@
     resizeHandle.addEventListener('mousedown', onMouseDown);
     document.addEventListener('mousemove', onMouseMove);
     document.addEventListener('mouseup', onMouseUp);
+
+    // Update resize handle position on window resize
+    window.addEventListener('resize', updateResizeHandlePosition);
+
+    // Initial position update
+    updateResizeHandlePosition();
 
     // Add hover effects
     const closeBtn = modal.querySelector("#close-btn");
@@ -216,7 +233,7 @@
     let modalRect;
 
     const dragStart = (e) => {
-      if (e.target.closest('button') || e.target.closest('select')) return;  // Don't drag when clicking buttons or dropdowns
+      if (e.target.closest('button') || e.target.closest('select')) return;  
 
       isDragging = true;
       modalRect = modal.getBoundingClientRect();
@@ -250,7 +267,6 @@
         y = e.clientY - startY;
       }
 
-      // Keep modal within viewport bounds
       const modalWidth = modalRect.width;
       const modalHeight = modalRect.height;
       const maxX = window.innerWidth - modalWidth;
@@ -263,9 +279,9 @@
       modal.style.top = y + 'px';
       modal.style.transform = 'none';
       modal.style.webkitTransform = 'none';
+      updateResizeHandlePosition();
     };
 
-    // Add passive event listeners for better performance
     modal.addEventListener("touchstart", dragStart, { passive: false });
     modal.addEventListener("touchend", dragEnd);
     modal.addEventListener("touchmove", drag, { passive: false });
@@ -479,7 +495,7 @@
         }
         
         // Get Package Progress from fourth container - Following exact path
-        if (containersV2[3]) {  // Get 4th div with css-11ofut8
+        if (containersV2[3]) {  
           const thirdChild = Array.from(containersV2[3].children).find((child, index) => 
             index === 2 && child.classList.contains('css-1avovsw')
           );
@@ -527,7 +543,7 @@
 
     updateProgress("Scrolling back to the top...");
     window.scrollTo({ top: 0, behavior: "smooth" });
-    await new Promise((resolve) => setTimeout(resolve, 2000)); // Wait for everything to load again
+    await new Promise((resolve) => setTimeout(resolve, 2000)); 
 
     updateProgress("Rechecking routes...");
     await collectRoutes(routeSelector, routes, 20, 100, isV1);
@@ -537,7 +553,6 @@
 
     const behindRoutes = routes.filter(route => {
       const progressText = extractBehindProgress(route.progress);
-      // Only include routes if they have a non-zero BEHIND count
       return progressText && !progressText.startsWith('0 BEHIND');
     });
     console.log("Behind Routes:", behindRoutes);
@@ -548,10 +563,8 @@
       const daSelectionSection = modal.querySelector("#da-selection-section");
       const daDropdowns = modal.querySelector("#da-dropdowns");
       
-      // Show the DA selection section
       daSelectionSection.style.display = "block";
 
-      // Create dropdowns for routes with multiple DAs
       behindRoutes.forEach((route) => {
         const das = route.associateInfo.split(", ");
         if (das.length > 1) {
@@ -594,7 +607,6 @@
         }
       });
 
-      // Add Next button functionality
       const nextBtn = modal.querySelector("#da-next-btn");
       const previewSection = modal.querySelector("#preview-section");
       const routeDetails = modal.querySelector("#route-details");
@@ -603,7 +615,6 @@
         daSelectionSection.style.display = "none";
         previewSection.style.display = "block";
 
-        // Create route detail inputs
         behindRoutes.forEach((route) => {
           const select = daDropdowns.querySelector(`select[data-route-code="${route.routeCode}"]`);
           const associateInfo = select ? select.value : route.associateInfo;
@@ -676,7 +687,6 @@
             </div>
           `;
 
-          // Add event listener for Other checkbox
           const otherCheckbox = container.querySelector('.other-checkbox');
           const otherInputContainer = container.querySelector('.other-input-container');
           
@@ -684,7 +694,6 @@
             otherInputContainer.style.display = e.target.checked ? 'block' : 'none';
           });
 
-          // Add event listener for POA select
           const poaSelect = container.querySelector('.poa-select');
           const poaOtherContainer = container.querySelector('.poa-other-container');
           
@@ -695,7 +704,6 @@
           routeDetails.appendChild(container);
         });
 
-        // Add change event listeners to all DA dropdowns
         const allDropdowns = daDropdowns.querySelectorAll('select');
         allDropdowns.forEach(select => {
           select.addEventListener('change', (e) => {
@@ -703,25 +711,21 @@
             const container = routeDetails.querySelector(`div[data-route-code="${routeCode}"]`);
             if (container) {
               const h4 = container.querySelector('h4');
-              const progress = h4.textContent.match(/\((.*?)\)/)[0]; // Get the progress part
+              const progress = h4.textContent.match(/\((.*?)\)/)[0]; 
               h4.textContent = `${routeCode}: ${e.target.value} ${progress}`;
             }
           });
         });
       });
 
-      // Update download functionality to include RC and POA
       downloadBtn.onclick = () => {
-        // Get current date and time
         const now = new Date();
         const minutes = now.getMinutes();
-        // Round to nearest hour
         if (minutes >= 30) {
           now.setHours(now.getHours() + 1);
         }
         now.setMinutes(0);
         
-        // Format date components with two digits
         const month = String(now.getMonth() + 1).padStart(2, '0');
         const day = String(now.getDate()).padStart(2, '0');
         const year = now.getFullYear().toString().substr(-2);
@@ -732,7 +736,6 @@
         
         const formattedDate = `${month}/${day}/${year}`;
         
-        // Create header with leading zeros for all values
         const header = `/md\n@\n## CRDR UPDATE - ${formattedDate} ${roundedHour}\n\n` +
                       `**IN PROGRESS: ${window.dspProgress.inProgress.toString().padStart(2, '0')}**\n` +
                       `**AT RISK: ${window.dspProgress.atRisk.toString().padStart(2, '0')}**\n` +
@@ -744,7 +747,6 @@
           const select = daDropdowns.querySelector(`select[data-route-code="${route.routeCode}"]`);
           const associateInfo = select ? select.value : route.associateInfo;
           
-          // Find the container by iterating through all containers and matching the route code
           const containers = document.querySelectorAll('#route-details > div');
           const container = Array.from(containers).find(div => {
             const h4 = div.querySelector('h4 span');
@@ -753,7 +755,6 @@
           
           if (!container) return `${route.routeCode}: ${associateInfo} (${route.progress})\n`;
           
-          // Get all checked root causes
           const checkedBoxes = container.querySelectorAll('input[type="checkbox"]:checked');
           const rootCauses = Array.from(checkedBoxes).map(checkbox => {
             if (checkbox.classList.contains('other-checkbox') && checkbox.checked) {
@@ -761,11 +762,10 @@
               return otherInput.value.trim() || 'Other (unspecified)';
             }
             return checkbox.value;
-          }).filter(Boolean); // Remove any empty values
+          }).filter(Boolean); 
           
           const rc = rootCauses.length > 0 ? rootCauses.join(', ') : 'N/A';
           
-          // Get POA value
           const poaSelect = container.querySelector('.poa-select');
           let poa = poaSelect ? poaSelect.value : 'N/A';
           if (poa === 'Other') {
@@ -789,63 +789,59 @@
         URL.revokeObjectURL(blobURL);
       };
     }
+
+    const backBtn = modal.querySelector("#back-btn");
+    backBtn.addEventListener("click", () => {
+      const previewSection = modal.querySelector("#preview-section");
+      const daSelectionSection = modal.querySelector("#da-selection-section");
+      previewSection.style.display = "none";
+      daSelectionSection.style.display = "block";
+    });
+
+    backBtn.addEventListener("mouseover", () => {
+      backBtn.style.backgroundColor = "#5a6268";
+      backBtn.style.boxShadow = "0 4px 6px rgba(108, 117, 125, 0.3)";
+    });
+    backBtn.addEventListener("mouseout", () => {
+      backBtn.style.backgroundColor = "#6c757d";
+      backBtn.style.boxShadow = "0 2px 4px rgba(108, 117, 125, 0.2)";
+    });
+
+    const previewNextBtn = modal.querySelector("#preview-next-btn");
+    previewNextBtn.addEventListener("click", () => {
+      modal.querySelector("#preview-section").style.display = "none";
+      modal.querySelector("#dsp-progress-section").style.display = "block";
+      
+      if (window.dspProgress) {
+        const inProgressInput = modal.querySelector('#in-progress-input');
+        const atRiskInput = modal.querySelector('#at-risk-input');
+        const behindInput = modal.querySelector('#behind-input');
+        const packageProgressInput = modal.querySelector('#package-progress-input');
+        
+        if (inProgressInput) inProgressInput.value = window.dspProgress.inProgress;
+        if (atRiskInput) atRiskInput.value = window.dspProgress.atRisk;
+        if (behindInput) behindInput.value = window.dspProgress.behind;
+        if (packageProgressInput) packageProgressInput.value = window.dspProgress.packageProgress;
+      }
+    });
+
+    const progressBackBtn = modal.querySelector("#progress-back-btn");
+    progressBackBtn.addEventListener("click", () => {
+      modal.querySelector("#dsp-progress-section").style.display = "none";
+      modal.querySelector("#preview-section").style.display = "block";
+    });
+
+    progressBackBtn.addEventListener("mouseover", () => {
+      progressBackBtn.style.backgroundColor = "#5a6268";
+      progressBackBtn.style.boxShadow = "0 4px 6px rgba(108, 117, 125, 0.3)";
+    });
+
+    progressBackBtn.addEventListener("mouseout", () => {
+      progressBackBtn.style.backgroundColor = "#6c757d";
+      progressBackBtn.style.boxShadow = "0 2px 4px rgba(108, 117, 125, 0.2)";
+    });
   } catch (error) {
     console.error("Error during route data processing:", error);
     updateProgress(`Error: ${error.message}`);
   }
-
-  // Add back button functionality
-  const backBtn = modal.querySelector("#back-btn");
-  backBtn.addEventListener("click", () => {
-    const previewSection = modal.querySelector("#preview-section");
-    const daSelectionSection = modal.querySelector("#da-selection-section");
-    previewSection.style.display = "none";
-    daSelectionSection.style.display = "block";
-  });
-
-  backBtn.addEventListener("mouseover", () => {
-    backBtn.style.backgroundColor = "#5a6268";
-    backBtn.style.boxShadow = "0 4px 6px rgba(108, 117, 125, 0.3)";
-  });
-  backBtn.addEventListener("mouseout", () => {
-    backBtn.style.backgroundColor = "#6c757d";
-    backBtn.style.boxShadow = "0 2px 4px rgba(108, 117, 125, 0.2)";
-  });
-
-  // Add next button to preview section
-  const previewNextBtn = modal.querySelector("#preview-next-btn");
-  previewNextBtn.addEventListener("click", () => {
-    modal.querySelector("#preview-section").style.display = "none";
-    modal.querySelector("#dsp-progress-section").style.display = "block";
-    
-    // Populate DSP progress section with gathered data
-    if (window.dspProgress) {
-      const inProgressInput = modal.querySelector('#in-progress-input');
-      const atRiskInput = modal.querySelector('#at-risk-input');
-      const behindInput = modal.querySelector('#behind-input');
-      const packageProgressInput = modal.querySelector('#package-progress-input');
-      
-      if (inProgressInput) inProgressInput.value = window.dspProgress.inProgress;
-      if (atRiskInput) atRiskInput.value = window.dspProgress.atRisk;
-      if (behindInput) behindInput.value = window.dspProgress.behind;
-      if (packageProgressInput) packageProgressInput.value = window.dspProgress.packageProgress;
-    }
-  });
-
-  // Add event listeners for the progress back button
-  const progressBackBtn = modal.querySelector("#progress-back-btn");
-  progressBackBtn.addEventListener("click", () => {
-    modal.querySelector("#dsp-progress-section").style.display = "none";
-    modal.querySelector("#preview-section").style.display = "block";
-  });
-
-  progressBackBtn.addEventListener("mouseover", () => {
-    progressBackBtn.style.backgroundColor = "#5a6268";
-    progressBackBtn.style.boxShadow = "0 4px 6px rgba(108, 117, 125, 0.3)";
-  });
-
-  progressBackBtn.addEventListener("mouseout", () => {
-    progressBackBtn.style.backgroundColor = "#6c757d";
-    progressBackBtn.style.boxShadow = "0 2px 4px rgba(108, 117, 125, 0.2)";
-  });
 })();
