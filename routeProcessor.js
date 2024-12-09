@@ -14,7 +14,6 @@
     modal.style.borderRadius = "16px";
     modal.style.zIndex = "10000";
     modal.style.maxHeight = "90vh";
-    modal.style.resize = "both";
     modal.style.overflow = "auto";
     modal.style.minWidth = "400px";
     modal.style.minHeight = "300px";
@@ -101,50 +100,51 @@
     // Add resize handle styles
     const resizeHandle = document.createElement('div');
     resizeHandle.style.position = 'absolute';
-    resizeHandle.style.right = '0';
-    resizeHandle.style.bottom = '0';
-    resizeHandle.style.width = '15px';
-    resizeHandle.style.height = '15px';
+    resizeHandle.style.right = '2px';
+    resizeHandle.style.bottom = '2px';
+    resizeHandle.style.width = '20px';
+    resizeHandle.style.height = '20px';
     resizeHandle.style.cursor = 'se-resize';
     resizeHandle.style.zIndex = '10001';
-    resizeHandle.innerHTML = '⟋'; // Add a visual indicator
+    resizeHandle.innerHTML = '⟋';
     resizeHandle.style.color = '#666';
-    resizeHandle.style.fontSize = '12px';
-    resizeHandle.style.lineHeight = '15px';
+    resizeHandle.style.fontSize = '16px';
+    resizeHandle.style.lineHeight = '20px';
     resizeHandle.style.textAlign = 'center';
+    resizeHandle.style.userSelect = 'none';
 
     // Add resize functionality
     let isResizing = false;
-    let originalWidth;
-    let originalHeight;
-    let originalX;
-    let originalY;
+    let startX = 0, startY = 0, startWidth = 0, startHeight = 0;
 
     resizeHandle.addEventListener('mousedown', function(e) {
         isResizing = true;
-        originalWidth = modal.offsetWidth;
-        originalHeight = modal.offsetHeight;
-        originalX = e.clientX;
-        originalY = e.clientY;
-        e.stopPropagation(); // Prevent dragging from starting
+        startX = e.clientX;
+        startY = e.clientY;
+        startWidth = modal.offsetWidth;
+        startHeight = modal.offsetHeight;
+        e.stopPropagation();
+        document.body.style.cursor = 'se-resize';
     });
 
     document.addEventListener('mousemove', function(e) {
         if (!isResizing) return;
-        
-        const width = originalWidth + (e.clientX - originalX);
-        const height = originalHeight + (e.clientY - originalY);
-        
-        if (width >= 400 && width <= window.innerWidth * 0.9) {
-            modal.style.width = width + 'px';
-        }
-        if (height >= 300 && height <= window.innerHeight * 0.9) {
-            modal.style.height = height + 'px';
-        }
+
+        const deltaX = e.clientX - startX;
+        const deltaY = e.clientY - startY;
+
+        const newWidth = Math.max(400, Math.min(startWidth + deltaX, window.innerWidth * 0.9));
+        const newHeight = Math.max(300, Math.min(startHeight + deltaY, window.innerHeight * 0.9));
+
+        modal.style.width = newWidth + 'px';
+        modal.style.height = newHeight + 'px';
     });
 
     document.addEventListener('mouseup', function() {
-        isResizing = false;
+        if (isResizing) {
+            isResizing = false;
+            document.body.style.cursor = 'default';
+        }
     });
 
     modal.appendChild(resizeHandle);
