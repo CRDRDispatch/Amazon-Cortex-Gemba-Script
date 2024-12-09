@@ -428,10 +428,16 @@
             index === 2 && child.classList.contains('css-1avovsw')
           );
           if (thirdChild) {
-            const circularDiv = thirdChild.querySelector('.mdn-circular-children');
-            if (circularDiv) {
-              const progressText = circularDiv.querySelector('p.css-y1k2yy.font-weight-bold')?.textContent || '0%';
-              packageProgress = parseInt(progressText.replace('%', '') || '0');
+            const firstChild = thirdChild.firstElementChild;
+            if (firstChild) {
+              const ql9057Div = firstChild.querySelector('.css-ql9057');
+              if (ql9057Div) {
+                const circularDiv = ql9057Div.querySelector('.mdn-circular-children');
+                if (circularDiv) {
+                  const progressText = circularDiv.querySelector('p')?.textContent || '0%';
+                  packageProgress = parseInt(progressText.replace('%', '') || '0');
+                }
+              }
             }
           }
         }
