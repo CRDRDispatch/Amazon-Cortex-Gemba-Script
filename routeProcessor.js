@@ -1268,3 +1268,15 @@
             });
             backBtn.addEventListener("mouseout", () => {
               backBtn.style.backgroundColor = "#6c757d";
+              backBtn.style.boxShadow = "0 2px 4px rgba(108, 117, 125, 0.2)";
+            }); // Close mouseout event listener
+        } catch (error) {
+            console.error("Error in processRoutes:", error);
+            updateProgress("Error: " + error.message, true, true);
+        }
+    } // Close processRoutes function
+  } catch (error) {
+    console.error("Error in main script:", error);
+    updateProgress("Error: " + error.message, true, true);
+  }
+})();
