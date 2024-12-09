@@ -440,28 +440,11 @@
               console.log('Found ql9057 div:', ql9057Div);
               
               if (ql9057Div) {
-                // Log all children to see what we have
-                console.log('Children of ql9057:', Array.from(ql9057Div.children).map(child => ({
-                  tagName: child.tagName,
-                  name: child.getAttribute('name'),
-                  className: child.className,
-                  id: child.id
-                })));
-                
-                // Try to find the circular div by checking each child
-                const circularDiv = Array.from(ql9057Div.children).find(child => 
-                  child.getAttribute('name') === 'mdn-circular-children'
-                );
-                console.log('Found circular div:', circularDiv);
+                // Just look for the first div
+                const circularDiv = ql9057Div.querySelector('div');
+                console.log('Found div:', circularDiv);
                 
                 if (circularDiv) {
-                  // Log all children of circular div
-                  console.log('Children of circular div:', Array.from(circularDiv.children).map(child => ({
-                    tagName: child.tagName,
-                    textContent: child.textContent,
-                    className: child.className
-                  })));
-                  
                   const progressText = circularDiv.querySelector('p')?.textContent || '0%';
                   console.log('Progress text found:', progressText);
                   packageProgress = parseInt(progressText.replace('%', '') || '0');
