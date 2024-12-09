@@ -1,103 +1,4 @@
-/**
- * @fileoverview Route Processor for Amazon DSP logistics page
- * Analyzes and reports on routes that are behind schedule
- * @version 1.1.0
- */
-
 (async function () {
-  /** @type {Object.<string, Function[]>} Store for cleanup functions */
-  const cleanupRegistry = {
-    eventListeners: [],
-    animations: [],
-    observers: [],
-    timers: []
-  };
-
-  /**
-   * Registers a cleanup function for later execution
-   * @param {string} type - Type of cleanup ('eventListeners', 'animations', 'observers', 'timers')
-   * @param {Function} fn - Cleanup function to register
-   */
-  const registerCleanup = (type, fn) => {
-    if (cleanupRegistry[type]) {
-      cleanupRegistry[type].push(fn);
-    }
-  };
-
-  /**
-   * Executes all registered cleanup functions
-   */
-  const executeCleanup = () => {
-    Object.values(cleanupRegistry).forEach(fns => {
-      fns.forEach(fn => {
-        try {
-          fn();
-        } catch (error) {
-          console.error('Cleanup function failed:', error);
-        }
-      });
-    });
-    // Clear all registries after cleanup
-    Object.keys(cleanupRegistry).forEach(key => {
-      cleanupRegistry[key] = [];
-    });
-  };
-
-  /**
-   * Cached DOM elements to prevent repeated queries
-   * @type {Object.<string, Element>}
-   */
-  const domCache = new Map();
-
-  /**
-   * Gets a DOM element, using cache if available
-   * @param {string} selector - CSS selector
-   * @param {Element} [context=document] - Context element for query
-   * @returns {Element} Found element or null
-   */
-  const getElement = (selector, context = document) => {
-    const cacheKey = `${context === document ? 'doc' : context.id || 'ctx'}-${selector}`;
-    if (!domCache.has(cacheKey)) {
-      domCache.set(cacheKey, context.querySelector(selector));
-    }
-    return domCache.get(cacheKey);
-  };
-
-  /**
-   * Gets multiple DOM elements, using cache if available
-   * @param {string} selector - CSS selector
-   * @param {Element} [context=document] - Context element for query
-   * @returns {Element[]} Array of found elements
-   */
-  const getElements = (selector, context = document) => {
-    const cacheKey = `${context === document ? 'doc' : context.id || 'ctx'}-${selector}-all`;
-    if (!domCache.has(cacheKey)) {
-      domCache.set(cacheKey, [...context.querySelectorAll(selector)]);
-    }
-    return domCache.get(cacheKey);
-  };
-
-  /**
-   * Safely executes a function with error boundary
-   * @param {Function} fn - Function to execute
-   * @param {*} fallbackValue - Value to return if execution fails
-   * @param {string} [errorMessage] - Optional error message to log
-   * @returns {*} Function result or fallback value
-   */
-  const withErrorBoundary = async (fn, fallbackValue, errorMessage) => {
-    try {
-      return await fn();
-    } catch (error) {
-      console.error(errorMessage || 'Operation failed:', error);
-      updateProgress(`Error: ${errorMessage || error.message}`, true);
-      return fallbackValue;
-    }
-  };
-
-  /**
-   * Creates and returns the main modal element
-   * @returns {HTMLElement} The created modal element
-   */
   const createModal = () => {
     const modal = document.createElement("div");
     modal.id = "custom-modal";
@@ -110,10 +11,7 @@
     modal.style.webkitBackfaceVisibility = "hidden";
     modal.style.perspective = "1000";
     modal.style.webkitPerspective = "1000";
-    modal.style.width = "600px";
-    modal.style.minWidth = "400px";
-    modal.style.height = "600px";
-    modal.style.minHeight = "500px";
+    modal.style.width = "400px";
     modal.style.background = "white";
     modal.style.border = "none";
     modal.style.boxShadow = "0 10px 25px rgba(0, 0, 0, 0.2), 0 2px 10px rgba(0, 0, 0, 0.1)";
@@ -125,155 +23,8 @@
     modal.style.overflowY = "auto";
     modal.style.willChange = "transform";
     modal.style.isolation = "isolate";
-    modal.style.cursor = "move";
+    modal.style.cursor = "move";  // Indicate draggable
 
-    // Add resize handle
-    const resizeHandle = document.createElement('div');
-    resizeHandle.style.position = 'absolute';
-    resizeHandle.style.width = '15px';
-    resizeHandle.style.height = '15px';
-    resizeHandle.style.bottom = '0';
-    resizeHandle.style.right = '0';
-    resizeHandle.style.cursor = 'se-resize';
-    resizeHandle.style.background = '#00000020';
-    resizeHandle.style.zIndex = '10001';
-    modal.appendChild(resizeHandle);
-
-    document.body.appendChild(modal);
-
-    // Resize functionality
-    let isResizing = false;
-    let startX, startY, startWidth, startHeight;
-
-    const initResize = (e) => {
-        if (e.button !== undefined && e.button !== 0) return;
-        isResizing = true;
-        startX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
-        startY = e.type === 'touchstart' ? e.touches[0].clientY : e.clientY;
-        startWidth = parseInt(getComputedStyle(modal).width, 10);
-        startHeight = parseInt(getComputedStyle(modal).height, 10);
-        e.preventDefault();
-        e.stopPropagation();
-    };
-
-    const resize = (e) => {
-        if (!isResizing) return;
-        e.preventDefault();
-
-        const clientX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
-        const clientY = e.type === 'touchmove' ? e.touches[0].clientY : e.clientY;
-        const width = startWidth + (clientX - startX);
-        const height = startHeight + (clientY - startY);
-
-        // Apply minimum size constraints
-        if (width >= 400) {
-            modal.style.width = `${width}px`;
-        }
-        if (height >= 500) {
-            modal.style.height = `${height}px`;
-        }
-    };
-
-    const stopResize = () => {
-        isResizing = false;
-    };
-
-    // Add event listeners for resize
-    resizeHandle.addEventListener('mousedown', initResize);
-    document.addEventListener('mousemove', resize);
-    document.addEventListener('mouseup', stopResize);
-    resizeHandle.addEventListener('touchstart', initResize, { passive: false });
-    document.addEventListener('touchmove', resize, { passive: false });
-    document.addEventListener('touchend', stopResize);
-
-    // Drag functionality
-    let isDragging = false;
-    let currentX = 0;
-    let currentY = 0;
-    let initialX = 0;
-    let initialY = 0;
-
-    const dragStart = (e) => {
-        if (e.target === resizeHandle) return;
-        if (e.button !== undefined && e.button !== 0) return;
-        
-        e.preventDefault();
-        isDragging = true;
-
-        if (e.type === "touchstart") {
-            initialX = e.touches[0].clientX - currentX;
-            initialY = e.touches[0].clientY - currentY;
-        } else {
-            initialX = e.clientX - currentX;
-            initialY = e.clientY - currentY;
-        }
-    };
-
-    const drag = (e) => {
-        if (!isDragging) return;
-        e.preventDefault();
-
-        if (e.type === "touchmove") {
-            currentX = e.touches[0].clientX - initialX;
-            currentY = e.touches[0].clientY - initialY;
-        } else {
-            currentX = e.clientX - initialX;
-            currentY = e.clientY - initialY;
-        }
-
-        // Apply bounds checking
-        const rect = modal.getBoundingClientRect();
-        const maxX = window.innerWidth - rect.width - 20;
-        const maxY = window.innerHeight - rect.height - 20;
-        currentX = Math.max(-rect.width + 40, Math.min(currentX, maxX));
-        currentY = Math.max(-rect.height + 40, Math.min(currentY, maxY));
-
-        modal.style.transform = `translate(calc(-50% + ${currentX}px), calc(-50% + ${currentY}px)) translateZ(0)`;
-        modal.style.webkitTransform = `translate(calc(-50% + ${currentX}px), calc(-50% + ${currentY}px)) translateZ(0)`;
-    };
-
-    const dragEnd = () => {
-        isDragging = false;
-    };
-
-    // Add event listeners for drag
-    modal.addEventListener('mousedown', dragStart);
-    document.addEventListener('mousemove', drag);
-    document.addEventListener('mouseup', dragEnd);
-    modal.addEventListener('touchstart', dragStart, { passive: false });
-    document.addEventListener('touchmove', drag, { passive: false });
-    document.addEventListener('touchend', dragEnd);
-
-    // Register cleanup for event listeners
-    registerCleanup('eventListeners', () => {
-        resizeHandle.removeEventListener('mousedown', initResize);
-        document.removeEventListener('mousemove', resize);
-        document.removeEventListener('mouseup', stopResize);
-        resizeHandle.removeEventListener('touchstart', initResize);
-        document.removeEventListener('touchmove', resize);
-        document.removeEventListener('touchend', stopResize);
-        
-        modal.removeEventListener('mousedown', dragStart);
-        document.removeEventListener('mousemove', drag);
-        document.removeEventListener('mouseup', dragEnd);
-        modal.removeEventListener('touchstart', dragStart);
-        document.removeEventListener('touchmove', drag);
-        document.removeEventListener('touchend', dragEnd);
-    });
-
-    // Create entrance animation
-    const fadeIn = modal.animate([
-        { opacity: 0, transform: 'translate(-50%, -60%) translateZ(0)' },
-        { opacity: 1, transform: 'translate(-50%, -50%) translateZ(0)' }
-    ], {
-        duration: 300,
-        easing: 'ease-out',
-        fill: 'forwards'
-    });
-
-    registerCleanup('animations', () => fadeIn.cancel());
-
-    // Add modal content
     modal.innerHTML = `
       <button id="close-btn" style="position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 18px; cursor: pointer; color: #666; transition: color 0.2s ease;">✖</button>
       <div style="margin-bottom: 25px; cursor: move;">
@@ -390,7 +141,6 @@
       });
     });
 
-    // Add download button hover effect
     const downloadBtn = modal.querySelector("#download-btn");
     downloadBtn.addEventListener("mouseover", () => {
       downloadBtn.style.backgroundColor = "#45a049";
@@ -401,216 +151,105 @@
       downloadBtn.style.boxShadow = "0 4px 6px rgba(76, 175, 80, 0.2)";
     });
 
-    // Add toggle functionality
-    modalToggleBtn.addEventListener("click", () => {
-      if (progressDetails.style.display === "none") {
-        progressDetails.style.display = "block";
-        modalToggleBtn.textContent = "Hide";
-      } else {
-        progressDetails.style.display = "none";
-        modalToggleBtn.textContent = "Show";
-      }
-    });
-
-    registerCleanup('eventListeners', () => {
-      modalToggleBtn.removeEventListener("click", toggleProgress);
-    });
-
-    // Navigation handlers
-    const backBtn = modal.querySelector("#back-btn");
-    const progressBackBtn = modal.querySelector("#progress-back-btn");
-    const daSelectionSection = modal.querySelector("#da-selection-section");
-    const previewSection = modal.querySelector("#preview-section");
-    const dspProgressSection = modal.querySelector("#dsp-progress-section");
-
-    backBtn?.addEventListener("click", () => {
-      previewSection.style.display = "none";
-      daSelectionSection.style.display = "block";
-    });
-
-    progressBackBtn?.addEventListener("click", () => {
-      dspProgressSection.style.display = "none";
-      previewSection.style.display = "block";
-    });
-
-    registerCleanup('eventListeners', () => {
-      backBtn?.removeEventListener("click", () => {});
-      progressBackBtn?.removeEventListener("click", () => {});
-    });
-
-    // Add input validation for DSP progress
-    const progressInputs = modal.querySelectorAll('.progress-input');
-    progressInputs.forEach(input => {
-      input.addEventListener('input', (e) => {
-        const value = parseInt(e.target.value);
-        const min = parseInt(e.target.min);
-        const max = parseInt(e.target.max) || Infinity;
-        
-        if (isNaN(value)) {
-          e.target.value = min;
-        } else {
-          e.target.value = Math.min(Math.max(value, min), max);
-        }
-      });
-
-      // Register cleanup
-      registerCleanup('eventListeners', () => {
-        input.removeEventListener('input', null);
-      });
-    });
-
-    // Enhanced download functionality with proper format and time rounding
-    downloadBtn.onclick = async () => {
-      try {
-        updateProgress("Preparing download...", true);
-        
-        // Round current time to nearest hour
-        const now = new Date('2024-12-08T14:43:41-08:00');  // Using provided time
-        const roundedHour = new Date(now);
-        roundedHour.setMinutes(now.getMinutes() >= 30 ? 60 : 0);
-        roundedHour.setSeconds(0);
-        roundedHour.setMilliseconds(0);
-
-        const timeStr = roundedHour.toLocaleTimeString('en-US', {
-          hour: 'numeric',
-          minute: '2-digit',
-          hour12: true
-        });
-
-        const dateStr = roundedHour.toLocaleDateString('en-US', {
-          weekday: 'long',
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric'
-        });
-
-        // Get values from input fields with fallbacks
-        const inProgress = getElement("#in-progress-input").value || '0';
-        const atRisk = getElement("#at-risk-input").value || '0';
-        const behind = getElement("#behind-input").value || '0';
-        const packageProgress = getElement("#package-progress-input").value || '0';
-
-        // Create header in markdown format
-        const header = `/md\n@\n## CRDR UPDATE - ${dateStr} ${timeStr}\n\n` +
-                      `**IN PROGRESS: ${inProgress.toString().padStart(2, '0')}**\n` +
-                      `**AT RISK: ${atRisk.toString().padStart(2, '0')}**\n` +
-                      `**BEHIND: ${behind.toString().padStart(2, '0')}**\n` +
-                      `**PACKAGE PROGRESS: ${packageProgress}%**\n\n` +
-                      `---\n\n`;
-
-        // Get route details in the correct format
-        const routeContent = Array.from(getElements("#route-details > div")).map(container => {
-          const routeHeader = container.querySelector("h4");
-          const routeInfo = routeHeader.querySelector("span").textContent.split(":");
-          const routeCode = routeInfo[0].trim();
-          const associateInfo = routeInfo[1].trim();
-          const progress = routeHeader.lastElementChild.textContent;
-          
-          // Get selected root causes
-          const checkedBoxes = container.querySelectorAll('input[type="checkbox"]:checked');
-          const rootCauses = Array.from(checkedBoxes)
-            .map(checkbox => {
-              if (checkbox.classList.contains('other-checkbox') && checkbox.checked) {
-                const otherInput = container.querySelector('.other-input');
-                return otherInput && otherInput.value.trim() || 'Other (unspecified)';
-              }
-              return checkbox.value;
-            })
-            .filter(Boolean);
-          
-          const rc = rootCauses.length > 0 ? rootCauses.join(', ') : 'N/A';
-          
-          // Get point of action
-          const poaSelect = container.querySelector('.poa-select');
-          let poa = poaSelect ? poaSelect.value : 'N/A';
-          if (poa === 'Other') {
-            const poaOtherInput = container.querySelector('.poa-other-input');
-            poa = poaOtherInput && poaOtherInput.value.trim() || 'Other (unspecified)';
-          }
-          poa = poa || 'N/A';
-          
-          return `**${routeCode}** | ${associateInfo} | **${progress}**\nRC: ${rc}\nPOA: ${poa}\n`;
-        }).join('\n');
-
-        const fileContent = header + routeContent;
-
-        // Create and download file
-        const blob = new Blob([fileContent], { type: "text/plain" });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        
-        link.setAttribute("href", url);
-        link.setAttribute("download", "behind_routes.txt");
-        document.body.appendChild(link);
-        
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-
-        updateProgress("Download complete!", true, true);
-      } catch (error) {
-        console.error("Download failed:", error);
-        updateProgress(`Download failed: ${error.message}`, true);
-      }
-    };
-
-    // Register cleanup for download button
-    registerCleanup('eventListeners', () => {
-      downloadBtn.removeEventListener("click", null);
-    });
-
-    // Close button handler with animation
-    const closeModal = async () => {
-      const fadeOut = modal.animate([
-        { opacity: 1, transform: 'translate(-50%, -50%)' },
-        { opacity: 0, transform: 'translate(-50%, -40%)' }
-      ], {
-        duration: 200,
-        easing: 'ease-in',
-        fill: 'forwards'
-      });
-
-      await fadeOut.finished;
-      executeCleanup();
-      modal.remove();
-    };
-
     document.body.appendChild(modal);
 
-    // Close button handler
-    modal.querySelector("#close-btn").addEventListener("click", closeModal);
+    // Make modal draggable
+    let isDragging = false;
+    let startX;
+    let startY;
+    let modalRect;
+
+    const dragStart = (e) => {
+      if (e.target.closest('button') || e.target.closest('select')) return;  // Don't drag when clicking buttons or dropdowns
+
+      isDragging = true;
+      modalRect = modal.getBoundingClientRect();
+      
+      if (e.type === "touchstart") {
+        startX = e.touches[0].clientX - modalRect.left;
+        startY = e.touches[0].clientY - modalRect.top;
+      } else {
+        startX = e.clientX - modalRect.left;
+        startY = e.clientY - modalRect.top;
+      }
+      
+      modal.style.cursor = 'grabbing';
+    };
+
+    const dragEnd = () => {
+      isDragging = false;
+      modal.style.cursor = 'move';
+    };
+
+    const drag = (e) => {
+      if (!isDragging) return;
+      e.preventDefault();
+
+      let x, y;
+      if (e.type === "touchmove") {
+        x = e.touches[0].clientX - startX;
+        y = e.touches[0].clientY - startY;
+      } else {
+        x = e.clientX - startX;
+        y = e.clientY - startY;
+      }
+
+      // Keep modal within viewport bounds
+      const modalWidth = modalRect.width;
+      const modalHeight = modalRect.height;
+      const maxX = window.innerWidth - modalWidth;
+      const maxY = window.innerHeight - modalHeight;
+
+      x = Math.max(0, Math.min(x, maxX));
+      y = Math.max(0, Math.min(y, maxY));
+
+      modal.style.left = x + 'px';
+      modal.style.top = y + 'px';
+      modal.style.transform = 'none';
+      modal.style.webkitTransform = 'none';
+    };
+
+    // Add passive event listeners for better performance
+    modal.addEventListener("touchstart", dragStart, { passive: false });
+    modal.addEventListener("touchend", dragEnd);
+    modal.addEventListener("touchmove", drag, { passive: false });
+    document.addEventListener("mousedown", (e) => {
+      if (modal.contains(e.target)) dragStart(e);
+    });
+    document.addEventListener("mouseup", dragEnd);
+    document.addEventListener("mousemove", drag);
+
+    // Clean up event listeners when modal is closed
+    modal.querySelector("#close-btn").addEventListener("click", () => {
+      document.removeEventListener("mousedown", dragStart);
+      document.removeEventListener("mouseup", dragEnd);
+      document.removeEventListener("mousemove", drag);
+      modal.remove();
+    });
 
     return modal;
   };
 
-  /**
-   * Updates the progress display in the modal
-   * @param {string} message - Message to display
-   * @param {boolean} append - Whether to append or replace existing message
-   * @param {boolean} complete - Whether the process is complete
-   */
   const updateProgress = (message, append = true, complete = false) => {
-    return withErrorBoundary(() => {
-      const progressDetails = getElement("#progress-details");
-      const progressStatus = getElement("#progress-status");
-      const toggleBtn = getElement("#toggle-progress");
+    const progressDetails = document.getElementById("progress-details");
+    const progressStatus = document.getElementById("progress-status");
+    const toggleBtn = document.getElementById("toggle-progress");
 
-      if (progressDetails) {
-        if (append) {
-          progressDetails.innerHTML += `<p>${message}</p>`;
-        } else {
-          progressDetails.innerHTML = `<p>${message}</p>`;
-        }
+    if (progressDetails) {
+      if (append) {
+        progressDetails.innerHTML += `<p>${message}</p>`;
+      } else {
+        progressDetails.innerHTML = `<p>${message}</p>`;
       }
+    }
 
-      if (complete && progressStatus && toggleBtn) {
-        progressStatus.style.display = "inline-block";
-        progressDetails.style.display = "none";
-        toggleBtn.textContent = "Show";
-      }
+    if (complete && progressStatus && toggleBtn) {
+      progressStatus.style.display = "inline-block";
+      progressDetails.style.display = "none";
+      toggleBtn.textContent = "Show";
+    }
 
-      console.log(message);
-    }, null, "Failed to update progress");
+    console.log(message);
   };
 
   const extractBehindProgress = (progressText) => {
@@ -674,7 +313,7 @@
         const routeCode = routeCodeElem?.textContent.trim() || routeCodeElem?.getAttribute("title");
         const associateInfo = extractAssociates(el, isV1);
         const progressRaw = progressElem?.textContent.trim();
-        const progress = extractBehindProgress(progressRaw);
+        const progress = extractBehindProgress(progressRaw); // Extract only "X behind"
 
         console.log("Route Code:", routeCode);
         console.log("Associate Info:", associateInfo);
@@ -709,79 +348,59 @@
     updateProgress("Script started...");
 
     const isV1 = document.querySelector(".css-hkr77h")?.checked;
-    console.log("Interface version:", isV1 ? "V1" : "V2");
-    updateProgress(`Detected interface version: ${isV1 ? "V1" : "V2"}`);
-
-    // Version-specific click handling
-    const clickVersionSpecificElement = async () => {
-      if (isV1) {
-        const container = document.querySelector(".css-1bovypj");
-        if (!container) {
-          throw new Error("Could not find V1 container element");
+    
+    // Click specific elements based on version
+    if (isV1) {
+      updateProgress("Processing V1 interface...");
+      const containerV1 = document.querySelector('.css-1bovypj');
+      if (containerV1) {
+        const valuesV1 = containerV1.querySelectorAll('.cortex-summary-bar-data-value');
+        if (valuesV1.length >= 3) {
+          valuesV1[2].click();
+          await new Promise(resolve => setTimeout(resolve, 500));
         }
-
-        const values = container.querySelectorAll(".cortex-summary-bar-data-value");
-        if (values.length < 3) {
-          throw new Error("Could not find enough V1 data value elements");
-        }
-
-        // Click the third value element
-        values[2].click();
-      } else {
-        const container = document.querySelector(".css-11ofut8");
-        if (!container) {
-          throw new Error("Could not find V2 container element");
-        }
-
-        const values = container.querySelectorAll(".css-11ibtj8");
-        if (values.length < 2) {
-          throw new Error("Could not find enough V2 data value elements");
-        }
-
-        // Click the second value element
-        values[1].click();
       }
-    };
-
-    // Execute click and wait
-    try {
-      await clickVersionSpecificElement();
-      await new Promise(resolve => setTimeout(resolve, 500)); // Wait 500ms
-      updateProgress("Successfully clicked version-specific element");
-    } catch (error) {
-      console.error("Error clicking version-specific element:", error);
-      updateProgress(`Warning: ${error.message}. Continuing with process...`);
+    } else {
+      updateProgress("Processing V2 interface...");
+      const containerV2 = document.querySelector('.css-11ofut8');
+      if (containerV2) {
+        const valuesV2 = containerV2.querySelectorAll('.css-11ibtj8');
+        if (valuesV2.length >= 2) {
+          valuesV2[1].click();
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+      }
     }
 
-    // Continue with existing route collection process
-    const behindRoutes = [];
+    updateProgress("Collecting route information...");
+
     const routeSelector = isV1
       ? '[class^="af-link routes-list-item p-2 d-flex align-items-center w-100 route-"]'
       : ".css-1muusaa";
+    const routes = [];
 
-    updateProgress("Scrolling to collect routes...");
-    await collectRoutes(routeSelector, behindRoutes, 20, 100, isV1);
+    await collectRoutes(routeSelector, routes, 20, 100, isV1);
 
     updateProgress("Scrolling back to the top...");
     window.scrollTo({ top: 0, behavior: "smooth" });
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await new Promise((resolve) => setTimeout(resolve, 2000)); // Wait for everything to load again
 
     updateProgress("Rechecking routes...");
-    await collectRoutes(routeSelector, behindRoutes, 20, 100, isV1);
+    await collectRoutes(routeSelector, routes, 20, 100, isV1);
 
-    updateProgress(`Final collection complete. Found ${behindRoutes.length} total routes.`);
-    console.log("Final routes collected:", behindRoutes);
+    updateProgress(`Final collection complete. Found ${routes.length} total routes.`);
+    console.log("Final routes collected:", routes);
 
-    const behindRoutesFiltered = behindRoutes.filter(route => {
+    const behindRoutes = routes.filter(route => {
       const progressText = extractBehindProgress(route.progress);
       // Only include routes if they have a non-zero BEHIND count
       return progressText && !progressText.startsWith('0 BEHIND');
     });
-    console.log("Behind Routes:", behindRoutesFiltered);
+    console.log("Behind Routes:", behindRoutes);
 
-    updateProgress(`Found ${behindRoutesFiltered.length} routes that are behind schedule.`, true, true);
+    updateProgress(`Found ${behindRoutes.length} routes that are behind schedule.`, true, true);
 
-    if (behindRoutesFiltered.length > 0) {
+    if (behindRoutes.length > 0) {
       const daSelectionSection = modal.querySelector("#da-selection-section");
       const daDropdowns = modal.querySelector("#da-dropdowns");
       
@@ -789,7 +408,7 @@
       daSelectionSection.style.display = "block";
 
       // Create dropdowns for routes with multiple DAs
-      behindRoutesFiltered.forEach((route) => {
+      behindRoutes.forEach((route) => {
         const das = route.associateInfo.split(", ");
         if (das.length > 1) {
           const container = document.createElement("div");
@@ -841,7 +460,7 @@
         previewSection.style.display = "block";
 
         // Create route detail inputs
-        behindRoutesFiltered.forEach((route) => {
+        behindRoutes.forEach((route) => {
           const select = daDropdowns.querySelector(`select[data-route-code="${route.routeCode}"]`);
           const associateInfo = select ? select.value : route.associateInfo;
 
@@ -948,27 +567,13 @@
       });
 
       // Update download functionality to include RC and POA
-      downloadBtn.onclick = async () => {
+      downloadBtn.onclick = () => {
         // Get current date and time
-        const now = new Date('2024-12-08T14:43:41-08:00');  // Using provided time
-        const roundedHour = new Date(now);
-        roundedHour.setMinutes(now.getMinutes() >= 30 ? 60 : 0);
-        roundedHour.setSeconds(0);
-        roundedHour.setMilliseconds(0);
-
-        const timeStr = roundedHour.toLocaleTimeString('en-US', {
-          hour: 'numeric',
-          minute: '2-digit',
-          hour12: true
-        });
-
-        const dateStr = roundedHour.toLocaleDateString('en-US', {
-          weekday: 'long',
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric'
-        });
-
+        const now = new Date();
+        const formattedDate = `${now.getMonth() + 1}/${now.getDate()}/${now.getFullYear().toString().substr(-2)}`;
+        const hour = now.getHours();
+        const roundedHour = hour >= 12 ? `${hour === 12 ? 12 : hour - 12}PM` : `${hour === 0 ? 12 : hour}AM`;
+        
         // Get values from input fields
         const inProgress = document.getElementById('in-progress-input').value || '0';
         const atRisk = document.getElementById('at-risk-input').value || '0';
@@ -976,14 +581,14 @@
         const packageProgress = document.getElementById('package-progress-input').value || '0';
 
         // Create header
-        const header = `/md\n@\n## CRDR UPDATE - ${dateStr} ${timeStr}\n\n` +
+        const header = `/md\n@\n## CRDR UPDATE - ${formattedDate} ${roundedHour}\n\n` +
                       `**IN PROGRESS: ${inProgress.toString().padStart(2, '0')}**\n` +
                       `**AT RISK: ${atRisk.toString().padStart(2, '0')}**\n` +
                       `**BEHIND: ${behind.toString().padStart(2, '0')}**\n` +
                       `**PACKAGE PROGRESS: ${packageProgress}%**\n\n` +
                       `---\n\n`;
 
-        const routeContent = behindRoutesFiltered.map((route) => {
+        const routeContent = behindRoutes.map((route) => {
           const select = daDropdowns.querySelector(`select[data-route-code="${route.routeCode}"]`);
           const associateInfo = select ? select.value : route.associateInfo;
           
@@ -1001,7 +606,7 @@
           const rootCauses = Array.from(checkedBoxes).map(checkbox => {
             if (checkbox.classList.contains('other-checkbox') && checkbox.checked) {
               const otherInput = container.querySelector('.other-input');
-              return otherInput && otherInput.value.trim() || 'Other (unspecified)';
+              return otherInput.value.trim() || 'Other (unspecified)';
             }
             return checkbox.value;
           }).filter(Boolean); // Remove any empty values
@@ -1026,13 +631,9 @@
         const blobURL = URL.createObjectURL(blob);
 
         const link = document.createElement("a");
-        
-        link.setAttribute("href", blobURL);
-        link.setAttribute("download", "behind_routes.txt");
-        document.body.appendChild(link);
-        
+        link.href = blobURL;
+        link.download = "behind_routes.txt";
         link.click();
-        document.body.removeChild(link);
         URL.revokeObjectURL(blobURL);
       };
     }
