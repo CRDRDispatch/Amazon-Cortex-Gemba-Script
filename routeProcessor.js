@@ -424,18 +424,48 @@
         
         // Get Package Progress from fourth container - Following exact path
         if (containersV2[3]) {  // Get 4th div with css-11ofut8
+          console.log('Found 4th container:', containersV2[3]);
+          
           const thirdChild = Array.from(containersV2[3].children).find((child, index) => 
             index === 2 && child.classList.contains('css-1avovsw')
           );
+          console.log('Found third child:', thirdChild);
+          
           if (thirdChild) {
             const firstChild = thirdChild.firstElementChild;
+            console.log('First child:', firstChild);
+            
             if (firstChild) {
               const ql9057Div = firstChild.querySelector('.css-ql9057');
+              console.log('Found ql9057 div:', ql9057Div);
+              
               if (ql9057Div) {
-                const circularDiv = ql9057Div.querySelector('[name="mdn-circular-children"]');
+                // Log all children to see what we have
+                console.log('Children of ql9057:', Array.from(ql9057Div.children).map(child => ({
+                  tagName: child.tagName,
+                  name: child.getAttribute('name'),
+                  className: child.className,
+                  id: child.id
+                })));
+                
+                // Try to find the circular div by checking each child
+                const circularDiv = Array.from(ql9057Div.children).find(child => 
+                  child.getAttribute('name') === 'mdn-circular-children'
+                );
+                console.log('Found circular div:', circularDiv);
+                
                 if (circularDiv) {
+                  // Log all children of circular div
+                  console.log('Children of circular div:', Array.from(circularDiv.children).map(child => ({
+                    tagName: child.tagName,
+                    textContent: child.textContent,
+                    className: child.className
+                  })));
+                  
                   const progressText = circularDiv.querySelector('p')?.textContent || '0%';
+                  console.log('Progress text found:', progressText);
                   packageProgress = parseInt(progressText.replace('%', '') || '0');
+                  console.log('Final package progress:', packageProgress);
                 }
               }
             }
