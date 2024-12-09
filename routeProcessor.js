@@ -422,10 +422,18 @@
           behindCount = parseInt(riskBehindDivs[2].querySelector('p')?.textContent || '0');
         }
         
-        // Get Package Progress from fourth container - Updated selector
-        const packageProgressDiv = containersV2[3]?.querySelector('.css-1avovsw:nth-child(3) .mdn-circular-children p.css-y1k2yy.font-weight-bold');
-        if (packageProgressDiv) {
-          packageProgress = parseInt(packageProgressDiv.textContent.replace('%', '') || '0');
+        // Get Package Progress from fourth container - Following exact path
+        if (containersV2[3]) {  // Get 4th div with css-11ofut8
+          const thirdChild = Array.from(containersV2[3].children).find((child, index) => 
+            index === 2 && child.classList.contains('css-1avovsw')
+          );
+          if (thirdChild) {
+            const circularDiv = thirdChild.querySelector('.mdn-circular-children');
+            if (circularDiv) {
+              const progressText = circularDiv.querySelector('p.css-y1k2yy.font-weight-bold')?.textContent || '0%';
+              packageProgress = parseInt(progressText.replace('%', '') || '0');
+            }
+          }
         }
         
         // Store the values for later use
