@@ -422,8 +422,8 @@
           behindCount = parseInt(riskBehindDivs[2].querySelector('p')?.textContent || '0');
         }
         
-        // Get Package Progress from fourth container
-        const packageProgressDiv = containersV2[3].querySelector('.css-1avovsw:nth-child(3) .mdn-circular-children p');
+        // Get Package Progress from fourth container - Updated selector
+        const packageProgressDiv = containersV2[3]?.querySelector('.css-1avovsw:nth-child(3) .mdn-circular-children p.css-y1k2yy.font-weight-bold');
         if (packageProgressDiv) {
           packageProgress = parseInt(packageProgressDiv.textContent.replace('%', '') || '0');
         }
@@ -661,12 +661,12 @@
         
         const formattedDate = `${month}/${day}/${year}`;
         
-        // Create header
+        // Create header with leading zeros for all values
         const header = `/md\n@\n## CRDR UPDATE - ${formattedDate} ${roundedHour}\n\n` +
                       `**IN PROGRESS: ${window.dspProgress.inProgress.toString().padStart(2, '0')}**\n` +
                       `**AT RISK: ${window.dspProgress.atRisk.toString().padStart(2, '0')}**\n` +
                       `**BEHIND: ${window.dspProgress.behind.toString().padStart(2, '0')}**\n` +
-                      `**PACKAGE PROGRESS: ${window.dspProgress.packageProgress}%**\n\n` +
+                      `**PACKAGE PROGRESS: ${window.dspProgress.packageProgress.toString().padStart(2, '0')}%**\n\n` +
                       `---\n\n`;
 
         const routeContent = behindRoutes.map((route) => {
