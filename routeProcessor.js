@@ -6,7 +6,9 @@
     modal.style.top = "50%";
     modal.style.left = "50%";
     modal.style.transform = "translate(-50%, -50%)";
-    modal.style.width = "400px";
+    modal.style.width = "min(40vw, 500px)";
+    modal.style.minWidth = "400px";
+    modal.style.maxWidth = "800px";
     modal.style.background = "linear-gradient(to bottom, #ffffff, #fafafa)";
     modal.style.boxShadow = "0 10px 25px rgba(0, 0, 0, 0.12), 0 4px 12px rgba(0, 0, 0, 0.08)";
     modal.style.border = "1px solid rgba(0, 0, 0, 0.1)";
@@ -17,9 +19,6 @@
     modal.style.zIndex = "10000";
     modal.style.maxHeight = "90vh";
     modal.style.overflow = "hidden";
-    modal.style.minWidth = "400px";
-    modal.style.minHeight = "300px";
-    modal.style.maxWidth = "90vw";
     modal.style.cursor = "move";
 
     modal.innerHTML = `
@@ -141,6 +140,19 @@
         resizeHandle.style.display = 'flex';
     };
 
+    // Debounce function
+    function debounce(func, wait) {
+      let timeout;
+      return function executedFunction(...args) {
+        const later = () => {
+          clearTimeout(timeout);
+          func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+      };
+    }
+
     // Add resize functionality
     const resize = {
         isResizing: false,
@@ -150,39 +162,31 @@
         startHeight: 0
     };
 
-    const onMouseDown = function(e) {
-        resize.isResizing = true;
-        resize.startX = e.clientX;
-        resize.startY = e.clientY;
-        resize.startWidth = modal.offsetWidth;
-        resize.startHeight = modal.offsetHeight;
-        e.stopPropagation();
-        document.body.style.cursor = 'se-resize';
-    };
+    const debouncedResize = debounce((e, modal, startWidth, startHeight, startX, startY) => {
+      const newWidth = Math.max(400, Math.min(startWidth + (e.clientX - startX), window.innerWidth * 0.9));
+      const newHeight = Math.max(300, Math.min(startHeight + (e.clientY - startY), window.innerHeight * 0.9));
+      
+      modal.style.width = newWidth + "px";
+      modal.style.height = newHeight + "px";
+    }, 16);
 
-    const onMouseMove = function(e) {
-        if (!resize.isResizing) return;
+    resizeHandle.addEventListener("mousedown", (e) => {
+      e.preventDefault();
+      const startWidth = modal.offsetWidth;
+      const startHeight = modal.offsetHeight;
+      const startX = e.clientX;
+      const startY = e.clientY;
 
-        const deltaX = e.clientX - resize.startX;
-        const deltaY = e.clientY - resize.startY;
+      const resize = (moveEvent) => {
+        moveEvent.preventDefault();
+        debouncedResize(moveEvent, modal, startWidth, startHeight, startX, startY);
+      };
 
-        const newWidth = Math.max(400, Math.min(resize.startWidth + deltaX, window.innerWidth * 0.9));
-        const newHeight = Math.max(300, Math.min(resize.startHeight + deltaY, window.innerHeight * 0.9));
-
-        modal.style.width = newWidth + 'px';
-        modal.style.height = newHeight + 'px';
-    };
-
-    const onMouseUp = function() {
-        if (resize.isResizing) {
-            resize.isResizing = false;
-            document.body.style.cursor = 'default';
-        }
-    };
-
-    resizeHandle.addEventListener('mousedown', onMouseDown);
-    document.addEventListener('mousemove', onMouseMove);
-    document.addEventListener('mouseup', onMouseUp);
+      document.addEventListener("mousemove", resize);
+      document.addEventListener("mouseup", () => {
+        document.removeEventListener("mousemove", resize);
+      }, { once: true });
+    });
 
     // Add hover effects
     const closeBtn = modal.querySelector("#close-btn");
@@ -383,51 +387,81 @@
     }
   };
 
-  const collectRoutes = async (selector, routes, maxScrolls = 20, scrollDelay = 100, isV1 = false) => {
-    console.log("Starting route collection. Selector:", selector);
-    for (let i = 0; i < maxScrolls; i++) {
-      console.log(`Scroll iteration ${i + 1} of ${maxScrolls}`);
-      const elements = document.querySelectorAll(selector);
-      console.log(`Found ${elements.length} route elements`);
+  // Optimized route collection with virtual scrolling
+  async function collectRoutes(selector, routes, batchSize = 20, maxRetries = 100, isV1) {
+    const routeMap = new Map();
+    let lastScrollHeight = 0;
+    let retryCount = 0;
+    let noNewRoutes = 0;
 
-      elements.forEach((el, index) => {
-        console.log(`Processing element ${index + 1} of ${elements.length}`);
-        const routeCodeElem = isV1
-          ? el.querySelector(".left-column.text-sm")?.firstElementChild
-          : el.querySelector(".css-1nqzkik");
-        const progressElem = isV1
-          ? el.querySelector(".complete.h-100.d-flex.justify-content-center.align-items-center.progressStatusBar")
-          : el.querySelector(".css-1xac89n.font-weight-bold");
+    const processVisibleRoutes = () => {
+      const visibleRoutes = document.querySelectorAll(selector);
+      let addedNewRoute = false;
 
-        const routeCode = routeCodeElem?.textContent.trim() || routeCodeElem?.getAttribute("title");
-        const associateInfo = extractAssociates(el, isV1);
-        const progressRaw = progressElem?.textContent.trim();
-        const progress = extractBehindProgress(progressRaw); // Extract only "X behind"
+      visibleRoutes.forEach(route => {
+        const routeCode = isV1 ? 
+          route.querySelector('.text-monospace')?.textContent :
+          route.querySelector('p')?.textContent;
 
-        console.log("Route Code:", routeCode);
-        console.log("Associate Info:", associateInfo);
-        console.log("Progress:", progress);
+        if (routeCode && !routeMap.has(routeCode)) {
+          addedNewRoute = true;
+          const associateInfo = isV1 ?
+            route.querySelector('.driver-name')?.textContent :
+            route.querySelector('div[title]')?.getAttribute('title');
 
-        if (routeCode) {
-          const existingRouteIndex = routes.findIndex(route => route.routeCode === routeCode);
-          if (existingRouteIndex === -1) {
-            routes.push({ routeCode, associateInfo, progress });
-            console.log("Added route:", { routeCode, associateInfo, progress });
-          } else {
-            console.log("Skipped duplicate route with code:", routeCode);
+          const progress = isV1 ?
+            route.querySelector('.behind')?.textContent :
+            Array.from(route.querySelectorAll('p')).slice(-1)[0]?.textContent;
+
+          if (associateInfo && progress) {
+            routeMap.set(routeCode, {
+              routeCode,
+              associateInfo: associateInfo.trim(),
+              progress: progress.trim()
+            });
           }
-        } else {
-          console.log("Skipped route due to missing code.");
         }
       });
 
-      elements[elements.length - 1]?.scrollIntoView({ behavior: "smooth", block: "end" });
-      await new Promise((resolve) => setTimeout(resolve, scrollDelay));
+      return addedNewRoute;
+    };
+
+    const smoothScroll = async (distance) => {
+      const steps = 10;
+      const stepSize = distance / steps;
+      for (let i = 0; i < steps; i++) {
+        window.scrollBy(0, stepSize);
+        await new Promise(resolve => setTimeout(resolve, 50));
+      }
+    };
+
+    const debouncedScroll = debounce(async () => {
+      if (processVisibleRoutes()) {
+        noNewRoutes = 0;
+      } else {
+        noNewRoutes++;
+      }
+
+      const currentScrollHeight = document.documentElement.scrollHeight;
+      if (currentScrollHeight > lastScrollHeight) {
+        lastScrollHeight = currentScrollHeight;
+        retryCount = 0;
+      } else {
+        retryCount++;
+      }
+
+      if (retryCount < maxRetries && noNewRoutes < 3) {
+        await smoothScroll(window.innerHeight * 0.8);
+      }
+    }, 150);
+
+    while (retryCount < maxRetries && noNewRoutes < 3) {
+      await debouncedScroll();
+      await new Promise(resolve => setTimeout(resolve, 200));
     }
 
-    updateProgress(`Collected ${routes.length} unique routes so far.`);
-    console.log("Completed route collection. Total routes:", routes.length);
-  };
+    routes.push(...Array.from(routeMap.values()));
+  }
 
   const modal = createModal();
   const downloadBtn = modal.querySelector("#download-btn");
