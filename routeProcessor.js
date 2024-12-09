@@ -5,29 +5,21 @@
     modal.style.position = "fixed";
     modal.style.top = "50%";
     modal.style.left = "50%";
-    modal.style.transform = "translate(-50%, -50%) translateZ(0)";
-    modal.style.webkitTransform = "translate(-50%, -50%) translateZ(0)";
-    modal.style.backfaceVisibility = "hidden";
-    modal.style.webkitBackfaceVisibility = "hidden";
-    modal.style.perspective = "1000";
-    modal.style.webkitPerspective = "1000";
+    modal.style.transform = "translate(-50%, -50%)";
     modal.style.width = "400px";
     modal.style.background = "white";
-    modal.style.border = "none";
+    modal.style.border = "1px solid #ccc";
     modal.style.boxShadow = "0 10px 25px rgba(0, 0, 0, 0.2), 0 2px 10px rgba(0, 0, 0, 0.1)";
     modal.style.padding = "25px";
     modal.style.borderRadius = "16px";
     modal.style.zIndex = "10000";
-    modal.style.textAlign = "center";
     modal.style.maxHeight = "90vh";
-    modal.style.overflowY = "auto";
-    modal.style.willChange = "transform";
-    modal.style.isolation = "isolate";
-    modal.style.cursor = "move";  // Indicate draggable
     modal.style.resize = "both";
     modal.style.overflow = "auto";
     modal.style.minWidth = "400px";
     modal.style.minHeight = "300px";
+    modal.style.maxWidth = "90vw";
+    modal.style.cursor = "move";
 
     modal.innerHTML = `
       <button id="close-btn" style="position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 18px; cursor: pointer; color: #666; transition: color 0.2s ease;">✖</button>
@@ -105,6 +97,57 @@
         </div>
       </div>
     `;
+
+    // Add resize handle styles
+    const resizeHandle = document.createElement('div');
+    resizeHandle.style.position = 'absolute';
+    resizeHandle.style.right = '0';
+    resizeHandle.style.bottom = '0';
+    resizeHandle.style.width = '15px';
+    resizeHandle.style.height = '15px';
+    resizeHandle.style.cursor = 'se-resize';
+    resizeHandle.style.zIndex = '10001';
+    resizeHandle.innerHTML = '⟋'; // Add a visual indicator
+    resizeHandle.style.color = '#666';
+    resizeHandle.style.fontSize = '12px';
+    resizeHandle.style.lineHeight = '15px';
+    resizeHandle.style.textAlign = 'center';
+
+    // Add resize functionality
+    let isResizing = false;
+    let originalWidth;
+    let originalHeight;
+    let originalX;
+    let originalY;
+
+    resizeHandle.addEventListener('mousedown', function(e) {
+        isResizing = true;
+        originalWidth = modal.offsetWidth;
+        originalHeight = modal.offsetHeight;
+        originalX = e.clientX;
+        originalY = e.clientY;
+        e.stopPropagation(); // Prevent dragging from starting
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (!isResizing) return;
+        
+        const width = originalWidth + (e.clientX - originalX);
+        const height = originalHeight + (e.clientY - originalY);
+        
+        if (width >= 400 && width <= window.innerWidth * 0.9) {
+            modal.style.width = width + 'px';
+        }
+        if (height >= 300 && height <= window.innerHeight * 0.9) {
+            modal.style.height = height + 'px';
+        }
+    });
+
+    document.addEventListener('mouseup', function() {
+        isResizing = false;
+    });
+
+    modal.appendChild(resizeHandle);
 
     // Add hover effects
     const closeBtn = modal.querySelector("#close-btn");
