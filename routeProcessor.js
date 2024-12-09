@@ -7,9 +7,11 @@
     modal.style.left = "50%";
     modal.style.transform = "translate(-50%, -50%)";
     modal.style.width = "400px";
-    modal.style.background = "white";
-    modal.style.border = "1px solid #ccc";
-    modal.style.boxShadow = "0 10px 25px rgba(0, 0, 0, 0.2), 0 2px 10px rgba(0, 0, 0, 0.1)";
+    modal.style.background = "linear-gradient(to bottom, #ffffff, #fafafa)";
+    modal.style.boxShadow = "0 10px 25px rgba(0, 0, 0, 0.12), 0 4px 12px rgba(0, 0, 0, 0.08)";
+    modal.style.border = "1px solid rgba(0, 0, 0, 0.1)";
+    modal.style.backdropFilter = "blur(8px)";
+    modal.style.webkitBackdropFilter = "blur(8px)";
     modal.style.padding = "25px";
     modal.style.borderRadius = "16px";
     modal.style.zIndex = "10000";
@@ -21,74 +23,81 @@
     modal.style.cursor = "move";
 
     modal.innerHTML = `
-      <button id="close-btn" style="position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 20px; cursor: pointer; color: #666; transition: all 0.2s ease; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; background-color: #f8f9fa; border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.1); z-index: 10002;">✖</button>
-      <div id="modal-content" style="height: calc(100% - 20px); overflow-y: auto; padding: 20px 35px 20px 20px;">
+      <button id="close-btn" style="position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 20px; cursor: pointer; color: #666; transition: all 0.2s ease; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background-color: rgba(248,249,250,0.8); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); border-radius: 50%; box-shadow: 0 2px 8px rgba(0,0,0,0.08); z-index: 10002;">✖</button>
+      <div id="modal-content" style="height: calc(100% - 20px); overflow-y: auto; padding: 20px 35px 20px 20px; scrollbar-width: thin; scrollbar-color: #cbd5e0 #f8f9fa;">
         <div style="margin-bottom: 25px; cursor: move;">
-          <img src="https://crdrdispatch.github.io/GembaScript/Logo.svg" alt="Logo" style="height: 90px; display: block; margin: 0 auto; -webkit-transform: translateZ(0); transform: translateZ(0); pointer-events: none;">
+          <img src="https://crdrdispatch.github.io/GembaScript/Logo.svg" alt="Logo" style="height: 90px; display: block; margin: 0 auto; transform: translateZ(0); filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));">
         </div>
-        <h2 style="font-family: Arial, sans-serif; margin-bottom: 25px; border-bottom: 2px solid #eee; padding-bottom: 15px; color: #2c3e50; font-size: 24px; text-align: center;">Gimme That GEMBA</h2>
+        <h2 style="font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif; margin-bottom: 25px; border-bottom: 2px solid rgba(0,0,0,0.06); padding-bottom: 15px; color: #1a202c; font-size: 24px; text-align: center; font-weight: 600;">Gimme That GEMBA</h2>
         <div id="progress-section" style="margin-bottom: 30px;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
             <div style="display: flex; align-items: center; gap: 10px;">
-              <h3 style="font-family: Arial, sans-serif; font-size: 16px; color: #2c3e50; margin: 0; font-weight: 600;">Progress</h3>
+              <h3 style="font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif; font-size: 16px; color: #1a202c; margin: 0; font-weight: 600;">Progress</h3>
               <span id="progress-status" style="display: none; font-size: 12px; padding: 3px 10px; border-radius: 20px; background-color: #4CAF50; color: white; font-weight: 500; box-shadow: 0 2px 4px rgba(76, 175, 80, 0.2);">Complete</span>
             </div>
             <button id="toggle-progress" style="background: none; border: none; color: #666; cursor: pointer; font-size: 14px; padding: 5px 10px; border-radius: 5px; transition: background-color 0.2s ease;">Hide</button>
           </div>
-          <div id="progress-details" style="font-family: Arial, sans-serif; text-align: left; margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 12px; border: 1px solid #edf2f7;">
+          <div id="progress-details" style="font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; text-align: left; margin-bottom: 20px; padding: 15px; background: rgba(255,255,255,0.8); border-radius: 12px; border: 1px solid rgba(0,0,0,0.06); box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
             <p>Initializing...</p>
           </div>
         </div>
         <div id="da-selection-section" style="display: none; margin-bottom: 30px;">
-          <h3 style="font-family: Arial, sans-serif; font-size: 16px; color: #2c3e50; margin-bottom: 12px; font-weight: 600;">These routes have multiple DAs. Please select the DA assigned to the route.</h3>
-          <div id="da-dropdowns" style="max-height: 400px; overflow-y: auto; padding: 15px; background: #f8f9fa; border-radius: 12px; border: 1px solid #edf2f7;">
+          <h3 style="font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif; font-size: 16px; color: #1a202c; margin-bottom: 12px; font-weight: 600;">These routes have multiple DAs. Please select the DA assigned to the route.</h3>
+          <div id="da-dropdowns" style="max-height: 400px; overflow-y: auto; padding: 15px; background: rgba(248,249,250,0.8); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); border-radius: 12px; border: 1px solid rgba(0,0,0,0.06); box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
           </div>
           <div style="margin-top: 20px; text-align: right;">
-            <button id="da-next-btn" style="padding: 12px 30px; background-color: #4CAF50; color: white; border: none; border-radius: 8px; cursor: pointer; font-family: Arial, sans-serif; font-weight: 500; font-size: 15px; box-shadow: 0 4px 6px rgba(76, 175, 80, 0.2); transition: all 0.2s ease;">Next</button>
+            <button id="da-next-btn" style="padding: 12px 30px; background: linear-gradient(135deg, #4CAF50, #43a047); color: white; border: none; border-radius: 12px; cursor: pointer; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 500; font-size: 15px; box-shadow: 0 4px 6px rgba(76, 175, 80, 0.2); transition: all 0.2s ease; display: inline-flex; align-items: center; gap: 8px; backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M8 12L3 7L4.4 5.55L7 8.15V0H9V8.15L11.6 5.55L13 7L8 12ZM2 16C1.45 16 0.979333 15.8043 0.588 15.413C0.196667 15.0217 0.001333 14.5507 0 14V11H2V14H14V11H16V14C16 14.55 15.8043 15.021 15.413 15.413C15.0217 15.805 14.5507 16 14 16H2Z" fill="white"/>
+              </svg>
+              Next
+            </button>
           </div>
         </div>
         <div id="preview-section" style="display: none; margin-bottom: 30px;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-            <button id="back-btn" style="padding: 8px 16px; background-color: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer; font-family: Arial, sans-serif; font-weight: 500; font-size: 14px; box-shadow: 0 2px 4px rgba(108, 117, 125, 0.2); transition: all 0.2s ease; display: flex; align-items: center; gap: 6px;">
+            <button id="back-btn" style="padding: 8px 16px; background-color: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 500; font-size: 14px; box-shadow: 0 2px 4px rgba(108, 117, 125, 0.2); transition: all 0.2s ease; display: flex; align-items: center; gap: 6px;">
               <span style="font-size: 18px;">←</span> Back
             </button>
-            <h3 style="font-family: Arial, sans-serif; font-size: 16px; color: #2c3e50; margin: 0; font-weight: 600;">Route Details</h3>
+            <h3 style="font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif; font-size: 16px; color: #1a202c; margin: 0; font-weight: 600;">Route Details</h3>
             <div style="width: 80px;"></div>
           </div>
-          <div id="route-details" style="max-height: 400px; overflow-y: auto; padding: 15px; background: #f8f9fa; border-radius: 12px; border: 1px solid #edf2f7; scrollbar-width: thin; scrollbar-color: #cbd5e0 #f8f9fa;">
+          <div id="route-details" style="max-height: 400px; overflow-y: auto; padding: 15px; background: rgba(255,255,255,0.8); border-radius: 12px; border: 1px solid rgba(0,0,0,0.06); box-shadow: 0 1px 3px rgba(0,0,0,0.02); scrollbar-width: thin; scrollbar-color: #cbd5e0 #f8f9fa;">
           </div>
           <div style="display: flex; justify-content: flex-end; margin-top: 20px;">
-            <button id="preview-next-btn" style="padding: 12px 30px; background-color: #4CAF50; color: white; border: none; border-radius: 8px; cursor: pointer; font-family: Arial, sans-serif; font-weight: 500; font-size: 15px; box-shadow: 0 4px 6px rgba(76, 175, 80, 0.2); transition: all 0.2s ease;">Next</button>
+            <button id="preview-next-btn" style="padding: 12px 30px; background: linear-gradient(135deg, #4CAF50, #43a047); color: white; border: none; border-radius: 12px; cursor: pointer; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 500; font-size: 15px; box-shadow: 0 4px 6px rgba(76, 175, 80, 0.2); transition: all 0.2s ease; display: inline-flex; align-items: center; gap: 8px; backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);">
+              Next
+            </button>
           </div>
         </div>
         <div id="dsp-progress-section" style="display: none;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-            <button id="progress-back-btn" style="padding: 8px 16px; background-color: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer; font-family: Arial, sans-serif; font-weight: 500; font-size: 14px; box-shadow: 0 2px 4px rgba(108, 117, 125, 0.2); transition: all 0.2s ease; display: flex; align-items: center; gap: 6px;">
+            <button id="progress-back-btn" style="padding: 8px 16px; background-color: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 500; font-size: 14px; box-shadow: 0 2px 4px rgba(108, 117, 125, 0.2); transition: all 0.2s ease; display: flex; align-items: center; gap: 6px;">
               <span style="font-size: 18px;">←</span> Back
             </button>
-            <h3 style="font-family: Arial, sans-serif; font-size: 16px; color: #2c3e50; margin: 0; font-weight: 600;">DSP Total Progress</h3>
+            <h3 style="font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif; font-size: 16px; color: #1a202c; margin: 0; font-weight: 600;">DSP Total Progress</h3>
             <div style="width: 80px;"></div>
           </div>
           <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin-bottom: 30px;">
             <div class="input-group">
-              <label style="display: block; margin-bottom: 8px; color: #2c3e50; font-weight: 600; font-size: 14px;">In Progress:</label>
-              <input type="number" id="in-progress-input" class="progress-input" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px;" min="0">
+              <label style="display: block; margin-bottom: 8px; color: #1a202c; font-weight: 600; font-size: 14px;">In Progress:</label>
+              <input type="number" id="in-progress-input" class="progress-input" style="width: 100%; padding: 10px; border: 1px solid rgba(0,0,0,0.06); border-radius: 6px; font-size: 14px;" min="0">
             </div>
             <div class="input-group">
-              <label style="display: block; margin-bottom: 8px; color: #2c3e50; font-weight: 600; font-size: 14px;">At Risk:</label>
-              <input type="number" id="at-risk-input" class="progress-input" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px;" min="0">
+              <label style="display: block; margin-bottom: 8px; color: #1a202c; font-weight: 600; font-size: 14px;">At Risk:</label>
+              <input type="number" id="at-risk-input" class="progress-input" style="width: 100%; padding: 10px; border: 1px solid rgba(0,0,0,0.06); border-radius: 6px; font-size: 14px;" min="0">
             </div>
             <div class="input-group">
-              <label style="display: block; margin-bottom: 8px; color: #2c3e50; font-weight: 600; font-size: 14px;">Behind:</label>
-              <input type="number" id="behind-input" class="progress-input" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px;" min="0">
+              <label style="display: block; margin-bottom: 8px; color: #1a202c; font-weight: 600; font-size: 14px;">Behind:</label>
+              <input type="number" id="behind-input" class="progress-input" style="width: 100%; padding: 10px; border: 1px solid rgba(0,0,0,0.06); border-radius: 6px; font-size: 14px;" min="0">
             </div>
             <div class="input-group">
-              <label style="display: block; margin-bottom: 8px; color: #2c3e50; font-weight: 600; font-size: 14px;">Package Progress:</label>
-              <input type="number" id="package-progress-input" class="progress-input" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px;" min="0" max="100">
+              <label style="display: block; margin-bottom: 8px; color: #1a202c; font-weight: 600; font-size: 14px;">Package Progress:</label>
+              <input type="number" id="package-progress-input" class="progress-input" style="width: 100%; padding: 10px; border: 1px solid rgba(0,0,0,0.06); border-radius: 6px; font-size: 14px;" min="0" max="100">
             </div>
           </div>
           <div style="text-align: center;">
-            <button id="download-btn" style="padding: 12px 30px; background-color: #4CAF50; color: white; border: none; border-radius: 8px; cursor: pointer; font-family: Arial, sans-serif; font-weight: 500; font-size: 15px; box-shadow: 0 4px 6px rgba(76, 175, 80, 0.2); transition: all 0.2s ease; display: inline-flex; align-items: center; gap: 8px;">
+            <button id="download-btn" style="padding: 12px 30px; background: linear-gradient(135deg, #4CAF50, #43a047); color: white; border: none; border-radius: 12px; cursor: pointer; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 500; font-size: 15px; box-shadow: 0 4px 6px rgba(76, 175, 80, 0.2); transition: all 0.2s ease; display: inline-flex; align-items: center; gap: 8px; backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);">
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M8 12L3 7L4.4 5.55L7 8.15V0H9V8.15L11.6 5.55L13 7L8 12ZM2 16C1.45 16 0.979333 15.8043 0.588 15.413C0.196667 15.0217 0.001333 14.5507 0 14V11H2V14H14V11H16V14C16 14.55 15.8043 15.021 15.413 15.413C15.0217 15.805 14.5507 16 14 16H2Z" fill="white"/>
               </svg>
@@ -104,26 +113,29 @@
     resizeHandle.style.position = 'absolute';
     resizeHandle.style.right = '0';
     resizeHandle.style.bottom = '0';
-    resizeHandle.style.width = '20px';
-    resizeHandle.style.height = '20px';
+    resizeHandle.style.width = '24px';
+    resizeHandle.style.height = '24px';
     resizeHandle.style.cursor = 'se-resize';
     resizeHandle.style.zIndex = '10002';
     resizeHandle.style.userSelect = 'none';
-    resizeHandle.style.backgroundColor = '#f8f9fa';
+    resizeHandle.style.background = 'linear-gradient(135deg, transparent 50%, rgba(248,249,250,0.95) 50%)';
+    resizeHandle.style.borderRadius = '0 0 16px 0';
+    resizeHandle.style.boxShadow = 'inset -1px -1px 0 rgba(0,0,0,0.1)';
+    resizeHandle.style.backdropFilter = 'blur(4px)';
+    resizeHandle.style.webkitBackdropFilter = 'blur(4px)';
     resizeHandle.style.display = 'flex';
     resizeHandle.style.alignItems = 'center';
     resizeHandle.style.justifyContent = 'center';
-    resizeHandle.style.padding = '3px';
 
     // Create SVG for resize handle with diagonal lines
     const svgContent = `
-      <svg width="14" height="14" viewBox="0 0 14 14" xmlns="http://www.w3.org/2000/svg">
+      <svg width="12" height="12" viewBox="0 0 12 12" xmlns="http://www.w3.org/2000/svg" style="transform: translate(2px, 2px)">
         <style>
-          .resize-line { stroke: #666; stroke-width: 1.5; }
+          .resize-line { stroke: rgba(0,0,0,0.4); stroke-width: 1.25; }
         </style>
-        <line x1="10" y1="14" x2="14" y2="10" class="resize-line" />
-        <line x1="6" y1="14" x2="14" y2="6" class="resize-line" />
-        <line x1="2" y1="14" x2="14" y2="2" class="resize-line" />
+        <line x1="8" y1="12" x2="12" y2="8" class="resize-line" />
+        <line x1="4" y1="12" x2="12" y2="4" class="resize-line" />
+        <line x1="0" y1="12" x2="12" y2="0" class="resize-line" />
       </svg>
     `;
     resizeHandle.innerHTML = svgContent;
@@ -183,14 +195,14 @@
     // Add hover effects
     const closeBtn = modal.querySelector("#close-btn");
     closeBtn.addEventListener("mouseover", () => {
-        closeBtn.style.backgroundColor = '#fee2e2';
+        closeBtn.style.backgroundColor = 'rgba(254,226,226,0.8)';
         closeBtn.style.color = '#ef4444';
         closeBtn.style.boxShadow = '0 4px 6px rgba(0,0,0,0.1)';
     });
     closeBtn.addEventListener("mouseout", () => {
-        closeBtn.style.backgroundColor = '#f8f9fa';
+        closeBtn.style.backgroundColor = 'rgba(248,249,250,0.8)';
         closeBtn.style.color = '#666';
-        closeBtn.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
+        closeBtn.style.boxShadow = '0 2px 4px rgba(0,0,0,0.08)';
     });
 
     const modalToggleBtn = modal.querySelector("#toggle-progress");
@@ -587,23 +599,24 @@
           container.style.background = "white";
           container.style.borderRadius = "8px";
           container.style.boxShadow = "0 2px 4px rgba(0,0,0,0.05)";
-          container.style.border = "1px solid #edf2f7";
+          container.style.border = "1px solid rgba(0,0,0,0.06)";
           
           const label = document.createElement("label");
           label.textContent = `${route.routeCode} (${route.progress}):`;
           label.style.display = "block";
           label.style.marginBottom = "8px";
           label.style.fontWeight = "600";
-          label.style.color = "#2c3e50";
+          label.style.color = "#1a202c";
+          label.style.fontFamily = "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif";
           
           const select = document.createElement("select");
           select.style.width = "100%";
           select.style.padding = "8px 12px";
           select.style.borderRadius = "6px";
-          select.style.border = "1px solid #ddd";
-          select.style.backgroundColor = "#f8f9fa";
+          select.style.border = "1px solid rgba(0,0,0,0.06)";
+          select.style.backgroundColor = "white";
           select.style.cursor = "pointer";
-          select.style.color = "#2c3e50";
+          select.style.color = "#1a202c";
           select.style.fontSize = "14px";
           select.dataset.routeCode = route.routeCode;
           
@@ -638,53 +651,53 @@
           container.style.background = "white";
           container.style.borderRadius = "12px";
           container.style.boxShadow = "0 2px 4px rgba(0,0,0,0.05)";
-          container.style.border = "1px solid #edf2f7";
+          container.style.border = "1px solid rgba(0,0,0,0.06)";
           container.style.overflow = "hidden";
           container.dataset.routeCode = route.routeCode;
 
           container.innerHTML = `
-            <div style="padding: 15px; border-bottom: 1px solid #edf2f7; background: #f8fafc;">
-              <h4 style="margin: 0; color: #2c3e50; font-size: 16px; display: flex; justify-content: space-between; align-items: center;">
+            <div style="padding: 15px; border-bottom: 1px solid rgba(0,0,0,0.06); background: rgba(255,255,255,0.8);">
+              <h4 style="margin: 0; color: #1a202c; font-size: 16px; display: flex; justify-content: space-between; align-items: center;">
                 <span>${route.routeCode}: ${associateInfo}</span>
                 <span style="font-size: 14px; padding: 4px 8px; background: #ebf5ff; color: #3182ce; border-radius: 6px;">${route.progress}</span>
               </h4>
             </div>
             <div style="padding: 15px;">
               <div style="margin-bottom: 15px;">
-                <label style="display: block; margin-bottom: 8px; color: #2c3e50; font-weight: 600; font-size: 14px;">Root Cause:</label>
+                <label style="display: block; margin-bottom: 8px; color: #1a202c; font-weight: 600; font-size: 14px;">Root Cause:</label>
                 <div class="rc-checkboxes" style="display: flex; flex-direction: column; gap: 10px;">
                   <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 8px; border-radius: 6px; transition: background-color 0.2s; hover:background-color: #f7fafc;">
                     <input type="checkbox" class="rc-checkbox" value="Route is spread out" style="cursor: pointer; width: 16px; height: 16px;">
-                    <span style="color: #2c3e50; font-size: 14px;">Route is spread out</span>
+                    <span style="color: #1a202c; font-size: 14px;">Route is spread out</span>
                   </label>
                   <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 8px; border-radius: 6px; transition: background-color 0.2s; hover:background-color: #f7fafc;">
                     <input type="checkbox" class="rc-checkbox" value="DA is working at a slow pace" style="cursor: pointer; width: 16px; height: 16px;">
-                    <span style="color: #2c3e50; font-size: 14px;">DA is working at a slow pace</span>
+                    <span style="color: #1a202c; font-size: 14px;">DA is working at a slow pace</span>
                   </label>
                   <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 8px; border-radius: 6px; transition: background-color 0.2s; hover:background-color: #f7fafc;">
                     <input type="checkbox" class="rc-checkbox" value="DA is having connection issues" style="cursor: pointer; width: 16px; height: 16px;">
-                    <span style="color: #2c3e50; font-size: 14px;">DA is having connection issues</span>
+                    <span style="color: #1a202c; font-size: 14px;">DA is having connection issues</span>
                   </label>
                   <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 8px; border-radius: 6px; transition: background-color 0.2s; hover:background-color: #f7fafc;">
                     <input type="checkbox" class="rc-checkbox" value="High Package Count" style="cursor: pointer; width: 16px; height: 16px;">
-                    <span style="color: #2c3e50; font-size: 14px;">High Package Count</span>
+                    <span style="color: #1a202c; font-size: 14px;">High Package Count</span>
                   </label>
                   <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 8px; border-radius: 6px; transition: background-color 0.2s; hover:background-color: #f7fafc;">
                     <input type="checkbox" class="rc-checkbox" value="High Stop Count" style="cursor: pointer; width: 16px; height: 16px;">
-                    <span style="color: #2c3e50; font-size: 14px;">High Stop Count</span>
+                    <span style="color: #1a202c; font-size: 14px;">High Stop Count</span>
                   </label>
                   <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 8px; border-radius: 6px; transition: background-color 0.2s; hover:background-color: #f7fafc;">
                     <input type="checkbox" class="rc-checkbox other-checkbox" value="Other" style="cursor: pointer; width: 16px; height: 16px;">
-                    <span style="color: #2c3e50; font-size: 14px;">Other</span>
+                    <span style="color: #1a202c; font-size: 14px;">Other</span>
                   </label>
                   <div class="other-input-container" style="display: none; margin-left: 32px;">
-                    <input type="text" class="other-input" style="width: calc(100% - 16px); padding: 8px 12px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px; background: #f8fafc;" placeholder="Enter other root cause...">
+                    <input type="text" class="other-input" style="width: calc(100% - 16px); padding: 8px 12px; border: 1px solid rgba(0,0,0,0.06); border-radius: 6px; font-size: 14px; background: rgba(248,249,250,0.8);" placeholder="Enter other root cause...">
                   </div>
                 </div>
               </div>
               <div>
-                <label style="display: block; margin-bottom: 8px; color: #2c3e50; font-weight: 600; font-size: 14px;">Point of Action:</label>
-                <select class="poa-select" style="width: 100%; padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px; background-color: white; cursor: pointer; color: #2c3e50; appearance: none; background-image: url('data:image/svg+xml;charset=US-ASCII,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%232c3e50" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>'); background-repeat: no-repeat; background-position: right 12px center; background-size: 16px;">
+                <label style="display: block; margin-bottom: 8px; color: #1a202c; font-weight: 600; font-size: 14px;">Point of Action:</label>
+                <select class="poa-select" style="width: 100%; padding: 10px 12px; border: 1px solid rgba(0,0,0,0.06); border-radius: 6px; font-size: 14px; background-color: white; cursor: pointer; color: #1a202c; appearance: none; background-image: url('data:image/svg+xml;charset=US-ASCII,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%232c3e50" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>'); background-repeat: no-repeat; background-position: right 12px center; background-size: 16px;">
                   <option value="">Select a point of action...</option>
                   <option value="Rescue Planned">Rescue Planned</option>
                   <option value="Rescue Sent">Rescue Sent</option>
@@ -694,7 +707,7 @@
                   <option value="Other">Other</option>
                 </select>
                 <div class="poa-other-container" style="display: none; margin-top: 8px;">
-                  <input type="text" class="poa-other-input" style="width: 100%; padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px; background: #f8fafc;" placeholder="Enter other point of action...">
+                  <input type="text" class="poa-other-input" style="width: 100%; padding: 10px 12px; border: 1px solid rgba(0,0,0,0.06); border-radius: 6px; font-size: 14px; background: rgba(248,249,250,0.8);" placeholder="Enter other point of action...">
                 </div>
               </div>
             </div>
