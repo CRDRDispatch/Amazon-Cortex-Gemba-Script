@@ -26,7 +26,7 @@
         <div style="margin-bottom: 25px; cursor: move;">
           <img src="https://crdrdispatch.github.io/GembaScript/Logo.svg" alt="Logo" style="height: 90px; display: block; margin: 0 auto; -webkit-transform: translateZ(0); transform: translateZ(0); pointer-events: none;">
         </div>
-        <h2 style="font-family: Arial, sans-serif; margin-bottom: 25px; border-bottom: 2px solid #eee; padding-bottom: 15px; color: #2c3e50; font-size: 24px;">Gimme That GEMBA</h2>
+        <h2 style="font-family: Arial, sans-serif; margin-bottom: 25px; border-bottom: 2px solid #eee; padding-bottom: 15px; color: #2c3e50; font-size: 24px; text-align: center;">Gimme That GEMBA</h2>
         <div id="progress-section" style="margin-bottom: 30px;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
             <div style="display: flex; align-items: center; gap: 10px;">
@@ -108,11 +108,7 @@
     resizeHandle.style.height = '25px';
     resizeHandle.style.cursor = 'se-resize';
     resizeHandle.style.zIndex = '10002';
-    resizeHandle.innerHTML = '⟋';
     resizeHandle.style.color = '#666';
-    resizeHandle.style.fontSize = '20px';
-    resizeHandle.style.lineHeight = '25px';
-    resizeHandle.style.textAlign = 'center';
     resizeHandle.style.userSelect = 'none';
     resizeHandle.style.backgroundColor = '#f8f9fa';
     resizeHandle.style.borderRadius = '4px 0 0 0';
@@ -120,6 +116,19 @@
     resizeHandle.style.border = '1px solid #e2e8f0';
     resizeHandle.style.borderRight = 'none';
     resizeHandle.style.borderBottom = 'none';
+    resizeHandle.style.display = 'flex';
+    resizeHandle.style.alignItems = 'center';
+    resizeHandle.style.justifyContent = 'center';
+
+    // Create SVG for resize handle
+    const svgContent = `
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" style="transform: rotate(-45deg)">
+        <path d="M14 14L8 14L8 8L14 8L14 14Z" stroke="#666666" stroke-width="1.5"/>
+        <path d="M8 14L2 14L2 8L8 8L8 14Z" stroke="#666666" stroke-width="1.5"/>
+        <path d="M14 8L8 8L8 2L14 2L14 8Z" stroke="#666666" stroke-width="1.5"/>
+      </svg>
+    `;
+    resizeHandle.innerHTML = svgContent;
 
     modal.appendChild(resizeHandle);
 
