@@ -24,6 +24,10 @@
     modal.style.willChange = "transform";
     modal.style.isolation = "isolate";
     modal.style.cursor = "move";  // Indicate draggable
+    modal.style.resize = "both";
+    modal.style.overflow = "auto";
+    modal.style.minWidth = "400px";
+    modal.style.minHeight = "300px";
 
     modal.innerHTML = `
       <button id="close-btn" style="position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 18px; cursor: pointer; color: #666; transition: color 0.2s ease;">✖</button>
@@ -424,31 +428,19 @@
         
         // Get Package Progress from fourth container - Following exact path
         if (containersV2[3]) {  // Get 4th div with css-11ofut8
-          console.log('Found 4th container:', containersV2[3]);
-          
           const thirdChild = Array.from(containersV2[3].children).find((child, index) => 
             index === 2 && child.classList.contains('css-1avovsw')
           );
-          console.log('Found third child:', thirdChild);
           
           if (thirdChild) {
             const firstChild = thirdChild.firstElementChild;
-            console.log('First child:', firstChild);
-            
             if (firstChild) {
               const ql9057Div = firstChild.querySelector('.css-ql9057');
-              console.log('Found ql9057 div:', ql9057Div);
-              
               if (ql9057Div) {
-                // Just look for the first div
-                const circularDiv = ql9057Div.querySelector('div');
-                console.log('Found div:', circularDiv);
-                
-                if (circularDiv) {
-                  const progressText = circularDiv.querySelector('p')?.textContent || '0%';
-                  console.log('Progress text found:', progressText);
+                const progressDiv = ql9057Div.querySelector('div');
+                if (progressDiv) {
+                  const progressText = progressDiv.querySelector('p')?.textContent || '0%';
                   packageProgress = parseInt(progressText.replace('%', '') || '0');
-                  console.log('Final package progress:', packageProgress);
                 }
               }
             }
