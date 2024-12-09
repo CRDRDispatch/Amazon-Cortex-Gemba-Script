@@ -47,21 +47,21 @@
         </div>
         <div id="da-selection-section" style="display: none; margin-bottom: 30px;">
           <h3 style="font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif; font-size: 16px; color: #1a202c; margin-bottom: 12px; font-weight: 600;">These routes have multiple DAs. Please select the DA originally assigned to the route as to avoid selecting a rescuer for the progress output.</h3>
-          <div id="da-dropdowns" style="max-height: 75vh; overflow-y: auto; padding: 15px; background: rgba(248,249,250,0.8); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); border-radius: 12px; border: 1px solid rgba(0,0,0,0.06); box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
+          <div id="da-dropdowns" style="height: calc(100vh - 450px); min-height: 200px; max-height: calc(90vh - 250px); overflow-y: auto; padding: 15px; background: rgba(248,249,250,0.8); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); border-radius: 12px; border: 1px solid rgba(0,0,0,0.06); box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
           </div>
           <div style="margin-top: 20px; text-align: right;">
             <button id="da-next-btn" style="padding: 12px 30px; background: linear-gradient(135deg, #4CAF50, #43a047); color: white; border: none; border-radius: 12px; cursor: pointer; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 500; font-size: 15px; box-shadow: 0 4px 6px rgba(76, 175, 80, 0.2); transition: all 0.2s ease;">Next</button>
           </div>
         </div>
         <div id="preview-section" style="display: none; margin-bottom: 30px;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
             <button id="back-btn" style="padding: 8px 16px; background-color: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 500; font-size: 14px; box-shadow: 0 2px 4px rgba(108, 117, 125, 0.2); transition: all 0.2s ease; display: flex; align-items: center; gap: 6px;">
               <span style="font-size: 18px;">←</span> Back
             </button>
             <h3 style="font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif; font-size: 16px; color: #1a202c; margin: 0; font-weight: 600;">Route Details</h3>
             <div style="width: 80px;"></div>
           </div>
-          <div id="route-details" style="max-height: 75vh; overflow-y: auto; padding: 15px; background: rgba(255,255,255,0.8); border-radius: 12px; border: 1px solid rgba(0,0,0,0.06); box-shadow: 0 1px 3px rgba(0,0,0,0.02); scrollbar-width: thin; scrollbar-color: #cbd5e0 #f8f9fa;">
+          <div id="route-details" style="height: calc(100vh - 450px); min-height: 200px; max-height: calc(90vh - 250px); overflow-y: auto; padding: 15px; background: rgba(255,255,255,0.8); border-radius: 12px; border: 1px solid rgba(0,0,0,0.06); box-shadow: 0 1px 3px rgba(0,0,0,0.02); scrollbar-width: thin; scrollbar-color: #cbd5e0 #f8f9fa;">
           </div>
           <div style="display: flex; justify-content: flex-end; margin-top: 20px;">
             <button id="preview-next-btn" style="padding: 12px 30px; background: linear-gradient(135deg, #4CAF50, #43a047); color: white; border: none; border-radius: 12px; cursor: pointer; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 500; font-size: 15px; box-shadow: 0 4px 6px rgba(76, 175, 80, 0.2); transition: all 0.2s ease;">Next</button>
@@ -431,852 +431,493 @@
 
   const modal = createModal();
   const downloadBtn = modal.querySelector("#download-btn");
+  const startBtn = modal.querySelector("#start-btn");
+  const progressSection = modal.querySelector("#progress-section");
 
-  try {
-    console.log("Script started");
-    updateProgress("Script started...");
+  async function processRoutes() {
+    try {
+      console.log("Script started");
+      updateProgress("Script started...");
 
-    const isV1 = document.querySelector(".css-hkr77h")?.checked;
-    
-    // Click specific elements based on version
-    if (isV1) {
-      updateProgress("Processing V1 interface...");
-      const containerV1 = document.querySelector('.css-1bovypj');
-      if (containerV1) {
-        // Get the values container divs
-        const firstChildDiv = containerV1.children[0];
-        const secondChildDiv = containerV1.children[1];
-        const valuesV1 = firstChildDiv.querySelectorAll('.cortex-summary-bar-data-value');
-        
-        // Extract progress counts
-        let inProgressCount = 0;
-        let atRiskCount = 0;
-        let behindCount = 0;
-        let packageProgress = 0;
-        
-        if (valuesV1.length >= 5) {
-          // Get In Progress count (3rd value)
-          inProgressCount = parseInt(valuesV1[2].querySelector('div span')?.textContent || '0');
-          
-          // Get At Risk count (4th value)
-          atRiskCount = parseInt(valuesV1[3].querySelector('div span')?.textContent || '0');
-          
-          // Get Behind count (5th value)
-          behindCount = parseInt(valuesV1[4].querySelector('div span')?.textContent || '0');
-        }
-        
-        // Get Package Progress
-        const packageProgressDiv = secondChildDiv.querySelectorAll('.mr-4.my-1')[1]?.querySelector('.cortex-summary-bar-data-value');
-        if (packageProgressDiv) {
-          const progressText = packageProgressDiv.textContent || '0%';
-          packageProgress = Math.round(parseFloat(progressText.replace('%', '')));
-        }
-        
-        // Store the values for later use
-        window.dspProgress = {
-          inProgress: inProgressCount,
-          atRisk: atRiskCount,
-          behind: behindCount,
-          packageProgress: packageProgress
-        };
-        
-        // Click the required element
-        valuesV1[2].click();
-        await new Promise(resolve => setTimeout(resolve, 500));
-      }
-    } else {
-      updateProgress("Processing V2 interface...");
+      const isV1 = document.querySelector(".css-hkr77h")?.checked;
       
-      // Get all containers with class css-11ofut8
-      const containersV2 = document.querySelectorAll('.css-11ofut8');
-      if (containersV2.length >= 4) {
-        // Extract progress counts
-        let inProgressCount = 0;
-        let atRiskCount = 0;
-        let behindCount = 0;
-        let packageProgress = 0;
-        
-        // Get In Progress count from first container
-        const inProgressDiv = containersV2[0].querySelectorAll('.css-11ibtj8')[1];
-        if (inProgressDiv) {
-          inProgressCount = parseInt(inProgressDiv.querySelector('p')?.textContent || '0');
-        }
-        
-        // Get At Risk and Behind counts from third container
-        const riskBehindDivs = containersV2[2].querySelectorAll('.css-11ibtj8');
-        if (riskBehindDivs.length >= 3) {
-          // At Risk is second div
-          atRiskCount = parseInt(riskBehindDivs[1].querySelector('p')?.textContent || '0');
-          // Behind is third div
-          behindCount = parseInt(riskBehindDivs[2].querySelector('p')?.textContent || '0');
-        }
-        
-        // Get Package Progress from fourth container - Following exact path
-        if (containersV2[3]) {  
-          const thirdChild = Array.from(containersV2[3].children).find((child, index) => 
-            index === 2 && child.classList.contains('css-1avovsw')
-          );
+      // Click specific elements based on version
+      if (isV1) {
+        updateProgress("Processing V1 interface...");
+        const containerV1 = document.querySelector('.css-1bovypj');
+        if (containerV1) {
+          // Get the values container divs
+          const firstChildDiv = containerV1.children[0];
+          const secondChildDiv = containerV1.children[1];
+          const valuesV1 = firstChildDiv.querySelectorAll('.cortex-summary-bar-data-value');
           
-          if (thirdChild) {
-            const firstChild = thirdChild.firstElementChild;
-            if (firstChild) {
-              const ql9057Div = firstChild.querySelector('.css-ql9057');
-              if (ql9057Div) {
-                const progressDiv = ql9057Div.querySelector('div');
-                if (progressDiv) {
-                  const progressText = progressDiv.querySelector('p')?.textContent || '0%';
-                  packageProgress = parseInt(progressText.replace('%', '') || '0');
+          // Extract progress counts
+          let inProgressCount = 0;
+          let atRiskCount = 0;
+          let behindCount = 0;
+          let packageProgress = 0;
+          
+          if (valuesV1.length >= 5) {
+            // Get In Progress count (3rd value)
+            inProgressCount = parseInt(valuesV1[2].querySelector('div span')?.textContent || '0');
+            
+            // Get At Risk count (4th value)
+            atRiskCount = parseInt(valuesV1[3].querySelector('div span')?.textContent || '0');
+            
+            // Get Behind count (5th value)
+            behindCount = parseInt(valuesV1[4].querySelector('div span')?.textContent || '0');
+          }
+          
+          // Get Package Progress
+          const packageProgressDiv = secondChildDiv.querySelectorAll('.mr-4.my-1')[1]?.querySelector('.cortex-summary-bar-data-value');
+          if (packageProgressDiv) {
+            const progressText = packageProgressDiv.textContent || '0%';
+            packageProgress = Math.round(parseFloat(progressText.replace('%', '')));
+          }
+          
+          // Store the values for later use
+          window.dspProgress = {
+            inProgress: inProgressCount,
+            atRisk: atRiskCount,
+            behind: behindCount,
+            packageProgress: packageProgress
+          };
+          
+          // Click the required element
+          valuesV1[2].click();
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+      } else {
+        updateProgress("Processing V2 interface...");
+        
+        // Get all containers with class css-11ofut8
+        const containersV2 = document.querySelectorAll('.css-11ofut8');
+        if (containersV2.length >= 4) {
+          // Extract progress counts
+          let inProgressCount = 0;
+          let atRiskCount = 0;
+          let behindCount = 0;
+          let packageProgress = 0;
+          
+          // Get In Progress count from first container
+          const inProgressDiv = containersV2[0].querySelectorAll('.css-11ibtj8')[1];
+          if (inProgressDiv) {
+            inProgressCount = parseInt(inProgressDiv.querySelector('p')?.textContent || '0');
+          }
+          
+          // Get At Risk and Behind counts from third container
+          const riskBehindDivs = containersV2[2].querySelectorAll('.css-11ibtj8');
+          if (riskBehindDivs.length >= 3) {
+            // At Risk is second div
+            atRiskCount = parseInt(riskBehindDivs[1].querySelector('p')?.textContent || '0');
+            // Behind is third div
+            behindCount = parseInt(riskBehindDivs[2].querySelector('p')?.textContent || '0');
+          }
+          
+          // Get Package Progress from fourth container - Following exact path
+          if (containersV2[3]) {  
+            const thirdChild = Array.from(containersV2[3].children).find((child, index) => 
+              index === 2 && child.classList.contains('css-1avovsw')
+            );
+            
+            if (thirdChild) {
+              const firstChild = thirdChild.firstElementChild;
+              if (firstChild) {
+                const ql9057Div = firstChild.querySelector('.css-ql9057');
+                if (ql9057Div) {
+                  const progressDiv = ql9057Div.querySelector('div');
+                  if (progressDiv) {
+                    const progressText = progressDiv.querySelector('p')?.textContent || '0%';
+                    packageProgress = parseInt(progressText.replace('%', '') || '0');
+                  }
                 }
               }
             }
           }
-        }
-        
-        // Store the values for later use
-        window.dspProgress = {
-          inProgress: inProgressCount,
-          atRisk: atRiskCount,
-          behind: behindCount,
-          packageProgress: packageProgress
-        };
-        
-        // Click the required element (2nd css-11ibtj8 in first container)
-        const clickTarget = containersV2[0].querySelectorAll('.css-11ibtj8')[1];
-        if (clickTarget) {
-          clickTarget.click();
-          await new Promise(resolve => setTimeout(resolve, 500));
+          
+          // Store the values for later use
+          window.dspProgress = {
+            inProgress: inProgressCount,
+            atRisk: atRiskCount,
+            behind: behindCount,
+            packageProgress: packageProgress
+          };
+          
+          // Click the required element (2nd css-11ibtj8 in first container)
+          const clickTarget = containersV2[0].querySelectorAll('.css-11ibtj8')[1];
+          if (clickTarget) {
+            clickTarget.click();
+            await new Promise(resolve => setTimeout(resolve, 500));
+          }
         }
       }
-    }
 
-    updateProgress("Collecting route information...");
+      updateProgress("Collecting route information...");
 
-    const routeSelector = isV1
-      ? '[class^="af-link routes-list-item p-2 d-flex align-items-center w-100 route-"]'
-      : ".css-1muusaa";
-    const routes = [];
+      const routeSelector = isV1
+        ? '[class^="af-link routes-list-item p-2 d-flex align-items-center w-100 route-"]'
+        : ".css-1muusaa";
+      const routes = [];
 
-    await collectRoutes(routeSelector, routes, 20, 100, isV1);
+      await collectRoutes(routeSelector, routes, 20, 100, isV1);
 
-    updateProgress("Scrolling back to the top...");
-    window.scrollTo({ top: 0, behavior: "smooth" });
-    await new Promise((resolve) => setTimeout(resolve, 2000)); 
+      updateProgress("Scrolling back to the top...");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      await new Promise((resolve) => setTimeout(resolve, 2000)); 
 
-    updateProgress("Rechecking routes...");
-    await collectRoutes(routeSelector, routes, 20, 100, isV1);
+      updateProgress("Rechecking routes...");
+      await collectRoutes(routeSelector, routes, 20, 100, isV1);
 
-    updateProgress(`Final collection complete. Found ${routes.length} total routes.`);
-    console.log("Final routes collected:", routes);
+      updateProgress(`Final collection complete. Found ${routes.length} total routes.`);
+      console.log("Final routes collected:", routes);
 
-    const behindRoutes = routes.filter(route => {
-      const progressText = extractBehindProgress(route.progress);
-      return progressText && !progressText.startsWith('0 BEHIND');
-    });
-    console.log("Behind Routes:", behindRoutes);
-
-    updateProgress(`Found ${behindRoutes.length} routes that are behind schedule.`, true, true);
-
-    if (behindRoutes.length > 0) {
-      const daSelectionSection = modal.querySelector("#da-selection-section");
-      const daDropdowns = modal.querySelector("#da-dropdowns");
-      
-      daSelectionSection.style.display = "block";
-
-      behindRoutes.forEach((route) => {
-        const das = route.associateInfo.split(", ");
-        if (das.length > 1) {
-          const container = document.createElement("div");
-          container.style.marginBottom = "15px";
-          container.style.padding = "15px";
-          container.style.background = "white";
-          container.style.borderRadius = "8px";
-          container.style.boxShadow = "0 2px 4px rgba(0,0,0,0.05)";
-          container.style.border = "1px solid rgba(0,0,0,0.06)";
-          
-          const label = document.createElement("label");
-          label.textContent = `${route.routeCode} (${route.progress}):`;
-          label.style.display = "block";
-          label.style.marginBottom = "8px";
-          label.style.fontWeight = "600";
-          label.style.color = "#1a202c";
-          label.style.fontFamily = "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif";
-          
-          const select = document.createElement("select");
-          select.style.width = "100%";
-          select.style.padding = "8px 12px";
-          select.style.borderRadius = "6px";
-          select.style.border = "1px solid rgba(0,0,0,0.06)";
-          select.style.backgroundColor = "white";
-          select.style.cursor = "pointer";
-          select.style.color = "#1a202c";
-          select.style.fontSize = "14px";
-          select.dataset.routeCode = route.routeCode;
-          
-          das.forEach((da) => {
-            const option = document.createElement("option");
-            option.value = da;
-            option.textContent = da;
-            select.appendChild(option);
-          });
-          
-          container.appendChild(label);
-          container.appendChild(select);
-          daDropdowns.appendChild(container);
-        }
+      const behindRoutes = routes.filter(route => {
+        const progressText = extractBehindProgress(route.progress);
+        return progressText && !progressText.startsWith('0 BEHIND');
       });
+      console.log("Behind Routes:", behindRoutes);
 
-      const nextBtn = modal.querySelector("#da-next-btn");
-      const previewSection = modal.querySelector("#preview-section");
-      const routeDetails = modal.querySelector("#route-details");
+      updateProgress(`Found ${behindRoutes.length} routes that are behind schedule.`, true, true);
 
-      nextBtn.addEventListener("click", () => {
-        daSelectionSection.style.display = "none";
-        previewSection.style.display = "block";
+      if (behindRoutes.length > 0) {
+        const daSelectionSection = modal.querySelector("#da-selection-section");
+        const daDropdowns = modal.querySelector("#da-dropdowns");
+        
+        daSelectionSection.style.display = "block";
 
         behindRoutes.forEach((route) => {
-          const select = daDropdowns.querySelector(`select[data-route-code="${route.routeCode}"]`);
-          const associateInfo = select ? select.value : route.associateInfo;
+          const das = route.associateInfo.split(", ");
+          if (das.length > 1) {
+            const container = document.createElement("div");
+            container.style.marginBottom = "15px";
+            container.style.padding = "15px";
+            container.style.background = "white";
+            container.style.borderRadius = "8px";
+            container.style.boxShadow = "0 2px 4px rgba(0,0,0,0.05)";
+            container.style.border = "1px solid rgba(0,0,0,0.06)";
+            
+            const label = document.createElement("label");
+            label.textContent = `${route.routeCode} (${route.progress}):`;
+            label.style.display = "block";
+            label.style.marginBottom = "8px";
+            label.style.fontWeight = "600";
+            label.style.color = "#1a202c";
+            label.style.fontFamily = "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif";
+            
+            const select = document.createElement("select");
+            select.style.width = "100%";
+            select.style.padding = "8px 12px";
+            select.style.borderRadius = "6px";
+            select.style.border = "1px solid rgba(0,0,0,0.06)";
+            select.style.backgroundColor = "white";
+            select.style.cursor = "pointer";
+            select.style.color = "#1a202c";
+            select.style.fontSize = "14px";
+            select.dataset.routeCode = route.routeCode;
+            
+            das.forEach((da) => {
+              const option = document.createElement("option");
+              option.value = da;
+              option.textContent = da;
+              select.appendChild(option);
+            });
+            
+            container.appendChild(label);
+            container.appendChild(select);
+            daDropdowns.appendChild(container);
+          }
+        });
 
-          const container = document.createElement("div");
-          container.style.marginBottom = "20px";
-          container.style.padding = "15px";
-          container.style.background = "white";
-          container.style.borderRadius = "12px";
-          container.style.boxShadow = "0 2px 4px rgba(0,0,0,0.05)";
-          container.style.border = "1px solid rgba(0,0,0,0.06)";
-          container.style.overflow = "hidden";
-          container.dataset.routeCode = route.routeCode;
+        const nextBtn = modal.querySelector("#da-next-btn");
+        const previewSection = modal.querySelector("#preview-section");
+        const routeDetails = modal.querySelector("#route-details");
 
-          container.innerHTML = `
-            <div style="padding: 15px; border-bottom: 1px solid rgba(0,0,0,0.06); background: rgba(255,255,255,0.8);">
-              <h4 style="margin: 0; color: #1a202c; font-size: 16px; display: flex; justify-content: space-between; align-items: center;">
-                <span>${route.routeCode}: ${associateInfo}</span>
-                <span style="font-size: 14px; padding: 4px 8px; background: #ebf5ff; color: #3182ce; border-radius: 6px;">${route.progress}</span>
-              </h4>
-            </div>
-            <div style="padding: 15px;">
-              <div style="margin-bottom: 15px;">
-                <label style="display: block; margin-bottom: 8px; color: #1a202c; font-weight: 600; font-size: 14px;">Root Cause:</label>
-                <div class="rc-checkboxes" style="display: flex; flex-direction: column; gap: 10px;">
-                  <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 8px; border-radius: 6px; transition: background-color 0.2s; hover:background-color: #f7fafc;">
-                    <input type="checkbox" class="rc-checkbox" value="Route is spread out" style="cursor: pointer; width: 16px; height: 16px;">
-                    <span style="color: #1a202c; font-size: 14px;">Route is spread out</span>
-                  </label>
-                  <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 8px; border-radius: 6px; transition: background-color 0.2s; hover:background-color: #f7fafc;">
-                    <input type="checkbox" class="rc-checkbox" value="DA is working at a slow pace" style="cursor: pointer; width: 16px; height: 16px;">
-                    <span style="color: #1a202c; font-size: 14px;">DA is working at a slow pace</span>
-                  </label>
-                  <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 8px; border-radius: 6px; transition: background-color 0.2s; hover:background-color: #f7fafc;">
-                    <input type="checkbox" class="rc-checkbox" value="DA is having connection issues" style="cursor: pointer; width: 16px; height: 16px;">
-                    <span style="color: #1a202c; font-size: 14px;">DA is having connection issues</span>
-                  </label>
-                  <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 8px; border-radius: 6px; transition: background-color 0.2s; hover:background-color: #f7fafc;">
-                    <input type="checkbox" class="rc-checkbox" value="High Package Count" style="cursor: pointer; width: 16px; height: 16px;">
-                    <span style="color: #1a202c; font-size: 14px;">High Package Count</span>
-                  </label>
-                  <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 8px; border-radius: 6px; transition: background-color 0.2s; hover:background-color: #f7fafc;">
-                    <input type="checkbox" class="rc-checkbox" value="High Stop Count" style="cursor: pointer; width: 16px; height: 16px;">
-                    <span style="color: #1a202c; font-size: 14px;">High Stop Count</span>
-                  </label>
-                  <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 8px; border-radius: 6px; transition: background-color 0.2s; hover:background-color: #f7fafc;">
-                    <input type="checkbox" class="rc-checkbox other-checkbox" value="Other" style="cursor: pointer; width: 16px; height: 16px;">
-                    <span style="color: #1a202c; font-size: 14px;">Other</span>
-                  </label>
-                  <div class="other-input-container" style="display: none; margin-left: 32px;">
-                    <input type="text" class="other-input" style="width: calc(100% - 16px); padding: 8px 12px; border: 1px solid rgba(0,0,0,0.06); border-radius: 6px; font-size: 14px; background: rgba(248,249,250,0.8);" placeholder="Enter other root cause...">
+        nextBtn.addEventListener("click", () => {
+          daSelectionSection.style.display = "none";
+          previewSection.style.display = "block";
+
+          behindRoutes.forEach((route) => {
+            const select = daDropdowns.querySelector(`select[data-route-code="${route.routeCode}"]`);
+            const associateInfo = select ? select.value : route.associateInfo;
+
+            const container = document.createElement("div");
+            container.style.marginBottom = "20px";
+            container.style.padding = "15px";
+            container.style.background = "white";
+            container.style.borderRadius = "12px";
+            container.style.boxShadow = "0 2px 4px rgba(0,0,0,0.05)";
+            container.style.border = "1px solid rgba(0,0,0,0.06)";
+            container.style.overflow = "hidden";
+            container.dataset.routeCode = route.routeCode;
+
+            container.innerHTML = `
+              <div style="padding: 15px; border-bottom: 1px solid rgba(0,0,0,0.06); background: rgba(255,255,255,0.8);">
+                <h4 style="margin: 0; color: #1a202c; font-size: 16px; display: flex; justify-content: space-between; align-items: center;">
+                  <span>${route.routeCode}: ${associateInfo}</span>
+                  <span style="font-size: 14px; padding: 4px 8px; background: #ebf5ff; color: #3182ce; border-radius: 6px;">${route.progress}</span>
+                </h4>
+              </div>
+              <div style="padding: 15px;">
+                <div style="margin-bottom: 15px;">
+                  <label style="display: block; margin-bottom: 8px; color: #1a202c; font-weight: 600; font-size: 14px;">Root Cause:</label>
+                  <div class="rc-checkboxes" style="display: flex; flex-direction: column; gap: 10px;">
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 8px; border-radius: 6px; transition: background-color 0.2s; hover:background-color: #f7fafc;">
+                      <input type="checkbox" class="rc-checkbox" value="Route is spread out" style="cursor: pointer; width: 16px; height: 16px;">
+                      <span style="color: #1a202c; font-size: 14px;">Route is spread out</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 8px; border-radius: 6px; transition: background-color 0.2s; hover:background-color: #f7fafc;">
+                      <input type="checkbox" class="rc-checkbox" value="DA is working at a slow pace" style="cursor: pointer; width: 16px; height: 16px;">
+                      <span style="color: #1a202c; font-size: 14px;">DA is working at a slow pace</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 8px; border-radius: 6px; transition: background-color 0.2s; hover:background-color: #f7fafc;">
+                      <input type="checkbox" class="rc-checkbox" value="DA is having connection issues" style="cursor: pointer; width: 16px; height: 16px;">
+                      <span style="color: #1a202c; font-size: 14px;">DA is having connection issues</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 8px; border-radius: 6px; transition: background-color 0.2s; hover:background-color: #f7fafc;">
+                      <input type="checkbox" class="rc-checkbox" value="High Package Count" style="cursor: pointer; width: 16px; height: 16px;">
+                      <span style="color: #1a202c; font-size: 14px;">High Package Count</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 8px; border-radius: 6px; transition: background-color 0.2s; hover:background-color: #f7fafc;">
+                      <input type="checkbox" class="rc-checkbox" value="High Stop Count" style="cursor: pointer; width: 16px; height: 16px;">
+                      <span style="color: #1a202c; font-size: 14px;">High Stop Count</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 8px; border-radius: 6px; transition: background-color 0.2s; hover:background-color: #f7fafc;">
+                      <input type="checkbox" class="rc-checkbox other-checkbox" value="Other" style="cursor: pointer; width: 16px; height: 16px;">
+                      <span style="color: #1a202c; font-size: 14px;">Other</span>
+                    </label>
+                    <div class="other-input-container" style="display: none; margin-left: 32px;">
+                      <input type="text" class="other-input" style="width: calc(100% - 16px); padding: 8px 12px; border: 1px solid rgba(0,0,0,0.06); border-radius: 6px; font-size: 14px; background: rgba(248,249,250,0.8);" placeholder="Enter other root cause...">
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <label style="display: block; margin-bottom: 8px; color: #1a202c; font-weight: 600; font-size: 14px;">Point of Action:</label>
+                  <select class="poa-select" style="width: 100%; padding: 10px 12px; border: 1px solid rgba(0,0,0,0.06); border-radius: 6px; font-size: 14px; background-color: white; cursor: pointer; color: #1a202c; appearance: none; background-image: url('data:image/svg+xml;charset=US-ASCII,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%232c3e50" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>'); background-repeat: no-repeat; background-position: right 12px center; background-size: 16px;">
+                    <option value="">Select a point of action...</option>
+                    <option value="Rescue Planned">Rescue Planned</option>
+                    <option value="Rescue Sent">Rescue Sent</option>
+                    <option value="Rescue on the way">Rescue on the way</option>
+                    <option value="We're monitoring progress and will send a rescue if needed">We're monitoring progress and will send a rescue if needed</option>
+                    <option value="Route Complete">Route Complete</option>
+                    <option value="Other">Other</option>
+                  </select>
+                  <div class="poa-other-container" style="display: none; margin-top: 8px;">
+                    <input type="text" class="poa-other-input" style="width: 100%; padding: 10px 12px; border: 1px solid rgba(0,0,0,0.06); border-radius: 6px; font-size: 14px; background: rgba(248,249,250,0.8);" placeholder="Enter other point of action...">
                   </div>
                 </div>
               </div>
-              <div>
-                <label style="display: block; margin-bottom: 8px; color: #1a202c; font-weight: 600; font-size: 14px;">Point of Action:</label>
-                <select class="poa-select" style="width: 100%; padding: 10px 12px; border: 1px solid rgba(0,0,0,0.06); border-radius: 6px; font-size: 14px; background-color: white; cursor: pointer; color: #1a202c; appearance: none; background-image: url('data:image/svg+xml;charset=US-ASCII,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%232c3e50" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>'); background-repeat: no-repeat; background-position: right 12px center; background-size: 16px;">
-                  <option value="">Select a point of action...</option>
-                  <option value="Rescue Planned">Rescue Planned</option>
-                  <option value="Rescue Sent">Rescue Sent</option>
-                  <option value="Rescue on the way">Rescue on the way</option>
-                  <option value="We're monitoring progress and will send a rescue if needed">We're monitoring progress and will send a rescue if needed</option>
-                  <option value="Route Complete">Route Complete</option>
-                  <option value="Other">Other</option>
-                </select>
-                <div class="poa-other-container" style="display: none; margin-top: 8px;">
-                  <input type="text" class="poa-other-input" style="width: 100%; padding: 10px 12px; border: 1px solid rgba(0,0,0,0.06); border-radius: 6px; font-size: 14px; background: rgba(248,249,250,0.8);" placeholder="Enter other point of action...">
-                </div>
-              </div>
-            </div>
-          `;
+            `;
 
-          const otherCheckbox = container.querySelector('.other-checkbox');
-          const otherInputContainer = container.querySelector('.other-input-container');
-          
-          otherCheckbox.addEventListener('change', (e) => {
-            otherInputContainer.style.display = e.target.checked ? 'block' : 'none';
+            const otherCheckbox = container.querySelector('.other-checkbox');
+            const otherInputContainer = container.querySelector('.other-input-container');
+            
+            otherCheckbox.addEventListener('change', (e) => {
+              otherInputContainer.style.display = e.target.checked ? 'block' : 'none';
+            });
+
+            const poaSelect = container.querySelector('.poa-select');
+            const poaOtherContainer = container.querySelector('.poa-other-container');
+            
+            poaSelect.addEventListener('change', (e) => {
+              poaOtherContainer.style.display = e.target.value === 'Other' ? 'block' : 'none';
+            });
+
+            routeDetails.appendChild(container);
           });
 
-          const poaSelect = container.querySelector('.poa-select');
-          const poaOtherContainer = container.querySelector('.poa-other-container');
-          
-          poaSelect.addEventListener('change', (e) => {
-            poaOtherContainer.style.display = e.target.value === 'Other' ? 'block' : 'none';
+          const allDropdowns = daDropdowns.querySelectorAll('select');
+          allDropdowns.forEach(select => {
+            select.addEventListener('change', (e) => {
+              const routeCode = e.target.dataset.routeCode;
+              const container = routeDetails.querySelector(`div[data-route-code="${routeCode}"]`);
+              if (container) {
+                const h4 = container.querySelector('h4');
+                const progress = h4.textContent.match(/\((.*?)\)/)[0]; 
+                h4.textContent = `${routeCode}: ${e.target.value} ${progress}`;
+              }
+            });
           });
-
-          routeDetails.appendChild(container);
         });
 
-        const allDropdowns = daDropdowns.querySelectorAll('select');
-        allDropdowns.forEach(select => {
-          select.addEventListener('change', (e) => {
-            const routeCode = e.target.dataset.routeCode;
-            const container = routeDetails.querySelector(`div[data-route-code="${routeCode}"]`);
-            if (container) {
-              const h4 = container.querySelector('h4');
-              const progress = h4.textContent.match(/\((.*?)\)/)[0]; 
-              h4.textContent = `${routeCode}: ${e.target.value} ${progress}`;
+        downloadBtn.onclick = () => {
+          const now = new Date();
+          const minutes = now.getMinutes();
+          if (minutes >= 30) {
+            now.setHours(now.getHours() + 1);
+          }
+          now.setMinutes(0);
+          
+          const month = String(now.getMonth() + 1).padStart(2, '0');
+          const day = String(now.getDate()).padStart(2, '0');
+          const year = now.getFullYear().toString().substr(-2);
+          const hour = now.getHours();
+          const roundedHour = hour >= 12 ? 
+            `${hour === 12 ? 12 : hour - 12}PM` : 
+            `${hour === 0 ? 12 : hour}AM`;
+          
+          const formattedDate = `${month}/${day}/${year}`;
+          
+          const header = `/md\n@\n## CRDR UPDATE - ${formattedDate} ${roundedHour}\n\n` +
+                        `**IN PROGRESS: ${window.dspProgress.inProgress.toString().padStart(2, '0')}**\n` +
+                        `**AT RISK: ${window.dspProgress.atRisk.toString().padStart(2, '0')}**\n` +
+                        `**BEHIND: ${window.dspProgress.behind.toString().padStart(2, '0')}**\n` +
+                        `**PACKAGE PROGRESS: ${window.dspProgress.packageProgress.toString().padStart(2, '0')}%**\n\n` +
+                        `---\n\n`;
+
+          const routeContent = behindRoutes.map((route) => {
+            const select = daDropdowns.querySelector(`select[data-route-code="${route.routeCode}"]`);
+            const associateInfo = select ? select.value : route.associateInfo;
+            
+            const containers = document.querySelectorAll('#route-details > div');
+            const container = Array.from(containers).find(div => {
+              const h4 = div.querySelector('h4 span');
+              return h4 && h4.textContent.includes(route.routeCode);
+            });
+            
+            if (!container) return `${route.routeCode}: ${associateInfo} (${route.progress})\n`;
+            
+            const checkedBoxes = container.querySelectorAll('input[type="checkbox"]:checked');
+            const rootCauses = Array.from(checkedBoxes).map(checkbox => {
+              if (checkbox.classList.contains('other-checkbox') && checkbox.checked) {
+                const otherInput = container.querySelector('.other-input');
+                return otherInput.value.trim() || 'Other (unspecified)';
+              }
+              return checkbox.value;
+            }).filter(Boolean); 
+            
+            const rc = rootCauses.length > 0 ? rootCauses.join(', ') : 'N/A';
+            
+            const poaSelect = container.querySelector('.poa-select');
+            let poa = poaSelect ? poaSelect.value : 'N/A';
+            if (poa === 'Other') {
+              const poaOtherInput = container.querySelector('.poa-other-input');
+              poa = poaOtherInput && poaOtherInput.value.trim() || 'Other (unspecified)';
             }
-          });
-        });
+            poa = poa || 'N/A';
+            
+            return `**${route.routeCode}** | ${associateInfo} | **${route.progress}**\nRC: ${rc}\nPOA: ${poa}\n`;
+          }).join('\n');
+
+          const fileContent = header + routeContent;
+
+          const blob = new Blob([fileContent], { type: "text/plain" });
+          const blobURL = URL.createObjectURL(blob);
+
+          const link = document.createElement("a");
+          link.href = blobURL;
+          link.download = "behind_routes.txt";
+          link.click();
+          URL.revokeObjectURL(blobURL);
+        };
+      }
+
+      const backBtn = modal.querySelector("#back-btn");
+      backBtn.addEventListener("click", () => {
+        const previewSection = modal.querySelector("#preview-section");
+        const daSelectionSection = modal.querySelector("#da-selection-section");
+        previewSection.style.display = "none";
+        daSelectionSection.style.display = "block";
       });
 
-      downloadBtn.onclick = () => {
-        const now = new Date();
-        const minutes = now.getMinutes();
-        if (minutes >= 30) {
-          now.setHours(now.getHours() + 1);
+      backBtn.addEventListener("mouseover", () => {
+        backBtn.style.backgroundColor = "#5a6268";
+        backBtn.style.boxShadow = "0 4px 6px rgba(108, 117, 125, 0.3)";
+      });
+      backBtn.addEventListener("mouseout", () => {
+        backBtn.style.backgroundColor = "#6c757d";
+        backBtn.style.boxShadow = "0 2px 4px rgba(108, 117, 125, 0.2)";
+      });
+
+      const previewNextBtn = modal.querySelector("#preview-next-btn");
+      previewNextBtn.addEventListener("click", () => {
+        modal.querySelector("#preview-section").style.display = "none";
+        modal.querySelector("#dsp-progress-section").style.display = "block";
+        
+        if (window.dspProgress) {
+          const inProgressInput = modal.querySelector('#in-progress-input');
+          const atRiskInput = modal.querySelector('#at-risk-input');
+          const behindInput = modal.querySelector('#behind-input');
+          const packageProgressInput = modal.querySelector('#package-progress-input');
+          
+          if (inProgressInput) inProgressInput.value = window.dspProgress.inProgress;
+          if (atRiskInput) atRiskInput.value = window.dspProgress.atRisk;
+          if (behindInput) behindInput.value = window.dspProgress.behind;
+          if (packageProgressInput) packageProgressInput.value = window.dspProgress.packageProgress;
         }
-        now.setMinutes(0);
-        
-        const month = String(now.getMonth() + 1).padStart(2, '0');
-        const day = String(now.getDate()).padStart(2, '0');
-        const year = now.getFullYear().toString().substr(-2);
-        const hour = now.getHours();
-        const roundedHour = hour >= 12 ? 
-          `${hour === 12 ? 12 : hour - 12}PM` : 
-          `${hour === 0 ? 12 : hour}AM`;
-        
-        const formattedDate = `${month}/${day}/${year}`;
-        
-        const header = `/md\n@\n## CRDR UPDATE - ${formattedDate} ${roundedHour}\n\n` +
-                      `**IN PROGRESS: ${window.dspProgress.inProgress.toString().padStart(2, '0')}**\n` +
-                      `**AT RISK: ${window.dspProgress.atRisk.toString().padStart(2, '0')}**\n` +
-                      `**BEHIND: ${window.dspProgress.behind.toString().padStart(2, '0')}**\n` +
-                      `**PACKAGE PROGRESS: ${window.dspProgress.packageProgress.toString().padStart(2, '0')}%**\n\n` +
-                      `---\n\n`;
+      });
 
-        const routeContent = behindRoutes.map((route) => {
-          const select = daDropdowns.querySelector(`select[data-route-code="${route.routeCode}"]`);
-          const associateInfo = select ? select.value : route.associateInfo;
-          
-          const containers = document.querySelectorAll('#route-details > div');
-          const container = Array.from(containers).find(div => {
-            const h4 = div.querySelector('h4 span');
-            return h4 && h4.textContent.includes(route.routeCode);
-          });
-          
-          if (!container) return `${route.routeCode}: ${associateInfo} (${route.progress})\n`;
-          
-          const checkedBoxes = container.querySelectorAll('input[type="checkbox"]:checked');
-          const rootCauses = Array.from(checkedBoxes).map(checkbox => {
-            if (checkbox.classList.contains('other-checkbox') && checkbox.checked) {
-              const otherInput = container.querySelector('.other-input');
-              return otherInput.value.trim() || 'Other (unspecified)';
-            }
-            return checkbox.value;
-          }).filter(Boolean); 
-          
-          const rc = rootCauses.length > 0 ? rootCauses.join(', ') : 'N/A';
-          
-          const poaSelect = container.querySelector('.poa-select');
-          let poa = poaSelect ? poaSelect.value : 'N/A';
-          if (poa === 'Other') {
-            const poaOtherInput = container.querySelector('.poa-other-input');
-            poa = poaOtherInput && poaOtherInput.value.trim() || 'Other (unspecified)';
-          }
-          poa = poa || 'N/A';
-          
-          return `**${route.routeCode}** | ${associateInfo} | **${route.progress}**\nRC: ${rc}\nPOA: ${poa}\n`;
-        }).join('\n');
+      const progressBackBtn = modal.querySelector("#progress-back-btn");
+      progressBackBtn.addEventListener("click", () => {
+        modal.querySelector("#dsp-progress-section").style.display = "none";
+        modal.querySelector("#preview-section").style.display = "block";
+      });
 
-        const fileContent = header + routeContent;
+      progressBackBtn.addEventListener("mouseover", () => {
+        progressBackBtn.style.backgroundColor = "#5a6268";
+        progressBackBtn.style.boxShadow = "0 4px 6px rgba(108, 117, 125, 0.3)";
+      });
 
-        const blob = new Blob([fileContent], { type: "text/plain" });
-        const blobURL = URL.createObjectURL(blob);
+      progressBackBtn.addEventListener("mouseout", () => {
+        progressBackBtn.style.backgroundColor = "#6c757d";
+        progressBackBtn.style.boxShadow = "0 2px 4px rgba(108, 117, 125, 0.2)";
+      });
 
-        const link = document.createElement("a");
-        link.href = blobURL;
-        link.download = "behind_routes.txt";
-        link.click();
-        URL.revokeObjectURL(blobURL);
-      };
-    }
-
-    const backBtn = modal.querySelector("#back-btn");
-    backBtn.addEventListener("click", () => {
-      const previewSection = modal.querySelector("#preview-section");
-      const daSelectionSection = modal.querySelector("#da-selection-section");
-      previewSection.style.display = "none";
-      daSelectionSection.style.display = "block";
-    });
-
-    backBtn.addEventListener("mouseover", () => {
-      backBtn.style.backgroundColor = "#5a6268";
-      backBtn.style.boxShadow = "0 4px 6px rgba(108, 117, 125, 0.3)";
-    });
-    backBtn.addEventListener("mouseout", () => {
-      backBtn.style.backgroundColor = "#6c757d";
-      backBtn.style.boxShadow = "0 2px 4px rgba(108, 117, 125, 0.2)";
-    });
-
-    const previewNextBtn = modal.querySelector("#preview-next-btn");
-    previewNextBtn.addEventListener("click", () => {
-      modal.querySelector("#preview-section").style.display = "none";
-      modal.querySelector("#dsp-progress-section").style.display = "block";
-      
-      if (window.dspProgress) {
-        const inProgressInput = modal.querySelector('#in-progress-input');
-        const atRiskInput = modal.querySelector('#at-risk-input');
-        const behindInput = modal.querySelector('#behind-input');
-        const packageProgressInput = modal.querySelector('#package-progress-input');
-        
-        if (inProgressInput) inProgressInput.value = window.dspProgress.inProgress;
-        if (atRiskInput) atRiskInput.value = window.dspProgress.atRisk;
-        if (behindInput) behindInput.value = window.dspProgress.behind;
-        if (packageProgressInput) packageProgressInput.value = window.dspProgress.packageProgress;
-      }
-    });
-
-    const progressBackBtn = modal.querySelector("#progress-back-btn");
-    progressBackBtn.addEventListener("click", () => {
-      modal.querySelector("#dsp-progress-section").style.display = "none";
-      modal.querySelector("#preview-section").style.display = "block";
-    });
-
-    progressBackBtn.addEventListener("mouseover", () => {
-      progressBackBtn.style.backgroundColor = "#5a6268";
-      progressBackBtn.style.boxShadow = "0 4px 6px rgba(108, 117, 125, 0.3)";
-    });
-
-    progressBackBtn.addEventListener("mouseout", () => {
-      progressBackBtn.style.backgroundColor = "#6c757d";
-      progressBackBtn.style.boxShadow = "0 2px 4px rgba(108, 117, 125, 0.2)";
-    });
-
-    const startBtn = modal.querySelector("#start-btn");
-    const startSection = modal.querySelector("#start-section");
-    const progressSection = modal.querySelector("#progress-section");
-
-    startBtn.addEventListener("click", () => {
-        startSection.style.display = "none";
-        progressSection.style.display = "block";
-        processRoutes();  // Start the main process
-    });
-
-    startBtn.addEventListener("mouseover", () => {
+      startBtn.addEventListener("mouseover", () => {
         startBtn.style.transform = "translateY(-1px)";
         startBtn.style.boxShadow = "0 6px 8px rgba(76, 175, 80, 0.3)";
-    });
+      });
 
-    startBtn.addEventListener("mouseout", () => {
+      startBtn.addEventListener("mouseout", () => {
         startBtn.style.transform = "none";
         startBtn.style.boxShadow = "0 4px 6px rgba(76, 175, 80, 0.2)";
-    });
+      });
+    } catch (error) {
+      console.error("Error in processRoutes:", error);
+      updateProgress("Error: " + error.message, true, true);
+    }
+  };
 
-    async function processRoutes() {
-        try {
-            updateProgress("Starting route data collection...");
-            const isV1 = document.querySelector(".css-hkr77h")?.checked;
-            
-            // Click specific elements based on version
-            if (isV1) {
-              updateProgress("Processing V1 interface...");
-              const containerV1 = document.querySelector('.css-1bovypj');
-              if (containerV1) {
-                // Get the values container divs
-                const firstChildDiv = containerV1.children[0];
-                const secondChildDiv = containerV1.children[1];
-                const valuesV1 = firstChildDiv.querySelectorAll('.cortex-summary-bar-data-value');
-                
-                // Extract progress counts
-                let inProgressCount = 0;
-                let atRiskCount = 0;
-                let behindCount = 0;
-                let packageProgress = 0;
-                
-                if (valuesV1.length >= 5) {
-                  // Get In Progress count (3rd value)
-                  inProgressCount = parseInt(valuesV1[2].querySelector('div span')?.textContent || '0');
-                  
-                  // Get At Risk count (4th value)
-                  atRiskCount = parseInt(valuesV1[3].querySelector('div span')?.textContent || '0');
-                  
-                  // Get Behind count (5th value)
-                  behindCount = parseInt(valuesV1[4].querySelector('div span')?.textContent || '0');
-                }
-                
-                // Get Package Progress
-                const packageProgressDiv = secondChildDiv.querySelectorAll('.mr-4.my-1')[1]?.querySelector('.cortex-summary-bar-data-value');
-                if (packageProgressDiv) {
-                  const progressText = packageProgressDiv.textContent || '0%';
-                  packageProgress = Math.round(parseFloat(progressText.replace('%', '')));
-                }
-                
-                // Store the values for later use
-                window.dspProgress = {
-                  inProgress: inProgressCount,
-                  atRisk: atRiskCount,
-                  behind: behindCount,
-                  packageProgress: packageProgress
-                };
-                
-                // Click the required element
-                valuesV1[2].click();
-                await new Promise(resolve => setTimeout(resolve, 500));
-              }
-            } else {
-              updateProgress("Processing V2 interface...");
-              
-              // Get all containers with class css-11ofut8
-              const containersV2 = document.querySelectorAll('.css-11ofut8');
-              if (containersV2.length >= 4) {
-                // Extract progress counts
-                let inProgressCount = 0;
-                let atRiskCount = 0;
-                let behindCount = 0;
-                let packageProgress = 0;
-                
-                // Get In Progress count from first container
-                const inProgressDiv = containersV2[0].querySelectorAll('.css-11ibtj8')[1];
-                if (inProgressDiv) {
-                  inProgressCount = parseInt(inProgressDiv.querySelector('p')?.textContent || '0');
-                }
-                
-                // Get At Risk and Behind counts from third container
-                const riskBehindDivs = containersV2[2].querySelectorAll('.css-11ibtj8');
-                if (riskBehindDivs.length >= 3) {
-                  // At Risk is second div
-                  atRiskCount = parseInt(riskBehindDivs[1].querySelector('p')?.textContent || '0');
-                  // Behind is third div
-                  behindCount = parseInt(riskBehindDivs[2].querySelector('p')?.textContent || '0');
-                }
-                
-                // Get Package Progress from fourth container - Following exact path
-                if (containersV2[3]) {  
-                  const thirdChild = Array.from(containersV2[3].children).find((child, index) => 
-                    index === 2 && child.classList.contains('css-1avovsw')
-                  );
-                  
-                  if (thirdChild) {
-                    const firstChild = thirdChild.firstElementChild;
-                    if (firstChild) {
-                      const ql9057Div = firstChild.querySelector('.css-ql9057');
-                      if (ql9057Div) {
-                        const progressDiv = ql9057Div.querySelector('div');
-                        if (progressDiv) {
-                          const progressText = progressDiv.querySelector('p')?.textContent || '0%';
-                          packageProgress = parseInt(progressText.replace('%', '') || '0');
-                        }
-                      }
-                    }
-                  }
-                }
-                
-                // Store the values for later use
-                window.dspProgress = {
-                  inProgress: inProgressCount,
-                  atRisk: atRiskCount,
-                  behind: behindCount,
-                  packageProgress: packageProgress
-                };
-                
-                // Click the required element (2nd css-11ibtj8 in first container)
-                const clickTarget = containersV2[0].querySelectorAll('.css-11ibtj8')[1];
-                if (clickTarget) {
-                  clickTarget.click();
-                  await new Promise(resolve => setTimeout(resolve, 500));
-                }
-              }
-            }
+  // Add click handler for start button
+  startBtn.addEventListener("click", async () => {
+    startBtn.style.display = "none";
+    progressSection.style.display = "block";
+    await processRoutes();  // Start the main process
+  });
 
-            updateProgress("Collecting route information...");
+  // Add next button to preview section
+  const previewNextBtn = modal.querySelector("#preview-next-btn");
+  previewNextBtn.addEventListener("click", () => {
+    modal.querySelector("#preview-section").style.display = "none";
+    modal.querySelector("#dsp-progress-section").style.display = "block";
+    
+    // Populate DSP progress section with gathered data
+    if (window.dspProgress) {
+      const inProgressInput = modal.querySelector('#in-progress-input');
+      const atRiskInput = modal.querySelector('#at-risk-input');
+      const behindInput = modal.querySelector('#behind-input');
+      const packageProgressInput = modal.querySelector('#package-progress-input');
+      
+      if (inProgressInput) inProgressInput.value = window.dspProgress.inProgress;
+      if (atRiskInput) atRiskInput.value = window.dspProgress.atRisk;
+      if (behindInput) behindInput.value = window.dspProgress.behind;
+      if (packageProgressInput) packageProgressInput.value = window.dspProgress.packageProgress;
+    }
+  });
 
-            const routeSelector = isV1
-              ? '[class^="af-link routes-list-item p-2 d-flex align-items-center w-100 route-"]'
-              : ".css-1muusaa";
-            const routes = [];
+  // Add event listeners for the progress back button
+  const progressBackBtn = modal.querySelector("#progress-back-btn");
+  progressBackBtn.addEventListener("click", () => {
+    modal.querySelector("#dsp-progress-section").style.display = "none";
+    modal.querySelector("#preview-section").style.display = "block";
+  });
 
-            await collectRoutes(routeSelector, routes, 20, 100, isV1);
+  progressBackBtn.addEventListener("mouseover", () => {
+    progressBackBtn.style.backgroundColor = "#5a6268";
+    progressBackBtn.style.boxShadow = "0 4px 6px rgba(108, 117, 125, 0.3)";
+  });
 
-            updateProgress("Scrolling back to the top...");
-            window.scrollTo({ top: 0, behavior: "smooth" });
-            await new Promise((resolve) => setTimeout(resolve, 2000)); 
-
-            updateProgress("Rechecking routes...");
-            await collectRoutes(routeSelector, routes, 20, 100, isV1);
-
-            updateProgress(`Final collection complete. Found ${routes.length} total routes.`);
-            console.log("Final routes collected:", routes);
-
-            const behindRoutes = routes.filter(route => {
-              const progressText = extractBehindProgress(route.progress);
-              return progressText && !progressText.startsWith('0 BEHIND');
-            });
-            console.log("Behind Routes:", behindRoutes);
-
-            updateProgress(`Found ${behindRoutes.length} routes that are behind schedule.`, true, true);
-
-            if (behindRoutes.length > 0) {
-              const daSelectionSection = modal.querySelector("#da-selection-section");
-              const daDropdowns = modal.querySelector("#da-dropdowns");
-              
-              daSelectionSection.style.display = "block";
-
-              behindRoutes.forEach((route) => {
-                const das = route.associateInfo.split(", ");
-                if (das.length > 1) {
-                  const container = document.createElement("div");
-                  container.style.marginBottom = "15px";
-                  container.style.padding = "15px";
-                  container.style.background = "white";
-                  container.style.borderRadius = "8px";
-                  container.style.boxShadow = "0 2px 4px rgba(0,0,0,0.05)";
-                  container.style.border = "1px solid rgba(0,0,0,0.06)";
-                  
-                  const label = document.createElement("label");
-                  label.textContent = `${route.routeCode} (${route.progress}):`;
-                  label.style.display = "block";
-                  label.style.marginBottom = "8px";
-                  label.style.fontWeight = "600";
-                  label.style.color = "#1a202c";
-                  label.style.fontFamily = "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif";
-                  
-                  const select = document.createElement("select");
-                  select.style.width = "100%";
-                  select.style.padding = "8px 12px";
-                  select.style.borderRadius = "6px";
-                  select.style.border = "1px solid rgba(0,0,0,0.06)";
-                  select.style.backgroundColor = "white";
-                  select.style.cursor = "pointer";
-                  select.style.color = "#1a202c";
-                  select.style.fontSize = "14px";
-                  select.dataset.routeCode = route.routeCode;
-                  
-                  das.forEach((da) => {
-                    const option = document.createElement("option");
-                    option.value = da;
-                    option.textContent = da;
-                    select.appendChild(option);
-                  });
-                  
-                  container.appendChild(label);
-                  container.appendChild(select);
-                  daDropdowns.appendChild(container);
-                }
-              });
-
-              const nextBtn = modal.querySelector("#da-next-btn");
-              const previewSection = modal.querySelector("#preview-section");
-              const routeDetails = modal.querySelector("#route-details");
-
-              nextBtn.addEventListener("click", () => {
-                daSelectionSection.style.display = "none";
-                previewSection.style.display = "block";
-
-                behindRoutes.forEach((route) => {
-                  const select = daDropdowns.querySelector(`select[data-route-code="${route.routeCode}"]`);
-                  const associateInfo = select ? select.value : route.associateInfo;
-
-                  const container = document.createElement("div");
-                  container.style.marginBottom = "20px";
-                  container.style.padding = "15px";
-                  container.style.background = "white";
-                  container.style.borderRadius = "12px";
-                  container.style.boxShadow = "0 2px 4px rgba(0,0,0,0.05)";
-                  container.style.border = "1px solid rgba(0,0,0,0.06)";
-                  container.style.overflow = "hidden";
-                  container.dataset.routeCode = route.routeCode;
-
-                  container.innerHTML = `
-                    <div style="padding: 15px; border-bottom: 1px solid rgba(0,0,0,0.06); background: rgba(255,255,255,0.8);">
-                      <h4 style="margin: 0; color: #1a202c; font-size: 16px; display: flex; justify-content: space-between; align-items: center;">
-                        <span>${route.routeCode}: ${associateInfo}</span>
-                        <span style="font-size: 14px; padding: 4px 8px; background: #ebf5ff; color: #3182ce; border-radius: 6px;">${route.progress}</span>
-                      </h4>
-                    </div>
-                    <div style="padding: 15px;">
-                      <div style="margin-bottom: 15px;">
-                        <label style="display: block; margin-bottom: 8px; color: #1a202c; font-weight: 600; font-size: 14px;">Root Cause:</label>
-                        <div class="rc-checkboxes" style="display: flex; flex-direction: column; gap: 10px;">
-                          <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 8px; border-radius: 6px; transition: background-color 0.2s; hover:background-color: #f7fafc;">
-                            <input type="checkbox" class="rc-checkbox" value="Route is spread out" style="cursor: pointer; width: 16px; height: 16px;">
-                            <span style="color: #1a202c; font-size: 14px;">Route is spread out</span>
-                          </label>
-                          <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 8px; border-radius: 6px; transition: background-color 0.2s; hover:background-color: #f7fafc;">
-                            <input type="checkbox" class="rc-checkbox" value="DA is working at a slow pace" style="cursor: pointer; width: 16px; height: 16px;">
-                            <span style="color: #1a202c; font-size: 14px;">DA is working at a slow pace</span>
-                          </label>
-                          <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 8px; border-radius: 6px; transition: background-color 0.2s; hover:background-color: #f7fafc;">
-                            <input type="checkbox" class="rc-checkbox" value="DA is having connection issues" style="cursor: pointer; width: 16px; height: 16px;">
-                            <span style="color: #1a202c; font-size: 14px;">DA is having connection issues</span>
-                          </label>
-                          <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 8px; border-radius: 6px; transition: background-color 0.2s; hover:background-color: #f7fafc;">
-                            <input type="checkbox" class="rc-checkbox" value="High Package Count" style="cursor: pointer; width: 16px; height: 16px;">
-                            <span style="color: #1a202c; font-size: 14px;">High Package Count</span>
-                          </label>
-                          <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 8px; border-radius: 6px; transition: background-color 0.2s; hover:background-color: #f7fafc;">
-                            <input type="checkbox" class="rc-checkbox" value="High Stop Count" style="cursor: pointer; width: 16px; height: 16px;">
-                            <span style="color: #1a202c; font-size: 14px;">High Stop Count</span>
-                          </label>
-                          <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 8px; border-radius: 6px; transition: background-color 0.2s; hover:background-color: #f7fafc;">
-                            <input type="checkbox" class="rc-checkbox other-checkbox" value="Other" style="cursor: pointer; width: 16px; height: 16px;">
-                            <span style="color: #1a202c; font-size: 14px;">Other</span>
-                          </label>
-                          <div class="other-input-container" style="display: none; margin-left: 32px;">
-                            <input type="text" class="other-input" style="width: calc(100% - 16px); padding: 8px 12px; border: 1px solid rgba(0,0,0,0.06); border-radius: 6px; font-size: 14px; background: rgba(248,249,250,0.8);" placeholder="Enter other root cause...">
-                          </div>
-                        </div>
-                      </div>
-                      <div>
-                        <label style="display: block; margin-bottom: 8px; color: #1a202c; font-weight: 600; font-size: 14px;">Point of Action:</label>
-                        <select class="poa-select" style="width: 100%; padding: 10px 12px; border: 1px solid rgba(0,0,0,0.06); border-radius: 6px; font-size: 14px; background-color: white; cursor: pointer; color: #1a202c; appearance: none; background-image: url('data:image/svg+xml;charset=US-ASCII,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%232c3e50" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>'); background-repeat: no-repeat; background-position: right 12px center; background-size: 16px;">
-                          <option value="">Select a point of action...</option>
-                          <option value="Rescue Planned">Rescue Planned</option>
-                          <option value="Rescue Sent">Rescue Sent</option>
-                          <option value="Rescue on the way">Rescue on the way</option>
-                          <option value="We're monitoring progress and will send a rescue if needed">We're monitoring progress and will send a rescue if needed</option>
-                          <option value="Route Complete">Route Complete</option>
-                          <option value="Other">Other</option>
-                        </select>
-                        <div class="poa-other-container" style="display: none; margin-top: 8px;">
-                          <input type="text" class="poa-other-input" style="width: 100%; padding: 10px 12px; border: 1px solid rgba(0,0,0,0.06); border-radius: 6px; font-size: 14px; background: rgba(248,249,250,0.8);" placeholder="Enter other point of action...">
-                        </div>
-                      </div>
-                    </div>
-                  `;
-
-                  const otherCheckbox = container.querySelector('.other-checkbox');
-                  const otherInputContainer = container.querySelector('.other-input-container');
-                  
-                  otherCheckbox.addEventListener('change', (e) => {
-                    otherInputContainer.style.display = e.target.checked ? 'block' : 'none';
-                  });
-
-                  const poaSelect = container.querySelector('.poa-select');
-                  const poaOtherContainer = container.querySelector('.poa-other-container');
-                  
-                  poaSelect.addEventListener('change', (e) => {
-                    poaOtherContainer.style.display = e.target.value === 'Other' ? 'block' : 'none';
-                  });
-
-                  routeDetails.appendChild(container);
-                });
-
-                const allDropdowns = daDropdowns.querySelectorAll('select');
-                allDropdowns.forEach(select => {
-                  select.addEventListener('change', (e) => {
-                    const routeCode = e.target.dataset.routeCode;
-                    const container = routeDetails.querySelector(`div[data-route-code="${routeCode}"]`);
-                    if (container) {
-                      const h4 = container.querySelector('h4');
-                      const progress = h4.textContent.match(/\((.*?)\)/)[0]; 
-                      h4.textContent = `${routeCode}: ${e.target.value} ${progress}`;
-                    }
-                  });
-                });
-              });
-
-              downloadBtn.onclick = () => {
-                const now = new Date();
-                const minutes = now.getMinutes();
-                if (minutes >= 30) {
-                  now.setHours(now.getHours() + 1);
-                }
-                now.setMinutes(0);
-                
-                const month = String(now.getMonth() + 1).padStart(2, '0');
-                const day = String(now.getDate()).padStart(2, '0');
-                const year = now.getFullYear().toString().substr(-2);
-                const hour = now.getHours();
-                const roundedHour = hour >= 12 ? 
-                  `${hour === 12 ? 12 : hour - 12}PM` : 
-                  `${hour === 0 ? 12 : hour}AM`;
-                
-                const formattedDate = `${month}/${day}/${year}`;
-                
-                const header = `/md\n@\n## CRDR UPDATE - ${formattedDate} ${roundedHour}\n\n` +
-                              `**IN PROGRESS: ${window.dspProgress.inProgress.toString().padStart(2, '0')}**\n` +
-                              `**AT RISK: ${window.dspProgress.atRisk.toString().padStart(2, '0')}**\n` +
-                              `**BEHIND: ${window.dspProgress.behind.toString().padStart(2, '0')}**\n` +
-                              `**PACKAGE PROGRESS: ${window.dspProgress.packageProgress.toString().padStart(2, '0')}%**\n\n` +
-                              `---\n\n`;
-
-                const routeContent = behindRoutes.map((route) => {
-                  const select = daDropdowns.querySelector(`select[data-route-code="${route.routeCode}"]`);
-                  const associateInfo = select ? select.value : route.associateInfo;
-                  
-                  const containers = document.querySelectorAll('#route-details > div');
-                  const container = Array.from(containers).find(div => {
-                    const h4 = div.querySelector('h4 span');
-                    return h4 && h4.textContent.includes(route.routeCode);
-                  });
-                  
-                  if (!container) return `${route.routeCode}: ${associateInfo} (${route.progress})\n`;
-                  
-                  const checkedBoxes = container.querySelectorAll('input[type="checkbox"]:checked');
-                  const rootCauses = Array.from(checkedBoxes).map(checkbox => {
-                    if (checkbox.classList.contains('other-checkbox') && checkbox.checked) {
-                      const otherInput = container.querySelector('.other-input');
-                      return otherInput.value.trim() || 'Other (unspecified)';
-                    }
-                    return checkbox.value;
-                  }).filter(Boolean); 
-                  
-                  const rc = rootCauses.length > 0 ? rootCauses.join(', ') : 'N/A';
-                  
-                  const poaSelect = container.querySelector('.poa-select');
-                  let poa = poaSelect ? poaSelect.value : 'N/A';
-                  if (poa === 'Other') {
-                    const poaOtherInput = container.querySelector('.poa-other-input');
-                    poa = poaOtherInput && poaOtherInput.value.trim() || 'Other (unspecified)';
-                  }
-                  poa = poa || 'N/A';
-                  
-                  return `**${route.routeCode}** | ${associateInfo} | **${route.progress}**\nRC: ${rc}\nPOA: ${poa}\n`;
-                }).join('\n');
-
-                const fileContent = header + routeContent;
-
-                const blob = new Blob([fileContent], { type: "text/plain" });
-                const blobURL = URL.createObjectURL(blob);
-
-                const link = document.createElement("a");
-                link.href = blobURL;
-                link.download = "behind_routes.txt";
-                link.click();
-                URL.revokeObjectURL(blobURL);
-              };
-            }
-
-            const backBtn = modal.querySelector("#back-btn");
-            backBtn.addEventListener("click", () => {
-              const previewSection = modal.querySelector("#preview-section");
-              const daSelectionSection = modal.querySelector("#da-selection-section");
-              previewSection.style.display = "none";
-              daSelectionSection.style.display = "block";
-            });
-
-            backBtn.addEventListener("mouseover", () => {
-              backBtn.style.backgroundColor = "#5a6268";
-              backBtn.style.boxShadow = "0 4px 6px rgba(108, 117, 125, 0.3)";
-            });
-            backBtn.addEventListener("mouseout", () => {
-              backBtn.style.backgroundColor = "#6c757d";
-              backBtn.style.boxShadow = "0 2px 4px rgba(108, 117, 125, 0.2)";
-            }); // Close mouseout event listener
-        } catch (error) {
-            console.error("Error in processRoutes:", error);
-            updateProgress("Error: " + error.message, true, true);
-        }
-    } // Close processRoutes function
-  } catch (error) {
-    console.error("Error in main script:", error);
-    updateProgress("Error: " + error.message, true, true);
-  }
+  progressBackBtn.addEventListener("mouseout", () => {
+    progressBackBtn.style.backgroundColor = "#6c757d";
+    progressBackBtn.style.boxShadow = "0 2px 4px rgba(108, 117, 125, 0.2)";
+  });
 })();
