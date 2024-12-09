@@ -14,7 +14,6 @@ function debounce(func, wait) {
 (async function () {
   const createModal = () => {
     const modal = document.createElement("div");
-    modal.id = "custom-modal";
     modal.style.position = "fixed";
     modal.style.top = "50%";
     modal.style.left = "50%";
@@ -145,13 +144,6 @@ function debounce(func, wait) {
 
     modal.appendChild(resizeHandle);
 
-    // Update resize handle position
-    const updateResizeHandlePosition = () => {
-        // No need to update position since it's absolute positioned
-        // Just ensure the handle is visible
-        resizeHandle.style.display = 'flex';
-    };
-
     // Add resize functionality
     const resize = {
         isResizing: false,
@@ -161,31 +153,39 @@ function debounce(func, wait) {
         startHeight: 0
     };
 
-    const debouncedResize = debounce((e, modal, startWidth, startHeight, startX, startY) => {
-      const newWidth = Math.max(400, Math.min(startWidth + (e.clientX - startX), window.innerWidth * 0.9));
-      const newHeight = Math.max(300, Math.min(startHeight + (e.clientY - startY), window.innerHeight * 0.9));
-      
-      modal.style.width = newWidth + "px";
-      modal.style.height = newHeight + "px";
+    const debouncedResize = debounce((e) => {
+        if (!resize.isResizing) return;
+
+        const deltaX = e.clientX - resize.startX;
+        const deltaY = e.clientY - resize.startY;
+
+        const newWidth = Math.max(400, Math.min(resize.startWidth + deltaX, window.innerWidth * 0.9));
+        const newHeight = Math.max(300, Math.min(resize.startHeight + deltaY, window.innerHeight * 0.9));
+
+        modal.style.width = newWidth + 'px';
+        modal.style.height = newHeight + 'px';
     }, 16);
 
-    resizeHandle.addEventListener("mousedown", (e) => {
-      e.preventDefault();
-      const startWidth = modal.offsetWidth;
-      const startHeight = modal.offsetHeight;
-      const startX = e.clientX;
-      const startY = e.clientY;
+    const onMouseDown = function(e) {
+        resize.isResizing = true;
+        resize.startX = e.clientX;
+        resize.startY = e.clientY;
+        resize.startWidth = modal.offsetWidth;
+        resize.startHeight = modal.offsetHeight;
+        e.stopPropagation();
+        document.body.style.cursor = 'se-resize';
+    };
 
-      const resize = (moveEvent) => {
-        moveEvent.preventDefault();
-        debouncedResize(moveEvent, modal, startWidth, startHeight, startX, startY);
-      };
+    const onMouseUp = function() {
+        if (resize.isResizing) {
+            resize.isResizing = false;
+            document.body.style.cursor = 'default';
+        }
+    };
 
-      document.addEventListener("mousemove", resize);
-      document.addEventListener("mouseup", () => {
-        document.removeEventListener("mousemove", resize);
-      }, { once: true });
-    });
+    resizeHandle.addEventListener('mousedown', onMouseDown);
+    document.addEventListener('mousemove', debouncedResize);
+    document.addEventListener('mouseup', onMouseUp);
 
     // Add hover effects
     const closeBtn = modal.querySelector("#close-btn");
@@ -299,7 +299,6 @@ function debounce(func, wait) {
       modal.style.top = y + 'px';
       modal.style.transform = 'none';
       modal.style.webkitTransform = 'none';
-      updateResizeHandlePosition();
     };
 
     modal.addEventListener("touchstart", dragStart, { passive: false });
