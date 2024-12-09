@@ -101,42 +101,40 @@
 
     // Add resize handle styles
     const resizeHandle = document.createElement('div');
-    resizeHandle.style.position = 'fixed';
-    resizeHandle.style.right = modal.style.right;
-    resizeHandle.style.bottom = modal.style.bottom;
-    resizeHandle.style.width = '25px';
-    resizeHandle.style.height = '25px';
+    resizeHandle.style.position = 'absolute';
+    resizeHandle.style.right = '0';
+    resizeHandle.style.bottom = '0';
+    resizeHandle.style.width = '20px';
+    resizeHandle.style.height = '20px';
     resizeHandle.style.cursor = 'se-resize';
     resizeHandle.style.zIndex = '10002';
-    resizeHandle.style.color = '#666';
     resizeHandle.style.userSelect = 'none';
     resizeHandle.style.backgroundColor = '#f8f9fa';
-    resizeHandle.style.borderRadius = '4px 0 0 0';
-    resizeHandle.style.boxShadow = '0 0 4px rgba(0,0,0,0.2)';
-    resizeHandle.style.border = '1px solid #e2e8f0';
-    resizeHandle.style.borderRight = 'none';
-    resizeHandle.style.borderBottom = 'none';
     resizeHandle.style.display = 'flex';
     resizeHandle.style.alignItems = 'center';
     resizeHandle.style.justifyContent = 'center';
+    resizeHandle.style.padding = '3px';
 
-    // Create SVG for resize handle
+    // Create SVG for resize handle with diagonal lines
     const svgContent = `
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" style="transform: rotate(-45deg)">
-        <path d="M14 14L8 14L8 8L14 8L14 14Z" stroke="#666666" stroke-width="1.5"/>
-        <path d="M8 14L2 14L2 8L8 8L8 14Z" stroke="#666666" stroke-width="1.5"/>
-        <path d="M14 8L8 8L8 2L14 2L14 8Z" stroke="#666666" stroke-width="1.5"/>
+      <svg width="14" height="14" viewBox="0 0 14 14" xmlns="http://www.w3.org/2000/svg">
+        <style>
+          .resize-line { stroke: #666; stroke-width: 1.5; }
+        </style>
+        <line x1="10" y1="14" x2="14" y2="10" class="resize-line" />
+        <line x1="6" y1="14" x2="14" y2="6" class="resize-line" />
+        <line x1="2" y1="14" x2="14" y2="2" class="resize-line" />
       </svg>
     `;
     resizeHandle.innerHTML = svgContent;
 
     modal.appendChild(resizeHandle);
 
-    // Update resize handle position when modal moves
+    // Update resize handle position
     const updateResizeHandlePosition = () => {
-        const modalRect = modal.getBoundingClientRect();
-        resizeHandle.style.right = (window.innerWidth - modalRect.right) + 'px';
-        resizeHandle.style.bottom = (window.innerHeight - modalRect.bottom) + 'px';
+        // No need to update position since it's absolute positioned
+        // Just ensure the handle is visible
+        resizeHandle.style.display = 'flex';
     };
 
     // Add resize functionality
@@ -169,7 +167,6 @@
 
         modal.style.width = newWidth + 'px';
         modal.style.height = newHeight + 'px';
-        updateResizeHandlePosition();
     };
 
     const onMouseUp = function() {
@@ -182,12 +179,6 @@
     resizeHandle.addEventListener('mousedown', onMouseDown);
     document.addEventListener('mousemove', onMouseMove);
     document.addEventListener('mouseup', onMouseUp);
-
-    // Update resize handle position on window resize
-    window.addEventListener('resize', updateResizeHandlePosition);
-
-    // Initial position update
-    updateResizeHandlePosition();
 
     // Add hover effects
     const closeBtn = modal.querySelector("#close-btn");
