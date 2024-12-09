@@ -354,19 +354,92 @@
       updateProgress("Processing V1 interface...");
       const containerV1 = document.querySelector('.css-1bovypj');
       if (containerV1) {
-        const valuesV1 = containerV1.querySelectorAll('.cortex-summary-bar-data-value');
-        if (valuesV1.length >= 3) {
-          valuesV1[2].click();
-          await new Promise(resolve => setTimeout(resolve, 500));
+        // Get the values container divs
+        const firstChildDiv = containerV1.children[0];
+        const secondChildDiv = containerV1.children[1];
+        const valuesV1 = firstChildDiv.querySelectorAll('.cortex-summary-bar-data-value');
+        
+        // Extract progress counts
+        let inProgressCount = 0;
+        let atRiskCount = 0;
+        let behindCount = 0;
+        let packageProgress = 0;
+        
+        if (valuesV1.length >= 5) {
+          // Get In Progress count (3rd value)
+          inProgressCount = parseInt(valuesV1[2].querySelector('div span')?.textContent || '0');
+          
+          // Get At Risk count (4th value)
+          atRiskCount = parseInt(valuesV1[3].querySelector('div span')?.textContent || '0');
+          
+          // Get Behind count (5th value)
+          behindCount = parseInt(valuesV1[4].querySelector('div span')?.textContent || '0');
         }
+        
+        // Get Package Progress
+        const packageProgressDiv = secondChildDiv.querySelectorAll('.mr-4.my-1')[1]?.querySelector('.cortex-summary-bar-data-value');
+        if (packageProgressDiv) {
+          const progressText = packageProgressDiv.textContent || '0%';
+          packageProgress = Math.round(parseFloat(progressText.replace('%', '')));
+        }
+        
+        // Store the values for later use
+        window.dspProgress = {
+          inProgress: inProgressCount,
+          atRisk: atRiskCount,
+          behind: behindCount,
+          packageProgress: packageProgress
+        };
+        
+        // Click the required element
+        valuesV1[2].click();
+        await new Promise(resolve => setTimeout(resolve, 500));
       }
     } else {
       updateProgress("Processing V2 interface...");
-      const containerV2 = document.querySelector('.css-11ofut8');
-      if (containerV2) {
-        const valuesV2 = containerV2.querySelectorAll('.css-11ibtj8');
-        if (valuesV2.length >= 2) {
-          valuesV2[1].click();
+      
+      // Get all containers with class css-11ofut8
+      const containersV2 = document.querySelectorAll('.css-11ofut8');
+      if (containersV2.length >= 4) {
+        // Extract progress counts
+        let inProgressCount = 0;
+        let atRiskCount = 0;
+        let behindCount = 0;
+        let packageProgress = 0;
+        
+        // Get In Progress count from first container
+        const inProgressDiv = containersV2[0].querySelectorAll('.css-11ibtj8')[1];
+        if (inProgressDiv) {
+          inProgressCount = parseInt(inProgressDiv.querySelector('p')?.textContent || '0');
+        }
+        
+        // Get At Risk and Behind counts from third container
+        const riskBehindDivs = containersV2[2].querySelectorAll('.css-11ibtj8');
+        if (riskBehindDivs.length >= 3) {
+          // At Risk is second div
+          atRiskCount = parseInt(riskBehindDivs[1].querySelector('p')?.textContent || '0');
+          // Behind is third div
+          behindCount = parseInt(riskBehindDivs[2].querySelector('p')?.textContent || '0');
+        }
+        
+        // Get Package Progress from fourth container
+        const packageProgressDiv = containersV2[3].querySelector('.css-1avovsw:nth-child(3) .mdn-circular-children p');
+        if (packageProgressDiv) {
+          packageProgress = parseInt(packageProgressDiv.textContent.replace('%', '') || '0');
+        }
+        
+        // Store the values for later use
+        window.dspProgress = {
+          inProgress: inProgressCount,
+          atRisk: atRiskCount,
+          behind: behindCount,
+          packageProgress: packageProgress
+        };
+        
+        // Click the required element (2nd css-11ibtj8 in first container)
+        const clickTarget = containersV2[0].querySelectorAll('.css-11ibtj8')[1];
+        if (clickTarget) {
+          clickTarget.click();
           await new Promise(resolve => setTimeout(resolve, 500));
         }
       }
@@ -570,22 +643,30 @@
       downloadBtn.onclick = () => {
         // Get current date and time
         const now = new Date();
-        const formattedDate = `${now.getMonth() + 1}/${now.getDate()}/${now.getFullYear().toString().substr(-2)}`;
-        const hour = now.getHours();
-        const roundedHour = hour >= 12 ? `${hour === 12 ? 12 : hour - 12}PM` : `${hour === 0 ? 12 : hour}AM`;
+        const minutes = now.getMinutes();
+        // Round to nearest hour
+        if (minutes >= 30) {
+          now.setHours(now.getHours() + 1);
+        }
+        now.setMinutes(0);
         
-        // Get values from input fields
-        const inProgress = document.getElementById('in-progress-input').value || '0';
-        const atRisk = document.getElementById('at-risk-input').value || '0';
-        const behind = document.getElementById('behind-input').value || '0';
-        const packageProgress = document.getElementById('package-progress-input').value || '0';
-
+        // Format date components with two digits
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        const year = now.getFullYear().toString().substr(-2);
+        const hour = now.getHours();
+        const roundedHour = hour >= 12 ? 
+          `${hour === 12 ? 12 : hour - 12}PM` : 
+          `${hour === 0 ? 12 : hour}AM`;
+        
+        const formattedDate = `${month}/${day}/${year}`;
+        
         // Create header
         const header = `/md\n@\n## CRDR UPDATE - ${formattedDate} ${roundedHour}\n\n` +
-                      `**IN PROGRESS: ${inProgress.toString().padStart(2, '0')}**\n` +
-                      `**AT RISK: ${atRisk.toString().padStart(2, '0')}**\n` +
-                      `**BEHIND: ${behind.toString().padStart(2, '0')}**\n` +
-                      `**PACKAGE PROGRESS: ${packageProgress}%**\n\n` +
+                      `**IN PROGRESS: ${window.dspProgress.inProgress.toString().padStart(2, '0')}**\n` +
+                      `**AT RISK: ${window.dspProgress.atRisk.toString().padStart(2, '0')}**\n` +
+                      `**BEHIND: ${window.dspProgress.behind.toString().padStart(2, '0')}**\n` +
+                      `**PACKAGE PROGRESS: ${window.dspProgress.packageProgress}%**\n\n` +
                       `---\n\n`;
 
         const routeContent = behindRoutes.map((route) => {
@@ -665,6 +746,28 @@
   previewNextBtn.addEventListener("click", () => {
     modal.querySelector("#preview-section").style.display = "none";
     modal.querySelector("#dsp-progress-section").style.display = "block";
+    
+    if (window.dspProgress && isV1) {
+      const inProgressInput = modal.querySelector('#in-progress-input');
+      const atRiskInput = modal.querySelector('#at-risk-input');
+      const behindInput = modal.querySelector('#behind-input');
+      const packageProgressInput = modal.querySelector('#package-progress-input');
+      
+      if (inProgressInput) inProgressInput.value = window.dspProgress.inProgress;
+      if (atRiskInput) atRiskInput.value = window.dspProgress.atRisk;
+      if (behindInput) behindInput.value = window.dspProgress.behind;
+      if (packageProgressInput) packageProgressInput.value = window.dspProgress.packageProgress;
+    } else if (window.dspProgress) {
+      const inProgressInput = modal.querySelector('#in-progress-input');
+      const atRiskInput = modal.querySelector('#at-risk-input');
+      const behindInput = modal.querySelector('#behind-input');
+      const packageProgressInput = modal.querySelector('#package-progress-input');
+      
+      if (inProgressInput) inProgressInput.value = window.dspProgress.inProgress;
+      if (atRiskInput) atRiskInput.value = window.dspProgress.atRisk;
+      if (behindInput) behindInput.value = window.dspProgress.behind;
+      if (packageProgressInput) packageProgressInput.value = window.dspProgress.packageProgress;
+    }
   });
 
   // Add event listeners for the progress back button
