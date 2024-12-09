@@ -113,41 +113,50 @@
     resizeHandle.style.textAlign = 'center';
     resizeHandle.style.userSelect = 'none';
 
-    // Add resize functionality
-    let isResizing = false;
-    let startX = 0, startY = 0, startWidth = 0, startHeight = 0;
+    modal.appendChild(resizeHandle);
 
-    resizeHandle.addEventListener('mousedown', function(e) {
-        isResizing = true;
-        startX = e.clientX;
-        startY = e.clientY;
-        startWidth = modal.offsetWidth;
-        startHeight = modal.offsetHeight;
+    // Add resize functionality
+    const resize = {
+        isResizing: false,
+        startX: 0,
+        startY: 0,
+        startWidth: 0,
+        startHeight: 0
+    };
+
+    const onMouseDown = function(e) {
+        resize.isResizing = true;
+        resize.startX = e.clientX;
+        resize.startY = e.clientY;
+        resize.startWidth = modal.offsetWidth;
+        resize.startHeight = modal.offsetHeight;
         e.stopPropagation();
         document.body.style.cursor = 'se-resize';
-    });
+    };
 
-    document.addEventListener('mousemove', function(e) {
-        if (!isResizing) return;
+    const onMouseMove = function(e) {
+        if (!resize.isResizing) return;
 
-        const deltaX = e.clientX - startX;
-        const deltaY = e.clientY - startY;
+        const deltaX = e.clientX - resize.startX;
+        const deltaY = e.clientY - resize.startY;
 
-        const newWidth = Math.max(400, Math.min(startWidth + deltaX, window.innerWidth * 0.9));
-        const newHeight = Math.max(300, Math.min(startHeight + deltaY, window.innerHeight * 0.9));
+        const newWidth = Math.max(400, Math.min(resize.startWidth + deltaX, window.innerWidth * 0.9));
+        const newHeight = Math.max(300, Math.min(resize.startHeight + deltaY, window.innerHeight * 0.9));
 
         modal.style.width = newWidth + 'px';
         modal.style.height = newHeight + 'px';
-    });
+    };
 
-    document.addEventListener('mouseup', function() {
-        if (isResizing) {
-            isResizing = false;
+    const onMouseUp = function() {
+        if (resize.isResizing) {
+            resize.isResizing = false;
             document.body.style.cursor = 'default';
         }
-    });
+    };
 
-    modal.appendChild(resizeHandle);
+    resizeHandle.addEventListener('mousedown', onMouseDown);
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
 
     // Add hover effects
     const closeBtn = modal.querySelector("#close-btn");
