@@ -21,8 +21,8 @@
     modal.style.cursor = "move";
 
     modal.innerHTML = `
-      <button id="close-btn" style="position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 18px; cursor: pointer; color: #666; transition: color 0.2s ease;">✖</button>
-      <div id="modal-content" style="height: calc(100% - 20px); overflow-y: auto; padding: 20px; padding-right: 25px;">
+      <button id="close-btn" style="position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 20px; cursor: pointer; color: #666; transition: all 0.2s ease; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; background-color: #f8f9fa; border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.1); z-index: 10002;">✖</button>
+      <div id="modal-content" style="height: calc(100% - 20px); overflow-y: auto; padding: 20px 35px 20px 20px;">
         <div style="margin-bottom: 25px; cursor: move;">
           <img src="https://crdrdispatch.github.io/GembaScript/Logo.svg" alt="Logo" style="height: 90px; display: block; margin: 0 auto; -webkit-transform: translateZ(0); transform: translateZ(0); pointer-events: none;">
         </div>
@@ -101,20 +101,25 @@
 
     // Add resize handle styles
     const resizeHandle = document.createElement('div');
-    resizeHandle.style.position = 'fixed';  
-    resizeHandle.style.right = modal.style.right;  
-    resizeHandle.style.bottom = modal.style.bottom;  
-    resizeHandle.style.width = '20px';
-    resizeHandle.style.height = '20px';
+    resizeHandle.style.position = 'fixed';
+    resizeHandle.style.right = modal.style.right;
+    resizeHandle.style.bottom = modal.style.bottom;
+    resizeHandle.style.width = '25px';
+    resizeHandle.style.height = '25px';
     resizeHandle.style.cursor = 'se-resize';
-    resizeHandle.style.zIndex = '10002';  
+    resizeHandle.style.zIndex = '10002';
     resizeHandle.innerHTML = '⟋';
     resizeHandle.style.color = '#666';
-    resizeHandle.style.fontSize = '16px';
-    resizeHandle.style.lineHeight = '20px';
+    resizeHandle.style.fontSize = '20px';
+    resizeHandle.style.lineHeight = '25px';
     resizeHandle.style.textAlign = 'center';
     resizeHandle.style.userSelect = 'none';
-    resizeHandle.style.backgroundColor = 'white';  
+    resizeHandle.style.backgroundColor = '#f8f9fa';
+    resizeHandle.style.borderRadius = '4px 0 0 0';
+    resizeHandle.style.boxShadow = '0 0 4px rgba(0,0,0,0.2)';
+    resizeHandle.style.border = '1px solid #e2e8f0';
+    resizeHandle.style.borderRight = 'none';
+    resizeHandle.style.borderBottom = 'none';
 
     modal.appendChild(resizeHandle);
 
@@ -177,8 +182,16 @@
 
     // Add hover effects
     const closeBtn = modal.querySelector("#close-btn");
-    closeBtn.addEventListener("mouseover", () => closeBtn.style.color = "#ff4444");
-    closeBtn.addEventListener("mouseout", () => closeBtn.style.color = "#666");
+    closeBtn.addEventListener("mouseover", () => {
+        closeBtn.style.backgroundColor = '#fee2e2';
+        closeBtn.style.color = '#ef4444';
+        closeBtn.style.boxShadow = '0 4px 6px rgba(0,0,0,0.1)';
+    });
+    closeBtn.addEventListener("mouseout", () => {
+        closeBtn.style.backgroundColor = '#f8f9fa';
+        closeBtn.style.color = '#666';
+        closeBtn.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
+    });
 
     const modalToggleBtn = modal.querySelector("#toggle-progress");
     const progressDetails = modal.querySelector("#progress-details");
