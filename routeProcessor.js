@@ -9,6 +9,10 @@
     modal.style.width = "min(40vw, 500px)";
     modal.style.minWidth = "400px";
     modal.style.maxWidth = "800px";
+    modal.style.height = "auto";
+    modal.style.maxHeight = "90vh";
+    modal.style.display = "flex";
+    modal.style.flexDirection = "column";
     modal.style.background = "linear-gradient(to bottom, #ffffff, #fafafa)";
     modal.style.boxShadow = "0 10px 25px rgba(0, 0, 0, 0.12), 0 4px 12px rgba(0, 0, 0, 0.08)";
     modal.style.border = "1px solid rgba(0, 0, 0, 0.1)";
@@ -17,13 +21,12 @@
     modal.style.padding = "25px";
     modal.style.borderRadius = "16px";
     modal.style.zIndex = "10000";
-    modal.style.maxHeight = "90vh";
     modal.style.overflow = "hidden";
     modal.style.cursor = "move";
 
     modal.innerHTML = `
       <button id="close-btn" style="position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 20px; cursor: pointer; color: #666; transition: all 0.2s ease; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background-color: rgba(248,249,250,0.8); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); border-radius: 50%; box-shadow: 0 2px 8px rgba(0,0,0,0.08); z-index: 10002;">✖</button>
-      <div id="modal-content" style="height: calc(100% - 20px); overflow-y: auto; padding: 20px 35px 20px 20px; scrollbar-width: thin; scrollbar-color: #cbd5e0 #f8f9fa;">
+      <div id="modal-content" style="flex: 1; overflow-y: auto; padding: 0 15px 0 0; margin-right: -15px; scrollbar-width: thin; scrollbar-color: #cbd5e0 #f8f9fa;">
         <div style="margin-bottom: 25px; cursor: move; display: flex; justify-content: center; align-items: center;">
           <img src="https://crdrdispatch.github.io/GembaScript/Logo.svg" alt="Logo" style="height: 120px; transform: translateZ(0); filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));">
         </div>
@@ -313,6 +316,26 @@
       document.removeEventListener("mousemove", drag);
       modal.remove();
     });
+
+    // Add resize observer to handle content changes
+    const resizeObserver = new ResizeObserver(entries => {
+      for (let entry of entries) {
+        const modalContent = entry.target;
+        const modal = modalContent.parentElement;
+        if (modal) {
+          const viewportHeight = window.innerHeight;
+          const modalHeight = modal.offsetHeight;
+          if (modalHeight > viewportHeight * 0.9) {
+            modal.style.height = '90vh';
+          } else {
+            modal.style.height = 'auto';
+          }
+        }
+      }
+    });
+
+    const modalContent = modal.querySelector('#modal-content');
+    resizeObserver.observe(modalContent);
 
     return modal;
   };
