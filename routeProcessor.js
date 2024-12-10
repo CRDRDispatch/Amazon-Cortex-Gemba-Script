@@ -363,22 +363,17 @@
   };
 
   const extractBehindProgress = (progressText) => {
-    console.log("Extracting progress from text:", progressText);
     const match = progressText?.match(/(\d+)\s*BEHIND/i);
     const result = match ? `${match[1]} BEHIND` : null;
-    console.log("Extracted progress:", result);
     return result;
   };
 
   const cleanAssociateNames = (names) => {
-    console.log("Cleaning associate names:", names);
     const cleanedNames = names.replace(/\(Cornerstone Delivery Service\)/g, "").trim();
-    console.log("Cleaned associate names:", cleanedNames);
     return cleanedNames;
   };
 
   const extractAssociates = (container, isV1) => {
-    console.log("Extracting associates. Version:", isV1 ? "V1" : "V2");
     if (isV1) {
       const associateContainer = container.querySelector(".ml-lg-4.ml-2.mr-2.mr-lg-auto.normal-white-space");
       const tooltip = associateContainer?.nextElementSibling?.classList.contains("af-tooltip")
@@ -388,31 +383,23 @@
         : null;
 
       if (tooltip) {
-        console.log("Extracted associates from tooltip (V1):", tooltip.join(", "));
         return tooltip.join(", ");
       }
 
       const associateInfo = cleanAssociateNames(associateContainer?.querySelector(".text-truncate")?.textContent.trim() || "No associate info");
-      console.log("Extracted associates (V1):", associateInfo);
       return associateInfo;
     } else {
       const associates = Array.from(container.querySelectorAll(".css-1kttr4w"))
         .map((el) => cleanAssociateNames(el.textContent.trim()))
         .join(", ");
-      console.log("Extracted associates (V2):", associates);
       return associates;
     }
   };
 
   const collectRoutes = async (selector, routes, maxScrolls = 20, scrollDelay = 100, isV1 = false) => {
-    console.log("Starting route collection. Selector:", selector);
     for (let i = 0; i < maxScrolls; i++) {
-      console.log(`Scroll iteration ${i + 1} of ${maxScrolls}`);
       const elements = document.querySelectorAll(selector);
-      console.log(`Found ${elements.length} route elements`);
-
       elements.forEach((el, index) => {
-        console.log(`Processing element ${index + 1} of ${elements.length}`);
         const routeCodeElem = isV1
           ? el.querySelector(".left-column.text-sm")?.firstElementChild
           : el.querySelector(".css-1nqzkik");
@@ -425,15 +412,10 @@
         const progressRaw = progressElem?.textContent.trim();
         const progress = extractBehindProgress(progressRaw); // Extract only "X behind"
 
-        console.log("Route Code:", routeCode);
-        console.log("Associate Info:", associateInfo);
-        console.log("Progress:", progress);
-
         if (routeCode) {
           const existingRouteIndex = routes.findIndex(route => route.routeCode === routeCode);
           if (existingRouteIndex === -1) {
             routes.push({ routeCode, associateInfo, progress });
-            console.log("Added route:", { routeCode, associateInfo, progress });
           } else {
             console.log("Skipped duplicate route with code:", routeCode);
           }
@@ -457,7 +439,6 @@
 
   async function processRoutes() {
     try {
-      console.log("Script started");
       updateProgress("Script started...");
 
       const isV1 = document.querySelector(".css-hkr77h")?.checked;
@@ -482,7 +463,6 @@
           if (valuesV1.length >= 5) {
             // Get In Progress count (3rd value)
             inProgressElement = valuesV1[2];
-            console.log('Found In Progress Element:', inProgressElement);
             inProgressCount = parseInt(inProgressElement.querySelector('div span')?.textContent || '0');
             
             // Get At Risk count (4th value)
@@ -507,30 +487,16 @@
             packageProgress: packageProgress
           };
           
-          // Debug logging to inspect element structure
+          // Click the In Progress element to show routes
           if (inProgressElement) {
-            console.log('In Progress Element Structure:');
-            console.log('- Element:', inProgressElement);
-            console.log('- Children:', Array.from(inProgressElement.children));
-            console.log('- First Child:', inProgressElement.firstElementChild);
-            console.log('- All child elements:', Array.from(inProgressElement.querySelectorAll('*')));
-            
-            // Try to find the clickable element that shows the routes
             const clickTarget = inProgressElement.querySelector('div[role="button"]') || 
                               inProgressElement.querySelector('.cortex-summary-bar-data-value') ||
                               inProgressElement.firstElementChild;
-                              
-            console.log('Click Target:', clickTarget);
             
             if (clickTarget) {
-              console.log('Clicking element:', clickTarget);
               clickTarget.click();
               await new Promise(resolve => setTimeout(resolve, 500));
-            } else {
-              console.error('Could not find appropriate element to click');
             }
-          } else {
-            console.error('In Progress Element not found');
           }
         }
       } else {
