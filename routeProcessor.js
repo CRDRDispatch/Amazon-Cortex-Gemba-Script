@@ -480,7 +480,8 @@
           
           if (valuesV1.length >= 5) {
             // Get In Progress count (3rd value)
-            inProgressCount = parseInt(valuesV1[2].querySelector('div span')?.textContent || '0');
+            const inProgressElement = valuesV1[2];
+            inProgressCount = parseInt(inProgressElement.querySelector('div span')?.textContent || '0');
             
             // Get At Risk count (4th value)
             atRiskCount = parseInt(valuesV1[3].querySelector('div span')?.textContent || '0');
@@ -504,9 +505,12 @@
             packageProgress: packageProgress
           };
           
-          // Click the required element
-          valuesV1[2].click();
-          await new Promise(resolve => setTimeout(resolve, 500));
+          // Click directly on the cortex-summary-bar-data-value element
+          const inProgressElement = valuesV1[2];
+          if (inProgressElement) {
+            inProgressElement.click();
+            await new Promise(resolve => setTimeout(resolve, 500));
+          }
         }
       } else {
         updateProgress("Processing V2 interface...");
