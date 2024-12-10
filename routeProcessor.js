@@ -505,12 +505,25 @@
             packageProgress: packageProgress
           };
           
-          // Click the direct child div of the cortex-summary-bar-data-value element
-          const inProgressElement = valuesV1[2];
-          const clickTarget = inProgressElement?.firstElementChild;
+          // Debug logging to inspect element structure
+          console.log('In Progress Element:', inProgressElement);
+          console.log('Children:', inProgressElement?.children);
+          console.log('First Child:', inProgressElement?.firstElementChild);
+          console.log('All child elements:', inProgressElement?.querySelectorAll('*'));
+          
+          // Try to find the clickable element that shows the routes
+          const clickTarget = inProgressElement?.querySelector('div[role="button"]') || 
+                            inProgressElement?.querySelector('.cortex-summary-bar-data-value') ||
+                            inProgressElement?.firstElementChild;
+                            
+          console.log('Click Target:', clickTarget);
+          
           if (clickTarget) {
+            console.log('Clicking element:', clickTarget);
             clickTarget.click();
             await new Promise(resolve => setTimeout(resolve, 500));
+          } else {
+            console.error('Could not find appropriate element to click');
           }
         }
       } else {
