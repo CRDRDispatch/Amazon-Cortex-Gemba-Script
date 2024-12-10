@@ -1,19 +1,7 @@
-// Debounce utility function
-function debounce(func, wait) {
-  let timeout;
-  return function executedFunction(...args) {
-    const later = () => {
-      clearTimeout(timeout);
-      func(...args);
-    };
-    clearTimeout(timeout);
-    timeout = setTimeout(later, wait);
-  };
-}
-
 (async function () {
   const createModal = () => {
     const modal = document.createElement("div");
+    modal.id = "custom-modal";
     modal.style.position = "fixed";
     modal.style.top = "50%";
     modal.style.left = "50%";
@@ -39,6 +27,7 @@ function debounce(func, wait) {
         <div style="margin-bottom: 25px; cursor: move; display: flex; justify-content: center; align-items: center;">
           <img src="https://crdrdispatch.github.io/GembaScript/Logo.svg" alt="Logo" style="height: 120px; transform: translateZ(0); filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));">
         </div>
+        <h2 style="font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif; margin-bottom: 15px; border-bottom: 2px solid rgba(0,0,0,0.06); padding-bottom: 15px; color: #1a202c; font-size: 24px; text-align: center; font-weight: 700;">AutoGemba</h2>
         <p style="text-align: center; color: #4a5568; margin-bottom: 25px; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; line-height: 1.5;">Please make sure you're on the full "Route" view before running. Do not interact with the page until progress is complete. Once complete you may move the modal window around and resize it as needed. Thank you.</p>
         <div id="start-section" style="text-align: center; margin-bottom: 30px;">
           <button id="start-btn" style="padding: 12px 40px; background: linear-gradient(135deg, #4CAF50, #43a047); color: white; border: none; border-radius: 12px; cursor: pointer; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 500; font-size: 16px; box-shadow: 0 4px 6px rgba(76, 175, 80, 0.2); transition: all 0.2s ease;">Start Process</button>
@@ -144,6 +133,13 @@ function debounce(func, wait) {
 
     modal.appendChild(resizeHandle);
 
+    // Update resize handle position
+    const updateResizeHandlePosition = () => {
+        // No need to update position since it's absolute positioned
+        // Just ensure the handle is visible
+        resizeHandle.style.display = 'flex';
+    };
+
     // Add resize functionality
     const resize = {
         isResizing: false,
@@ -153,39 +149,45 @@ function debounce(func, wait) {
         startHeight: 0
     };
 
+    function debounce(func, wait) {
+      let timeout;
+      return function executedFunction(...args) {
+        const later = () => {
+          clearTimeout(timeout);
+          func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+      };
+    }
+
     const debouncedResize = debounce((e) => {
-        if (!resize.isResizing) return;
+      const newWidth = Math.max(400, resize.startWidth + e.clientX - resize.startX);
+      const newHeight = Math.max(300, resize.startHeight + e.clientY - resize.startY);
+      modal.style.width = Math.min(newWidth, window.innerWidth * 0.9) + "px";
+      modal.style.height = Math.min(newHeight, window.innerHeight * 0.9) + "px";
+    }, 16); // ~60fps
 
-        const deltaX = e.clientX - resize.startX;
-        const deltaY = e.clientY - resize.startY;
+    resizeHandle.addEventListener('mousedown', (e) => {
+      e.preventDefault();
+      resize.startX = e.clientX;
+      resize.startY = e.clientY;
+      resize.startWidth = modal.offsetWidth;
+      resize.startHeight = modal.offsetHeight;
 
-        const newWidth = Math.max(400, Math.min(resize.startWidth + deltaX, window.innerWidth * 0.9));
-        const newHeight = Math.max(300, Math.min(resize.startHeight + deltaY, window.innerHeight * 0.9));
+      function onMouseMove(e) {
+        e.preventDefault();
+        debouncedResize(e);
+      }
 
-        modal.style.width = newWidth + 'px';
-        modal.style.height = newHeight + 'px';
-    }, 16);
+      function onMouseUp() {
+        document.removeEventListener('mousemove', onMouseMove);
+        document.removeEventListener('mouseup', onMouseUp);
+      }
 
-    const onMouseDown = function(e) {
-        resize.isResizing = true;
-        resize.startX = e.clientX;
-        resize.startY = e.clientY;
-        resize.startWidth = modal.offsetWidth;
-        resize.startHeight = modal.offsetHeight;
-        e.stopPropagation();
-        document.body.style.cursor = 'se-resize';
-    };
-
-    const onMouseUp = function() {
-        if (resize.isResizing) {
-            resize.isResizing = false;
-            document.body.style.cursor = 'default';
-        }
-    };
-
-    resizeHandle.addEventListener('mousedown', onMouseDown);
-    document.addEventListener('mousemove', debouncedResize);
-    document.addEventListener('mouseup', onMouseUp);
+      document.addEventListener('mousemove', onMouseMove);
+      document.addEventListener('mouseup', onMouseUp);
+    });
 
     // Add hover effects
     const closeBtn = modal.querySelector("#close-btn");
@@ -299,6 +301,7 @@ function debounce(func, wait) {
       modal.style.top = y + 'px';
       modal.style.transform = 'none';
       modal.style.webkitTransform = 'none';
+      updateResizeHandlePosition();
     };
 
     modal.addEventListener("touchstart", dragStart, { passive: false });
@@ -385,81 +388,49 @@ function debounce(func, wait) {
     }
   };
 
-  // Optimized route collection with virtual scrolling
-  async function collectRoutes(selector, routes, batchSize = 20, maxRetries = 100, isV1) {
-    const routeMap = new Map();
+  async function collectRoutes(routeSelector, routes, batchSize, delay, isV1) {
+    console.log("Starting route collection. Selector:", routeSelector);
+    const visibleRoutes = new Set();
     let lastScrollHeight = 0;
-    let retryCount = 0;
-    let noNewRoutes = 0;
-
-    const processVisibleRoutes = () => {
-      const visibleRoutes = document.querySelectorAll(selector);
-      let addedNewRoute = false;
-
-      visibleRoutes.forEach(route => {
-        const routeCode = isV1 ? 
-          route.querySelector('.text-monospace')?.textContent :
-          route.querySelector('p')?.textContent;
-
-        if (routeCode && !routeMap.has(routeCode)) {
-          addedNewRoute = true;
-          const associateInfo = isV1 ?
-            route.querySelector('.driver-name')?.textContent :
-            route.querySelector('div[title]')?.getAttribute('title');
-
-          const progress = isV1 ?
-            route.querySelector('.behind')?.textContent :
-            Array.from(route.querySelectorAll('p')).slice(-1)[0]?.textContent;
-
-          if (associateInfo && progress) {
-            routeMap.set(routeCode, {
-              routeCode,
-              associateInfo: associateInfo.trim(),
-              progress: progress.trim()
-            });
-          }
+    let unchangedCount = 0;
+    
+    while (unchangedCount < 3) {
+      const elements = document.querySelectorAll(routeSelector);
+      let newRoutes = false;
+      
+      for (const element of elements) {
+        const routeCode = isV1 ? element.textContent.match(/[A-Z]+\d+/)?.[0] : element.textContent.trim();
+        if (routeCode && !visibleRoutes.has(routeCode)) {
+          visibleRoutes.add(routeCode);
+          newRoutes = true;
+          
+          const associateInfo = isV1
+            ? element.querySelector('.associate-name')?.textContent?.trim() || 'Unknown'
+            : element.parentElement?.querySelector('.css-1563yu1')?.textContent?.trim() || 'Unknown';
+            
+          const progress = isV1
+            ? element.querySelector('.badge')?.textContent?.trim() || ''
+            : element.parentElement?.querySelector('.css-1vrnrz4')?.textContent?.trim() || '';
+          
+          routes.push({ routeCode, associateInfo, progress });
         }
-      });
-
-      return addedNewRoute;
-    };
-
-    const smoothScroll = async (distance) => {
-      const steps = 10;
-      const stepSize = distance / steps;
-      for (let i = 0; i < steps; i++) {
-        window.scrollBy(0, stepSize);
-        await new Promise(resolve => setTimeout(resolve, 50));
       }
-    };
-
-    const debouncedScroll = debounce(async () => {
-      if (processVisibleRoutes()) {
-        noNewRoutes = 0;
-      } else {
-        noNewRoutes++;
-      }
-
+      
       const currentScrollHeight = document.documentElement.scrollHeight;
-      if (currentScrollHeight > lastScrollHeight) {
-        lastScrollHeight = currentScrollHeight;
-        retryCount = 0;
+      if (currentScrollHeight === lastScrollHeight && !newRoutes) {
+        unchangedCount++;
       } else {
-        retryCount++;
+        unchangedCount = 0;
       }
-
-      if (retryCount < maxRetries && noNewRoutes < 3) {
-        await smoothScroll(window.innerHeight * 0.8);
-      }
-    }, 150);
-
-    while (retryCount < maxRetries && noNewRoutes < 3) {
-      await debouncedScroll();
-      await new Promise(resolve => setTimeout(resolve, 200));
+      
+      lastScrollHeight = currentScrollHeight;
+      window.scrollBy(0, window.innerHeight - 100);
+      await new Promise(resolve => setTimeout(resolve, delay));
     }
-
-    routes.push(...Array.from(routeMap.values()));
-  }
+    
+    // Final scroll back to top
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   const modal = createModal();
   const downloadBtn = modal.querySelector("#download-btn");
