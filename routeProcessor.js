@@ -22,80 +22,16 @@
     modal.style.cursor = "move";
 
     modal.innerHTML = `
-      <style>
-        .section-transition {
-          transition: opacity 0.3s ease, transform 0.3s ease;
-        }
-        .section-hidden {
-          opacity: 0;
-          transform: translateY(10px);
-        }
-        .loading-spinner {
-          display: inline-block;
-          width: 20px;
-          height: 20px;
-          border: 2px solid rgba(76, 175, 80, 0.3);
-          border-radius: 50%;
-          border-top-color: #4CAF50;
-          animation: spin 0.8s linear infinite;
-          margin-right: 8px;
-        }
-        @keyframes spin {
-          to { transform: rotate(360deg); }
-        }
-        .checkbox-label {
-          transition: background-color 0.2s ease;
-        }
-        .checkbox-label:hover {
-          background-color: rgba(76, 175, 80, 0.05);
-        }
-        .custom-select {
-          transition: border-color 0.2s ease, box-shadow 0.2s ease;
-        }
-        .custom-select:hover {
-          border-color: #4CAF50;
-        }
-        .custom-select:focus {
-          border-color: #4CAF50;
-          box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
-          outline: none;
-        }
-        [data-tooltip] {
-          position: relative;
-        }
-        [data-tooltip]:before {
-          content: attr(data-tooltip);
-          position: absolute;
-          bottom: 100%;
-          left: 50%;
-          transform: translateX(-50%);
-          padding: 5px 10px;
-          background: rgba(0,0,0,0.8);
-          color: white;
-          font-size: 12px;
-          border-radius: 4px;
-          white-space: nowrap;
-          opacity: 0;
-          visibility: hidden;
-          transition: opacity 0.2s ease, visibility 0.2s ease;
-          z-index: 10003;
-        }
-        [data-tooltip]:hover:before {
-          opacity: 1;
-          visibility: visible;
-        }
-      </style>
-      <button id="close-btn" style="position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 20px; cursor: pointer; color: #666; transition: all 0.2s ease; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background-color: rgba(248,249,250,0.8); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); border-radius: 50%; box-shadow: 0 2px 8px rgba(0,0,0,0.08); z-index: 10002;" data-tooltip="Close window">✖</button>
+      <button id="close-btn" style="position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 20px; cursor: pointer; color: #666; transition: all 0.2s ease; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background-color: rgba(248,249,250,0.8); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); border-radius: 50%; box-shadow: 0 2px 8px rgba(0,0,0,0.08); z-index: 10002;">✖</button>
       <div id="modal-content" style="height: calc(100% - 20px); overflow-y: auto; padding: 20px 35px 20px 20px; scrollbar-width: thin; scrollbar-color: #cbd5e0 #f8f9fa;">
         <div style="margin-bottom: 25px; cursor: move; display: flex; justify-content: center; align-items: center;">
           <img src="https://crdrdispatch.github.io/GembaScript/Logo.svg" alt="Logo" style="height: 120px; transform: translateZ(0); filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));">
         </div>
-        <h2 style="font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif; margin-bottom: 15px; border-bottom: 2px solid rgba(0,0,0,0.06); padding-bottom: 15px; color: #1a202c; font-size: 24px; text-align: center; font-weight: 700;">AutoGemba</h2>
         <p style="text-align: center; color: #4a5568; margin-bottom: 25px; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; line-height: 1.5;">Please make sure you're on the full "Route" view before running. Do not interact with the page until progress is complete. Once complete you may move the modal window around and resize it as needed. Thank you.</p>
-        <div id="start-section" style="text-align: center; margin-bottom: 30px;" class="section-transition">
-          <button id="start-btn" style="padding: 12px 40px; background: linear-gradient(135deg, #4CAF50, #43a047); color: white; border: none; border-radius: 12px; cursor: pointer; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 500; font-size: 16px; box-shadow: 0 4px 6px rgba(76, 175, 80, 0.2); transition: all 0.2s ease;" data-tooltip="Begin collecting route information">Start Process</button>
+        <div id="start-section" style="text-align: center; margin-bottom: 30px;">
+          <button id="start-btn" style="padding: 12px 40px; background: linear-gradient(135deg, #4CAF50, #43a047); color: white; border: none; border-radius: 12px; cursor: pointer; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 500; font-size: 16px; box-shadow: 0 4px 6px rgba(76, 175, 80, 0.2); transition: all 0.2s ease;">Start Process</button>
         </div>
-        <div id="progress-section" style="display: none; margin-bottom: 30px;" class="section-transition section-hidden">
+        <div id="progress-section" style="display: none; margin-bottom: 30px;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
             <div style="display: flex; align-items: center; gap: 10px;">
               <h3 style="font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif; font-size: 16px; color: #1a202c; margin: 0; font-weight: 600;">Progress</h3>
@@ -107,15 +43,15 @@
             <p>Initializing...</p>
           </div>
         </div>
-        <div id="da-selection-section" style="display: none; margin-bottom: 30px;" class="section-transition section-hidden">
+        <div id="da-selection-section" style="display: none; margin-bottom: 30px;">
           <h3 style="font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif; font-size: 16px; color: #1a202c; margin-bottom: 12px; font-weight: 600;">These routes have multiple DAs. Please select the DA originally assigned to the route as to avoid selecting a rescuer for the progress output.</h3>
-          <div id="da-dropdowns" style="height: calc(100vh - 450px); min-height: 200px; max-height: calc(90vh - 250px); overflow-y: auto; padding: 15px; background: rgba(248,249,250,0.8); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); border-radius: 12px; border: 1px solid rgba(0,0,0,0.06); box-shadow: 0 1px 3px rgba(0,0,0,0.02);" class="section-transition">
+          <div id="da-dropdowns" style="height: calc(100vh - 450px); min-height: 200px; max-height: calc(90vh - 250px); overflow-y: auto; padding: 15px; background: rgba(248,249,250,0.8); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); border-radius: 12px; border: 1px solid rgba(0,0,0,0.06); box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
           </div>
           <div style="margin-top: 20px; text-align: right;">
-            <button id="da-next-btn" style="padding: 12px 30px; background: linear-gradient(135deg, #4CAF50, #43a047); color: white; border: none; border-radius: 12px; cursor: pointer; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 500; font-size: 15px; box-shadow: 0 4px 6px rgba(76, 175, 80, 0.2); transition: all 0.2s ease;" data-tooltip="Proceed to route details">Next</button>
+            <button id="da-next-btn" style="padding: 12px 30px; background: linear-gradient(135deg, #4CAF50, #43a047); color: white; border: none; border-radius: 12px; cursor: pointer; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 500; font-size: 15px; box-shadow: 0 4px 6px rgba(76, 175, 80, 0.2); transition: all 0.2s ease;">Next</button>
           </div>
         </div>
-        <div id="preview-section" style="display: none; margin-bottom: 30px;" class="section-transition section-hidden">
+        <div id="preview-section" style="display: none; margin-bottom: 30px;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
             <button id="back-btn" style="padding: 8px 16px; background-color: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 500; font-size: 14px; box-shadow: 0 2px 4px rgba(108, 117, 125, 0.2); transition: all 0.2s ease; display: flex; align-items: center; gap: 6px;">
               <span style="font-size: 18px;">←</span> Back
@@ -129,7 +65,7 @@
             <button id="preview-next-btn" style="padding: 12px 30px; background: linear-gradient(135deg, #4CAF50, #43a047); color: white; border: none; border-radius: 12px; cursor: pointer; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 500; font-size: 15px; box-shadow: 0 4px 6px rgba(76, 175, 80, 0.2); transition: all 0.2s ease;">Next</button>
           </div>
         </div>
-        <div id="dsp-progress-section" style="display: none;" class="section-transition section-hidden">
+        <div id="dsp-progress-section" style="display: none;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
             <button id="progress-back-btn" style="padding: 8px 16px; background-color: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 500; font-size: 14px; box-shadow: 0 2px 4px rgba(108, 117, 125, 0.2); transition: all 0.2s ease; display: flex; align-items: center; gap: 6px;">
               <span style="font-size: 18px;">←</span> Back
@@ -497,13 +433,7 @@
   const progressSection = modal.querySelector("#progress-section");
 
   async function processRoutes() {
-    const startBtn = modal.querySelector("#start-btn");
-    const progressSection = modal.querySelector("#progress-section");
-    
     try {
-      startBtn.innerHTML = '<div class="loading-spinner"></div>Processing...';
-      startBtn.disabled = true;
-      
       console.log("Script started");
       updateProgress("Script started...");
 
@@ -719,7 +649,7 @@
             container.dataset.routeCode = route.routeCode;
 
             container.innerHTML = `
-              <div style="padding: 15px; border-bottom: 1px solid rgba(0,0,0,0.06); background: rgba(255,255,255,0.8);">
+              <div style="padding: 15px; border-bottom: 1px solid rgba(0,0,0,0.06); background: rgba(248,250,252,0.8);">
                 <h4 style="margin: 0; color: #1a202c; font-size: 16px; display: flex; justify-content: space-between; align-items: center;">
                   <span>${route.routeCode}: ${associateInfo}</span>
                   <span style="font-size: 14px; padding: 4px 8px; background: #ebf5ff; color: #3182ce; border-radius: 6px;">${route.progress}</span>
@@ -729,53 +659,52 @@
                 <div style="margin-bottom: 15px;">
                   <label style="display: block; margin-bottom: 8px; color: #1a202c; font-weight: 600; font-size: 14px;">Root Cause:</label>
                   <div class="rc-checkboxes" style="display: flex; flex-direction: column; gap: 10px;">
-                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 8px; border-radius: 6px; transition: background-color 0.2s; hover:background-color: #f7fafc;">
-                      <input type="checkbox" class="rc-checkbox" value="Route is spread out" style="cursor: pointer; width: 16px; height: 16px;">
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 8px; border-radius: 6px; transition: all 0.2s ease;" title="Route covers a large geographical area" onmouseover="this.style.backgroundColor='rgba(248,250,252,0.8)'" onmouseout="this.style.backgroundColor='transparent'">
+                      <input type="checkbox" class="rc-checkbox" value="Route is spread out" style="cursor: pointer; width: 16px; height: 16px; border: 2px solid #cbd5e0; border-radius: 4px; transition: all 0.2s ease;" onmouseover="this.style.borderColor='#4CAF50'" onmouseout="this.style.borderColor='#cbd5e0'">
                       <span style="color: #1a202c; font-size: 14px;">Route is spread out</span>
                     </label>
-                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 8px; border-radius: 6px; transition: background-color 0.2s; hover:background-color: #f7fafc;">
-                      <input type="checkbox" class="rc-checkbox" value="DA is working at a slow pace" style="cursor: pointer; width: 16px; height: 16px;">
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 8px; border-radius: 6px; transition: all 0.2s ease;" title="Delivery Associate's current pace is below expected rate" onmouseover="this.style.backgroundColor='rgba(248,250,252,0.8)'" onmouseout="this.style.backgroundColor='transparent'">
+                      <input type="checkbox" class="rc-checkbox" value="DA is working at a slow pace" style="cursor: pointer; width: 16px; height: 16px; border: 2px solid #cbd5e0; border-radius: 4px; transition: all 0.2s ease;" onmouseover="this.style.borderColor='#4CAF50'" onmouseout="this.style.borderColor='#cbd5e0'">
                       <span style="color: #1a202c; font-size: 14px;">DA is working at a slow pace</span>
                     </label>
-                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 8px; border-radius: 6px; transition: background-color 0.2s; hover:background-color: #f7fafc;">
-                      <input type="checkbox" class="rc-checkbox" value="DA is having connection issues" style="cursor: pointer; width: 16px; height: 16px;">
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 8px; border-radius: 6px; transition: all 0.2s ease;" title="Delivery Associate is experiencing technical difficulties" onmouseover="this.style.backgroundColor='rgba(248,250,252,0.8)'" onmouseout="this.style.backgroundColor='transparent'">
+                      <input type="checkbox" class="rc-checkbox" value="DA is having connection issues" style="cursor: pointer; width: 16px; height: 16px; border: 2px solid #cbd5e0; border-radius: 4px; transition: all 0.2s ease;" onmouseover="this.style.borderColor='#4CAF50'" onmouseout="this.style.borderColor='#cbd5e0'">
                       <span style="color: #1a202c; font-size: 14px;">DA is having connection issues</span>
                     </label>
-                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 8px; border-radius: 6px; transition: background-color 0.2s; hover:background-color: #f7fafc;">
-                      <input type="checkbox" class="rc-checkbox" value="High Package Count" style="cursor: pointer; width: 16px; height: 16px;">
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 8px; border-radius: 6px; transition: all 0.2s ease;" title="Route has more packages than usual" onmouseover="this.style.backgroundColor='rgba(248,250,252,0.8)'" onmouseout="this.style.backgroundColor='transparent'">
+                      <input type="checkbox" class="rc-checkbox" value="High Package Count" style="cursor: pointer; width: 16px; height: 16px; border: 2px solid #cbd5e0; border-radius: 4px; transition: all 0.2s ease;" onmouseover="this.style.borderColor='#4CAF50'" onmouseout="this.style.borderColor='#cbd5e0'">
                       <span style="color: #1a202c; font-size: 14px;">High Package Count</span>
                     </label>
-                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 8px; border-radius: 6px; transition: background-color 0.2s; hover:background-color: #f7fafc;">
-                      <input type="checkbox" class="rc-checkbox" value="High Stop Count" style="cursor: pointer; width: 16px; height: 16px;">
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 8px; border-radius: 6px; transition: all 0.2s ease;" title="Route has more stops than usual" onmouseover="this.style.backgroundColor='rgba(248,250,252,0.8)'" onmouseout="this.style.backgroundColor='transparent'">
+                      <input type="checkbox" class="rc-checkbox" value="High Stop Count" style="cursor: pointer; width: 16px; height: 16px; border: 2px solid #cbd5e0; border-radius: 4px; transition: all 0.2s ease;" onmouseover="this.style.borderColor='#4CAF50'" onmouseout="this.style.borderColor='#cbd5e0'">
                       <span style="color: #1a202c; font-size: 14px;">High Stop Count</span>
                     </label>
-                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 8px; border-radius: 6px; transition: background-color 0.2s; hover:background-color: #f7fafc;">
-                      <input type="checkbox" class="rc-checkbox other-checkbox" value="Other" style="cursor: pointer; width: 16px; height: 16px;">
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 8px; border-radius: 6px; transition: all 0.2s ease;" title="Specify a different root cause" onmouseover="this.style.backgroundColor='rgba(248,250,252,0.8)'" onmouseout="this.style.backgroundColor='transparent'">
+                      <input type="checkbox" class="rc-checkbox other-checkbox" value="Other" style="cursor: pointer; width: 16px; height: 16px; border: 2px solid #cbd5e0; border-radius: 4px; transition: all 0.2s ease;" onmouseover="this.style.borderColor='#4CAF50'" onmouseout="this.style.borderColor='#cbd5e0'">
                       <span style="color: #1a202c; font-size: 14px;">Other</span>
                     </label>
                     <div class="other-input-container" style="display: none; margin-left: 32px;">
-                      <input type="text" class="other-input" style="width: calc(100% - 16px); padding: 8px 12px; border: 1px solid rgba(0,0,0,0.06); border-radius: 6px; font-size: 14px; background: rgba(248,249,250,0.8);" placeholder="Enter other root cause...">
+                      <input type="text" class="other-input" style="width: calc(100% - 16px); padding: 8px 12px; border: 1px solid rgba(0,0,0,0.06); border-radius: 6px; font-size: 14px; background: rgba(248,250,252,0.8); transition: all 0.2s ease;" placeholder="Enter other root cause..." title="Specify custom root cause">
                     </div>
                   </div>
                 </div>
                 <div>
                   <label style="display: block; margin-bottom: 8px; color: #1a202c; font-weight: 600; font-size: 14px;">Point of Action:</label>
-                  <select class="poa-select" style="width: 100%; padding: 10px 12px; border: 1px solid rgba(0,0,0,0.06); border-radius: 6px; font-size: 14px; background-color: white; cursor: pointer; color: #1a202c; appearance: none; background-image: url('data:image/svg+xml;charset=US-ASCII,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%232c3e50" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>'); background-repeat: no-repeat; background-position: right 12px center; background-size: 16px;">
+                  <select class="poa-select" style="width: 100%; padding: 10px 12px; border: 1px solid rgba(0,0,0,0.06); border-radius: 6px; font-size: 14px; background-color: white; cursor: pointer; color: #1a202c; appearance: none; background-image: url('data:image/svg+xml;charset=US-ASCII,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%232c3e50" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>'); background-repeat: no-repeat; background-position: right 12px center; background-size: 16px; transition: all 0.2s ease;" title="Select the current action being taken" onmouseover="this.style.borderColor='#4CAF50'; this.style.boxShadow='0 0 0 1px #4CAF50'" onmouseout="this.style.borderColor='rgba(0,0,0,0.06)'; this.style.boxShadow='none'">
                     <option value="">Select a point of action...</option>
-                    <option value="Rescue Planned">Rescue Planned</option>
-                    <option value="Rescue Sent">Rescue Sent</option>
-                    <option value="Rescue on the way">Rescue on the way</option>
-                    <option value="We're monitoring progress and will send a rescue if needed">We're monitoring progress and will send a rescue if needed</option>
-                    <option value="Route Complete">Route Complete</option>
-                    <option value="Other">Other</option>
+                    <option value="Rescue Planned" title="A rescue has been scheduled">Rescue Planned</option>
+                    <option value="Rescue Sent" title="A rescue has been dispatched">Rescue Sent</option>
+                    <option value="Rescue on the way" title="Rescue is en route">Rescue on the way</option>
+                    <option value="We're monitoring progress and will send a rescue if needed" title="Situation is being assessed">We're monitoring progress and will send a rescue if needed</option>
+                    <option value="Route Complete" title="Route has been finished">Route Complete</option>
+                    <option value="Other" title="Specify a different action">Other</option>
                   </select>
                   <div class="poa-other-container" style="display: none; margin-top: 8px;">
-                    <input type="text" class="poa-other-input" style="width: 100%; padding: 10px 12px; border: 1px solid rgba(0,0,0,0.06); border-radius: 6px; font-size: 14px; background: rgba(248,249,250,0.8);" placeholder="Enter other point of action...">
+                    <input type="text" class="poa-other-input" style="width: 100%; padding: 10px 12px; border: 1px solid rgba(0,0,0,0.06); border-radius: 6px; font-size: 14px; background: rgba(248,250,252,0.8); transition: all 0.2s ease;" placeholder="Enter other point of action..." title="Specify custom action">
                   </div>
                 </div>
               </div>
             `;
-
             const otherCheckbox = container.querySelector('.other-checkbox');
             const otherInputContainer = container.querySelector('.other-input-container');
             
@@ -987,57 +916,5 @@
   progressBackBtn.addEventListener("mouseout", () => {
     progressBackBtn.style.backgroundColor = "#6c757d";
     progressBackBtn.style.boxShadow = "0 2px 4px rgba(108, 117, 125, 0.2)";
-  });
-
-  // Function to handle section transitions
-  function showSection(sectionToShow, sectionsToHide) {
-    sectionsToHide.forEach(section => {
-      section.classList.add('section-hidden');
-      setTimeout(() => {
-        section.style.display = 'none';
-      }, 300);
-    });
-
-    sectionToShow.style.display = 'block';
-    setTimeout(() => {
-      sectionToShow.classList.remove('section-hidden');
-    }, 50);
-  }
-
-  // Update section transitions in event listeners
-  startBtn.addEventListener("click", () => {
-    showSection(
-      progressSection, 
-      [document.querySelector("#start-section")]
-    );
-    processRoutes();
-  });
-
-  nextBtn.addEventListener("click", () => {
-    showSection(
-      previewSection,
-      [document.querySelector("#da-selection-section")]
-    );
-  });
-
-  backBtn.addEventListener("click", () => {
-    showSection(
-      document.querySelector("#da-selection-section"),
-      [previewSection]
-    );
-  });
-
-  previewNextBtn.addEventListener("click", () => {
-    showSection(
-      dspProgressSection,
-      [previewSection]
-    );
-  });
-
-  progressBackBtn.addEventListener("click", () => {
-    showSection(
-      previewSection,
-      [dspProgressSection]
-    );
   });
 })();
