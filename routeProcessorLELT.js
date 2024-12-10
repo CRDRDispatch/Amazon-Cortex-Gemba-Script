@@ -30,7 +30,7 @@
         <div style="margin-bottom: 25px; cursor: move; display: flex; justify-content: center; align-items: center;">
           <img src="https://crdrdispatch.github.io/GembaScript/Logo.svg" alt="Logo" style="height: 120px; transform: translateZ(0); filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));">
         </div>
-        <p style="text-align: center; color: #374151; margin-bottom: 25px; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; line-height: 1.5;">Please make sure you're on the full "Route" view before running. Do not interact with the page until progress is complete. Once complete you may move the modal window around and resize it as needed. Thank you.</p>
+        <p style="text-align: center; color: #374151; margin-bottom: 25px; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; line-height: 1.5;">Please make sure you're on the full Route list view before running. Do not interact with the page until progress is complete. Once complete you may move the modal window around and resize it as needed. Thank you.</p>
         <div id="start-section" style="text-align: center; margin-bottom: 30px;">
           <button id="start-btn" style="padding: 12px 40px; background: linear-gradient(135deg, #2F855A, #276749); color: white; border: none; border-radius: 12px; cursor: pointer; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 500; font-size: 16px; box-shadow: 0 4px 6px rgba(47, 133, 90, 0.2); transition: all 0.2s ease;">Start Process</button>
         </div>
@@ -369,7 +369,7 @@
   };
 
   const cleanAssociateNames = (names) => {
-    const cleanedNames = names.replace(/\(Cornerstone Delivery Service\)/g, "").trim();
+    const cleanedNames = names.replace(/\(Leading Edge Logistix\)/g, "").trim();
     return cleanedNames;
   };
 
@@ -768,7 +768,7 @@
           
           const formattedDate = `${month}/${day}/${year}`;
           
-          const header = `/md\n@Present\n## CRDR UPDATE - ${formattedDate} ${roundedHour}\n\n` +
+          const header = `/md\n@Present\n## LELT UPDATE - ${formattedDate} ${roundedHour}\n\n` +
                         `**IN PROGRESS: ${window.dspProgress.inProgress.toString().padStart(2, '0')}**\n` +
                         `**AT RISK: ${window.dspProgress.atRisk.toString().padStart(2, '0')}**\n` +
                         `**BEHIND: ${window.dspProgress.behind.toString().padStart(2, '0')}**\n` +
