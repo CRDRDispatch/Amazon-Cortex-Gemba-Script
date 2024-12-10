@@ -754,7 +754,7 @@
           
           const formattedDate = `${month}/${day}/${year}`;
           
-          const header = `/md\n@\n## CRDR UPDATE - ${formattedDate} ${roundedHour}\n\n` +
+          const header = `/md\n@Present\n## CRDR UPDATE - ${formattedDate} ${roundedHour}\n\n` +
                         `**IN PROGRESS: ${window.dspProgress.inProgress.toString().padStart(2, '0')}**\n` +
                         `**AT RISK: ${window.dspProgress.atRisk.toString().padStart(2, '0')}**\n` +
                         `**BEHIND: ${window.dspProgress.behind.toString().padStart(2, '0')}**\n` +
