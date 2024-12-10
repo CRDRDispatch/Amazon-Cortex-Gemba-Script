@@ -22,17 +22,80 @@
     modal.style.cursor = "move";
 
     modal.innerHTML = `
-      <button id="close-btn" style="position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 20px; cursor: pointer; color: #666; transition: all 0.2s ease; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background-color: rgba(248,249,250,0.8); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); border-radius: 50%; box-shadow: 0 2px 8px rgba(0,0,0,0.08); z-index: 10002;">✖</button>
+      <style>
+        .section-transition {
+          transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+        .section-hidden {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        .loading-spinner {
+          display: inline-block;
+          width: 20px;
+          height: 20px;
+          border: 2px solid rgba(76, 175, 80, 0.3);
+          border-radius: 50%;
+          border-top-color: #4CAF50;
+          animation: spin 0.8s linear infinite;
+          margin-right: 8px;
+        }
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+        .checkbox-label {
+          transition: background-color 0.2s ease;
+        }
+        .checkbox-label:hover {
+          background-color: rgba(76, 175, 80, 0.05);
+        }
+        .custom-select {
+          transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+        .custom-select:hover {
+          border-color: #4CAF50;
+        }
+        .custom-select:focus {
+          border-color: #4CAF50;
+          box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
+          outline: none;
+        }
+        [data-tooltip] {
+          position: relative;
+        }
+        [data-tooltip]:before {
+          content: attr(data-tooltip);
+          position: absolute;
+          bottom: 100%;
+          left: 50%;
+          transform: translateX(-50%);
+          padding: 5px 10px;
+          background: rgba(0,0,0,0.8);
+          color: white;
+          font-size: 12px;
+          border-radius: 4px;
+          white-space: nowrap;
+          opacity: 0;
+          visibility: hidden;
+          transition: opacity 0.2s ease, visibility 0.2s ease;
+          z-index: 10003;
+        }
+        [data-tooltip]:hover:before {
+          opacity: 1;
+          visibility: visible;
+        }
+      </style>
+      <button id="close-btn" style="position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 20px; cursor: pointer; color: #666; transition: all 0.2s ease; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background-color: rgba(248,249,250,0.8); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); border-radius: 50%; box-shadow: 0 2px 8px rgba(0,0,0,0.08); z-index: 10002;" data-tooltip="Close window">✖</button>
       <div id="modal-content" style="height: calc(100% - 20px); overflow-y: auto; padding: 20px 35px 20px 20px; scrollbar-width: thin; scrollbar-color: #cbd5e0 #f8f9fa;">
         <div style="margin-bottom: 25px; cursor: move; display: flex; justify-content: center; align-items: center;">
           <img src="https://crdrdispatch.github.io/GembaScript/Logo.svg" alt="Logo" style="height: 120px; transform: translateZ(0); filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));">
         </div>
         <h2 style="font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif; margin-bottom: 15px; border-bottom: 2px solid rgba(0,0,0,0.06); padding-bottom: 15px; color: #1a202c; font-size: 24px; text-align: center; font-weight: 700;">AutoGemba</h2>
         <p style="text-align: center; color: #4a5568; margin-bottom: 25px; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; line-height: 1.5;">Please make sure you're on the full "Route" view before running. Do not interact with the page until progress is complete. Once complete you may move the modal window around and resize it as needed. Thank you.</p>
-        <div id="start-section" style="text-align: center; margin-bottom: 30px;">
-          <button id="start-btn" style="padding: 12px 40px; background: linear-gradient(135deg, #4CAF50, #43a047); color: white; border: none; border-radius: 12px; cursor: pointer; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 500; font-size: 16px; box-shadow: 0 4px 6px rgba(76, 175, 80, 0.2); transition: all 0.2s ease;">Start Process</button>
+        <div id="start-section" style="text-align: center; margin-bottom: 30px;" class="section-transition">
+          <button id="start-btn" style="padding: 12px 40px; background: linear-gradient(135deg, #4CAF50, #43a047); color: white; border: none; border-radius: 12px; cursor: pointer; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 500; font-size: 16px; box-shadow: 0 4px 6px rgba(76, 175, 80, 0.2); transition: all 0.2s ease;" data-tooltip="Begin collecting route information">Start Process</button>
         </div>
-        <div id="progress-section" style="display: none; margin-bottom: 30px;">
+        <div id="progress-section" style="display: none; margin-bottom: 30px;" class="section-transition section-hidden">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
             <div style="display: flex; align-items: center; gap: 10px;">
               <h3 style="font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif; font-size: 16px; color: #1a202c; margin: 0; font-weight: 600;">Progress</h3>
@@ -44,15 +107,15 @@
             <p>Initializing...</p>
           </div>
         </div>
-        <div id="da-selection-section" style="display: none; margin-bottom: 30px;">
+        <div id="da-selection-section" style="display: none; margin-bottom: 30px;" class="section-transition section-hidden">
           <h3 style="font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif; font-size: 16px; color: #1a202c; margin-bottom: 12px; font-weight: 600;">These routes have multiple DAs. Please select the DA originally assigned to the route as to avoid selecting a rescuer for the progress output.</h3>
-          <div id="da-dropdowns" style="height: calc(100vh - 450px); min-height: 200px; max-height: calc(90vh - 250px); overflow-y: auto; padding: 15px; background: rgba(248,249,250,0.8); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); border-radius: 12px; border: 1px solid rgba(0,0,0,0.06); box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
+          <div id="da-dropdowns" style="height: calc(100vh - 450px); min-height: 200px; max-height: calc(90vh - 250px); overflow-y: auto; padding: 15px; background: rgba(248,249,250,0.8); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); border-radius: 12px; border: 1px solid rgba(0,0,0,0.06); box-shadow: 0 1px 3px rgba(0,0,0,0.02);" class="section-transition">
           </div>
           <div style="margin-top: 20px; text-align: right;">
-            <button id="da-next-btn" style="padding: 12px 30px; background: linear-gradient(135deg, #4CAF50, #43a047); color: white; border: none; border-radius: 12px; cursor: pointer; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 500; font-size: 15px; box-shadow: 0 4px 6px rgba(76, 175, 80, 0.2); transition: all 0.2s ease;">Next</button>
+            <button id="da-next-btn" style="padding: 12px 30px; background: linear-gradient(135deg, #4CAF50, #43a047); color: white; border: none; border-radius: 12px; cursor: pointer; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 500; font-size: 15px; box-shadow: 0 4px 6px rgba(76, 175, 80, 0.2); transition: all 0.2s ease;" data-tooltip="Proceed to route details">Next</button>
           </div>
         </div>
-        <div id="preview-section" style="display: none; margin-bottom: 30px;">
+        <div id="preview-section" style="display: none; margin-bottom: 30px;" class="section-transition section-hidden">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
             <button id="back-btn" style="padding: 8px 16px; background-color: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 500; font-size: 14px; box-shadow: 0 2px 4px rgba(108, 117, 125, 0.2); transition: all 0.2s ease; display: flex; align-items: center; gap: 6px;">
               <span style="font-size: 18px;">←</span> Back
@@ -66,7 +129,7 @@
             <button id="preview-next-btn" style="padding: 12px 30px; background: linear-gradient(135deg, #4CAF50, #43a047); color: white; border: none; border-radius: 12px; cursor: pointer; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 500; font-size: 15px; box-shadow: 0 4px 6px rgba(76, 175, 80, 0.2); transition: all 0.2s ease;">Next</button>
           </div>
         </div>
-        <div id="dsp-progress-section" style="display: none;">
+        <div id="dsp-progress-section" style="display: none;" class="section-transition section-hidden">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
             <button id="progress-back-btn" style="padding: 8px 16px; background-color: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 500; font-size: 14px; box-shadow: 0 2px 4px rgba(108, 117, 125, 0.2); transition: all 0.2s ease; display: flex; align-items: center; gap: 6px;">
               <span style="font-size: 18px;">←</span> Back
@@ -149,45 +212,39 @@
         startHeight: 0
     };
 
-    function debounce(func, wait) {
-      let timeout;
-      return function executedFunction(...args) {
-        const later = () => {
-          clearTimeout(timeout);
-          func(...args);
-        };
-        clearTimeout(timeout);
-        timeout = setTimeout(later, wait);
-      };
-    }
+    const onMouseDown = function(e) {
+        resize.isResizing = true;
+        resize.startX = e.clientX;
+        resize.startY = e.clientY;
+        resize.startWidth = modal.offsetWidth;
+        resize.startHeight = modal.offsetHeight;
+        e.stopPropagation();
+        document.body.style.cursor = 'se-resize';
+    };
 
-    const debouncedResize = debounce((e) => {
-      const newWidth = Math.max(400, resize.startWidth + e.clientX - resize.startX);
-      const newHeight = Math.max(300, resize.startHeight + e.clientY - resize.startY);
-      modal.style.width = Math.min(newWidth, window.innerWidth * 0.9) + "px";
-      modal.style.height = Math.min(newHeight, window.innerHeight * 0.9) + "px";
-    }, 16); // ~60fps
+    const onMouseMove = function(e) {
+        if (!resize.isResizing) return;
 
-    resizeHandle.addEventListener('mousedown', (e) => {
-      e.preventDefault();
-      resize.startX = e.clientX;
-      resize.startY = e.clientY;
-      resize.startWidth = modal.offsetWidth;
-      resize.startHeight = modal.offsetHeight;
+        const deltaX = e.clientX - resize.startX;
+        const deltaY = e.clientY - resize.startY;
 
-      function onMouseMove(e) {
-        e.preventDefault();
-        debouncedResize(e);
-      }
+        const newWidth = Math.max(400, Math.min(resize.startWidth + deltaX, window.innerWidth * 0.9));
+        const newHeight = Math.max(300, Math.min(resize.startHeight + deltaY, window.innerHeight * 0.9));
 
-      function onMouseUp() {
-        document.removeEventListener('mousemove', onMouseMove);
-        document.removeEventListener('mouseup', onMouseUp);
-      }
+        modal.style.width = newWidth + 'px';
+        modal.style.height = newHeight + 'px';
+    };
 
-      document.addEventListener('mousemove', onMouseMove);
-      document.addEventListener('mouseup', onMouseUp);
-    });
+    const onMouseUp = function() {
+        if (resize.isResizing) {
+            resize.isResizing = false;
+            document.body.style.cursor = 'default';
+        }
+    };
+
+    resizeHandle.addEventListener('mousedown', onMouseDown);
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
 
     // Add hover effects
     const closeBtn = modal.querySelector("#close-btn");
@@ -388,48 +445,50 @@
     }
   };
 
-  async function collectRoutes(routeSelector, routes, batchSize, delay, isV1) {
-    console.log("Starting route collection. Selector:", routeSelector);
-    const visibleRoutes = new Set();
-    let lastScrollHeight = 0;
-    let unchangedCount = 0;
-    
-    while (unchangedCount < 3) {
-      const elements = document.querySelectorAll(routeSelector);
-      let newRoutes = false;
-      
-      for (const element of elements) {
-        const routeCode = isV1 ? element.textContent.match(/[A-Z]+\d+/)?.[0] : element.textContent.trim();
-        if (routeCode && !visibleRoutes.has(routeCode)) {
-          visibleRoutes.add(routeCode);
-          newRoutes = true;
-          
-          const associateInfo = isV1
-            ? element.querySelector('.associate-name')?.textContent?.trim() || 'Unknown'
-            : element.parentElement?.querySelector('.css-1563yu1')?.textContent?.trim() || 'Unknown';
-            
-          const progress = isV1
-            ? element.querySelector('.badge')?.textContent?.trim() || ''
-            : element.parentElement?.querySelector('.css-1vrnrz4')?.textContent?.trim() || '';
-          
-          routes.push({ routeCode, associateInfo, progress });
+  const collectRoutes = async (selector, routes, maxScrolls = 20, scrollDelay = 100, isV1 = false) => {
+    console.log("Starting route collection. Selector:", selector);
+    for (let i = 0; i < maxScrolls; i++) {
+      console.log(`Scroll iteration ${i + 1} of ${maxScrolls}`);
+      const elements = document.querySelectorAll(selector);
+      console.log(`Found ${elements.length} route elements`);
+
+      elements.forEach((el, index) => {
+        console.log(`Processing element ${index + 1} of ${elements.length}`);
+        const routeCodeElem = isV1
+          ? el.querySelector(".left-column.text-sm")?.firstElementChild
+          : el.querySelector(".css-1nqzkik");
+        const progressElem = isV1
+          ? el.querySelector(".complete.h-100.d-flex.justify-content-center.align-items-center.progressStatusBar")
+          : el.querySelector(".css-1xac89n.font-weight-bold");
+
+        const routeCode = routeCodeElem?.textContent.trim() || routeCodeElem?.getAttribute("title");
+        const associateInfo = extractAssociates(el, isV1);
+        const progressRaw = progressElem?.textContent.trim();
+        const progress = extractBehindProgress(progressRaw); // Extract only "X behind"
+
+        console.log("Route Code:", routeCode);
+        console.log("Associate Info:", associateInfo);
+        console.log("Progress:", progress);
+
+        if (routeCode) {
+          const existingRouteIndex = routes.findIndex(route => route.routeCode === routeCode);
+          if (existingRouteIndex === -1) {
+            routes.push({ routeCode, associateInfo, progress });
+            console.log("Added route:", { routeCode, associateInfo, progress });
+          } else {
+            console.log("Skipped duplicate route with code:", routeCode);
+          }
+        } else {
+          console.log("Skipped route due to missing code.");
         }
-      }
-      
-      const currentScrollHeight = document.documentElement.scrollHeight;
-      if (currentScrollHeight === lastScrollHeight && !newRoutes) {
-        unchangedCount++;
-      } else {
-        unchangedCount = 0;
-      }
-      
-      lastScrollHeight = currentScrollHeight;
-      window.scrollBy(0, window.innerHeight - 100);
-      await new Promise(resolve => setTimeout(resolve, delay));
+      });
+
+      elements[elements.length - 1]?.scrollIntoView({ behavior: "smooth", block: "end" });
+      await new Promise((resolve) => setTimeout(resolve, scrollDelay));
     }
-    
-    // Final scroll back to top
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    updateProgress(`Collected ${routes.length} unique routes so far.`);
+    console.log("Completed route collection. Total routes:", routes.length);
   };
 
   const modal = createModal();
@@ -438,7 +497,13 @@
   const progressSection = modal.querySelector("#progress-section");
 
   async function processRoutes() {
+    const startBtn = modal.querySelector("#start-btn");
+    const progressSection = modal.querySelector("#progress-section");
+    
     try {
+      startBtn.innerHTML = '<div class="loading-spinner"></div>Processing...';
+      startBtn.disabled = true;
+      
       console.log("Script started");
       updateProgress("Script started...");
 
@@ -922,5 +987,57 @@
   progressBackBtn.addEventListener("mouseout", () => {
     progressBackBtn.style.backgroundColor = "#6c757d";
     progressBackBtn.style.boxShadow = "0 2px 4px rgba(108, 117, 125, 0.2)";
+  });
+
+  // Function to handle section transitions
+  function showSection(sectionToShow, sectionsToHide) {
+    sectionsToHide.forEach(section => {
+      section.classList.add('section-hidden');
+      setTimeout(() => {
+        section.style.display = 'none';
+      }, 300);
+    });
+
+    sectionToShow.style.display = 'block';
+    setTimeout(() => {
+      sectionToShow.classList.remove('section-hidden');
+    }, 50);
+  }
+
+  // Update section transitions in event listeners
+  startBtn.addEventListener("click", () => {
+    showSection(
+      progressSection, 
+      [document.querySelector("#start-section")]
+    );
+    processRoutes();
+  });
+
+  nextBtn.addEventListener("click", () => {
+    showSection(
+      previewSection,
+      [document.querySelector("#da-selection-section")]
+    );
+  });
+
+  backBtn.addEventListener("click", () => {
+    showSection(
+      document.querySelector("#da-selection-section"),
+      [previewSection]
+    );
+  });
+
+  previewNextBtn.addEventListener("click", () => {
+    showSection(
+      dspProgressSection,
+      [previewSection]
+    );
+  });
+
+  progressBackBtn.addEventListener("click", () => {
+    showSection(
+      previewSection,
+      [dspProgressSection]
+    );
   });
 })();
