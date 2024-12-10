@@ -27,9 +27,9 @@
         <div style="margin-bottom: 25px; cursor: move; display: flex; justify-content: center; align-items: center;">
           <img src="https://crdrdispatch.github.io/GembaScript/Logo.svg" alt="Logo" style="height: 120px; transform: translateZ(0); filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));">
         </div>
-        <p style="text-align: center; color: #4a5568; margin-bottom: 25px; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; line-height: 1.5;">Please make sure you're on the full "Route" view before running. Do not interact with the page until progress is complete. Once complete you may move the modal window around and resize it as needed. Thank you.</p>
+        <p style="text-align: center; color: #374151; margin-bottom: 25px; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; line-height: 1.5;">Please make sure you're on the full "Route" view before running. Do not interact with the page until progress is complete. Once complete you may move the modal window around and resize it as needed. Thank you.</p>
         <div id="start-section" style="text-align: center; margin-bottom: 30px;">
-          <button id="start-btn" style="padding: 12px 40px; background: linear-gradient(135deg, #4CAF50, #43a047); color: white; border: none; border-radius: 12px; cursor: pointer; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 500; font-size: 16px; box-shadow: 0 4px 6px rgba(76, 175, 80, 0.2); transition: all 0.2s ease;">Start Process</button>
+          <button id="start-btn" style="padding: 12px 40px; background: linear-gradient(135deg, #2F855A, #276749); color: white; border: none; border-radius: 12px; cursor: pointer; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 500; font-size: 16px; box-shadow: 0 4px 6px rgba(47, 133, 90, 0.2); transition: all 0.2s ease;">Start Process</button>
         </div>
         <div id="progress-section" style="display: none; margin-bottom: 30px;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
@@ -649,10 +649,10 @@
             container.dataset.routeCode = route.routeCode;
 
             container.innerHTML = `
-              <div style="padding: 15px; border-bottom: 1px solid rgba(0,0,0,0.06); background: rgba(248,250,252,0.8);">
+              <div style="padding: 15px; border-bottom: 1px solid rgba(0,0,0,0.16); background: rgba(248,250,252,0.8);">
                 <h4 style="margin: 0; color: #1a202c; font-size: 16px; display: flex; justify-content: space-between; align-items: center;">
                   <span>${route.routeCode}: ${associateInfo}</span>
-                  <span style="font-size: 14px; padding: 4px 8px; background: #ebf5ff; color: #3182ce; border-radius: 6px;">${route.progress}</span>
+                  <span style="font-size: 14px; padding: 4px 8px; background: #ebf5ff; color: #1e40af; border-radius: 6px;">${route.progress}</span>
                 </h4>
               </div>
               <div style="padding: 15px;">
@@ -660,28 +660,28 @@
                   <label style="display: block; margin-bottom: 8px; color: #1a202c; font-weight: 600; font-size: 14px;">Root Cause:</label>
                   <div class="rc-checkboxes" style="display: flex; flex-direction: column; gap: 10px;">
                     <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 8px; border-radius: 6px; transition: all 0.2s ease;" title="Route covers a large geographical area" onmouseover="this.style.backgroundColor='rgba(248,250,252,0.8)'" onmouseout="this.style.backgroundColor='transparent'">
-                      <input type="checkbox" class="rc-checkbox" value="Route is spread out" style="cursor: pointer; width: 16px; height: 16px; border: 2px solid #cbd5e0; border-radius: 4px; transition: all 0.2s ease;" onmouseover="this.style.borderColor='#4CAF50'" onmouseout="this.style.borderColor='#cbd5e0'">
-                      <span style="color: #1a202c; font-size: 14px;">Route is spread out</span>
+                      <input type="checkbox" class="rc-checkbox" value="Route is spread out" style="cursor: pointer; width: 16px; height: 16px; border: 2px solid #64748b; border-radius: 4px; transition: all 0.2s ease;" onmouseover="this.style.borderColor='#2F855A'" onmouseout="this.style.borderColor='#64748b'">
+                      <span style="color: #374151; font-size: 14px;">Route is spread out</span>
                     </label>
                     <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 8px; border-radius: 6px; transition: all 0.2s ease;" title="Delivery Associate's current pace is below expected rate" onmouseover="this.style.backgroundColor='rgba(248,250,252,0.8)'" onmouseout="this.style.backgroundColor='transparent'">
-                      <input type="checkbox" class="rc-checkbox" value="DA is working at a slow pace" style="cursor: pointer; width: 16px; height: 16px; border: 2px solid #cbd5e0; border-radius: 4px; transition: all 0.2s ease;" onmouseover="this.style.borderColor='#4CAF50'" onmouseout="this.style.borderColor='#cbd5e0'">
-                      <span style="color: #1a202c; font-size: 14px;">DA is working at a slow pace</span>
+                      <input type="checkbox" class="rc-checkbox" value="DA is working at a slow pace" style="cursor: pointer; width: 16px; height: 16px; border: 2px solid #64748b; border-radius: 4px; transition: all 0.2s ease;" onmouseover="this.style.borderColor='#2F855A'" onmouseout="this.style.borderColor='#64748b'">
+                      <span style="color: #374151; font-size: 14px;">DA is working at a slow pace</span>
                     </label>
                     <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 8px; border-radius: 6px; transition: all 0.2s ease;" title="Delivery Associate is experiencing technical difficulties" onmouseover="this.style.backgroundColor='rgba(248,250,252,0.8)'" onmouseout="this.style.backgroundColor='transparent'">
-                      <input type="checkbox" class="rc-checkbox" value="DA is having connection issues" style="cursor: pointer; width: 16px; height: 16px; border: 2px solid #cbd5e0; border-radius: 4px; transition: all 0.2s ease;" onmouseover="this.style.borderColor='#4CAF50'" onmouseout="this.style.borderColor='#cbd5e0'">
-                      <span style="color: #1a202c; font-size: 14px;">DA is having connection issues</span>
+                      <input type="checkbox" class="rc-checkbox" value="DA is having connection issues" style="cursor: pointer; width: 16px; height: 16px; border: 2px solid #64748b; border-radius: 4px; transition: all 0.2s ease;" onmouseover="this.style.borderColor='#2F855A'" onmouseout="this.style.borderColor='#64748b'">
+                      <span style="color: #374151; font-size: 14px;">DA is having connection issues</span>
                     </label>
                     <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 8px; border-radius: 6px; transition: all 0.2s ease;" title="Route has more packages than usual" onmouseover="this.style.backgroundColor='rgba(248,250,252,0.8)'" onmouseout="this.style.backgroundColor='transparent'">
-                      <input type="checkbox" class="rc-checkbox" value="High Package Count" style="cursor: pointer; width: 16px; height: 16px; border: 2px solid #cbd5e0; border-radius: 4px; transition: all 0.2s ease;" onmouseover="this.style.borderColor='#4CAF50'" onmouseout="this.style.borderColor='#cbd5e0'">
-                      <span style="color: #1a202c; font-size: 14px;">High Package Count</span>
+                      <input type="checkbox" class="rc-checkbox" value="High Package Count" style="cursor: pointer; width: 16px; height: 16px; border: 2px solid #64748b; border-radius: 4px; transition: all 0.2s ease;" onmouseover="this.style.borderColor='#2F855A'" onmouseout="this.style.borderColor='#64748b'">
+                      <span style="color: #374151; font-size: 14px;">High Package Count</span>
                     </label>
                     <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 8px; border-radius: 6px; transition: all 0.2s ease;" title="Route has more stops than usual" onmouseover="this.style.backgroundColor='rgba(248,250,252,0.8)'" onmouseout="this.style.backgroundColor='transparent'">
-                      <input type="checkbox" class="rc-checkbox" value="High Stop Count" style="cursor: pointer; width: 16px; height: 16px; border: 2px solid #cbd5e0; border-radius: 4px; transition: all 0.2s ease;" onmouseover="this.style.borderColor='#4CAF50'" onmouseout="this.style.borderColor='#cbd5e0'">
-                      <span style="color: #1a202c; font-size: 14px;">High Stop Count</span>
+                      <input type="checkbox" class="rc-checkbox" value="High Stop Count" style="cursor: pointer; width: 16px; height: 16px; border: 2px solid #64748b; border-radius: 4px; transition: all 0.2s ease;" onmouseover="this.style.borderColor='#2F855A'" onmouseout="this.style.borderColor='#64748b'">
+                      <span style="color: #374151; font-size: 14px;">High Stop Count</span>
                     </label>
                     <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 8px; border-radius: 6px; transition: all 0.2s ease;" title="Specify a different root cause" onmouseover="this.style.backgroundColor='rgba(248,250,252,0.8)'" onmouseout="this.style.backgroundColor='transparent'">
-                      <input type="checkbox" class="rc-checkbox other-checkbox" value="Other" style="cursor: pointer; width: 16px; height: 16px; border: 2px solid #cbd5e0; border-radius: 4px; transition: all 0.2s ease;" onmouseover="this.style.borderColor='#4CAF50'" onmouseout="this.style.borderColor='#cbd5e0'">
-                      <span style="color: #1a202c; font-size: 14px;">Other</span>
+                      <input type="checkbox" class="rc-checkbox other-checkbox" value="Other" style="cursor: pointer; width: 16px; height: 16px; border: 2px solid #64748b; border-radius: 4px; transition: all 0.2s ease;" onmouseover="this.style.borderColor='#2F855A'" onmouseout="this.style.borderColor='#64748b'">
+                      <span style="color: #374151; font-size: 14px;">Other</span>
                     </label>
                     <div class="other-input-container" style="display: none; margin-left: 32px;">
                       <input type="text" class="other-input" style="width: calc(100% - 16px); padding: 8px 12px; border: 1px solid rgba(0,0,0,0.06); border-radius: 6px; font-size: 14px; background: rgba(248,250,252,0.8); transition: all 0.2s ease;" placeholder="Enter other root cause..." title="Specify custom root cause">
@@ -690,7 +690,7 @@
                 </div>
                 <div>
                   <label style="display: block; margin-bottom: 8px; color: #1a202c; font-weight: 600; font-size: 14px;">Point of Action:</label>
-                  <select class="poa-select" style="width: 100%; padding: 10px 12px; border: 1px solid rgba(0,0,0,0.06); border-radius: 6px; font-size: 14px; background-color: white; cursor: pointer; color: #1a202c; appearance: none; background-image: url('data:image/svg+xml;charset=US-ASCII,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%232c3e50" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>'); background-repeat: no-repeat; background-position: right 12px center; background-size: 16px; transition: all 0.2s ease;" title="Select the current action being taken" onmouseover="this.style.borderColor='#4CAF50'; this.style.boxShadow='0 0 0 1px #4CAF50'" onmouseout="this.style.borderColor='rgba(0,0,0,0.06)'; this.style.boxShadow='none'">
+                  <select class="poa-select" style="width: 100%; padding: 10px 12px; border: 1px solid rgba(0,0,0,0.16); border-radius: 6px; font-size: 14px; background-color: white; cursor: pointer; color: #374151; appearance: none; background-image: url('data:image/svg+xml;charset=US-ASCII,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%23374151" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>'); background-repeat: no-repeat; background-position: right 12px center; background-size: 16px; transition: all 0.2s ease;" title="Select the current action being taken" onmouseover="this.style.borderColor='#2F855A'; this.style.boxShadow='0 0 0 1px #2F855A'" onmouseout="this.style.borderColor='rgba(0,0,0,0.16)'; this.style.boxShadow='none'">
                     <option value="">Select a point of action...</option>
                     <option value="Rescue Planned" title="A rescue has been scheduled">Rescue Planned</option>
                     <option value="Rescue Sent" title="A rescue has been dispatched">Rescue Sent</option>
@@ -700,7 +700,7 @@
                     <option value="Other" title="Specify a different action">Other</option>
                   </select>
                   <div class="poa-other-container" style="display: none; margin-top: 8px;">
-                    <input type="text" class="poa-other-input" style="width: 100%; padding: 10px 12px; border: 1px solid rgba(0,0,0,0.06); border-radius: 6px; font-size: 14px; background: rgba(248,250,252,0.8); transition: all 0.2s ease;" placeholder="Enter other point of action..." title="Specify custom action">
+                    <input type="text" class="poa-other-input" style="width: 100%; padding: 10px 12px; border: 1px solid rgba(0,0,0,0.16); border-radius: 6px; font-size: 14px; background: rgba(248,250,252,0.8); color: #374151; transition: all 0.2s ease;" placeholder="Enter other point of action..." title="Specify custom action">
                   </div>
                 </div>
               </div>
@@ -861,12 +861,12 @@
 
       startBtn.addEventListener("mouseover", () => {
         startBtn.style.transform = "translateY(-1px)";
-        startBtn.style.boxShadow = "0 6px 8px rgba(76, 175, 80, 0.3)";
+        startBtn.style.boxShadow = "0 6px 8px rgba(47, 133, 90, 0.3)";
       });
 
       startBtn.addEventListener("mouseout", () => {
         startBtn.style.transform = "none";
-        startBtn.style.boxShadow = "0 4px 6px rgba(76, 175, 80, 0.2)";
+        startBtn.style.boxShadow = "0 4px 6px rgba(47, 133, 90, 0.2)";
       });
     } catch (error) {
       console.error("Error in processRoutes:", error);
