@@ -505,10 +505,11 @@
             packageProgress: packageProgress
           };
           
-          // Click directly on the cortex-summary-bar-data-value element
+          // Click the direct child div of the cortex-summary-bar-data-value element
           const inProgressElement = valuesV1[2];
-          if (inProgressElement) {
-            inProgressElement.click();
+          const clickTarget = inProgressElement?.firstElementChild;
+          if (clickTarget) {
+            clickTarget.click();
             await new Promise(resolve => setTimeout(resolve, 500));
           }
         }
