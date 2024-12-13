@@ -1,4 +1,6 @@
 (async function () {
+  console.log("Script starting...");
+  
   // Clean up any existing elements at script start
   const existingModal = document.getElementById("custom-modal");
   const existingFAB = document.getElementById("auto-gemba-fab");
@@ -9,12 +11,11 @@
   window.dspProgress = null;
 
   const createModal = () => {
+    console.log("Creating modal...");
     const modal = document.createElement("div");
     modal.id = "custom-modal";
-    modal.style.position = "fixed";
-    modal.style.top = "50%";
-    modal.style.left = "50%";
-    modal.style.transform = "translate(-50%, -50%)";
+    
+    // Set modal styles
     modal.style.width = "min(40vw, 500px)";
     modal.style.minWidth = "400px";
     modal.style.maxWidth = "90vw";
@@ -30,8 +31,10 @@
     modal.style.borderRadius = "16px";
     modal.style.zIndex = "10000";
     modal.style.overflow = "hidden";
-    modal.style.cursor = "move";
     modal.style.position = "fixed";
+    modal.style.top = "50%";
+    modal.style.left = "50%";
+    modal.style.transform = "translate(-50%, -50%)";
     modal.style.resize = "both";
 
     modal.innerHTML = `
@@ -1027,8 +1030,12 @@
   };
 
   // Initialize the app by creating the first modal
+  console.log("Initializing app...");
   const modal = createModal();
+  console.log("Modal created, appending to body...");
   document.body.appendChild(modal);
+  console.log("Attaching event listeners...");
   attachModalEventListeners(modal);
+  console.log("Initialization complete");
 
 })();
