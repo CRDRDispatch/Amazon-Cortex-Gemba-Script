@@ -1,21 +1,11 @@
 (async function () {
-  console.log("Script starting...");
-  
-  // Clean up any existing elements at script start
-  const existingModal = document.getElementById("custom-modal");
-  const existingFAB = document.getElementById("auto-gemba-fab");
-  existingModal?.remove();
-  existingFAB?.remove();
-  
-  // Reset window.dspProgress
-  window.dspProgress = null;
-
   const createModal = () => {
-    console.log("Creating modal...");
     const modal = document.createElement("div");
     modal.id = "custom-modal";
-    
-    // Set modal styles
+    modal.style.position = "fixed";
+    modal.style.top = "50%";
+    modal.style.left = "50%";
+    modal.style.transform = "translate(-50%, -50%)";
     modal.style.width = "min(40vw, 500px)";
     modal.style.minWidth = "400px";
     modal.style.maxWidth = "90vw";
@@ -24,72 +14,87 @@
     modal.style.maxHeight = "90vh";
     modal.style.display = "flex";
     modal.style.flexDirection = "column";
-    modal.style.background = "linear-gradient(to bottom, #ffffff, #fafafa)";
+    modal.style.background = "#ffffff";
     modal.style.boxShadow = "0 10px 25px rgba(0, 0, 0, 0.12), 0 4px 12px rgba(0, 0, 0, 0.08)";
     modal.style.border = "1px solid rgba(0, 0, 0, 0.1)";
     modal.style.padding = "25px";
     modal.style.borderRadius = "16px";
     modal.style.zIndex = "10000";
     modal.style.overflow = "hidden";
-    modal.style.position = "fixed";
-    modal.style.top = "50%";
-    modal.style.left = "50%";
-    modal.style.transform = "translate(-50%, -50%)";
     modal.style.resize = "both";
 
     modal.innerHTML = `
-      <button id="close-btn" style="position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 20px; cursor: pointer; color: #666; transition: all 0.2s ease; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background-color: rgba(248,249,250,0.8); border-radius: 50%; box-shadow: 0 2px 8px rgba(0,0,0,0.08); z-index: 10002;">✖</button>
-      <div id="modal-content" style="flex: 1; display: flex; flex-direction: column; overflow: hidden;">
-        <div id="da-selection-section" style="flex: 1; display: flex; flex-direction: column; overflow-y: auto; padding-right: 15px;">
-          <h2 style="margin-top: 0; margin-bottom: 20px; color: #2c3e50; font-size: 1.5em;">Route Processing</h2>
-          <div style="margin-bottom: 20px;">
-            <button id="start-btn" style="width: 100%; padding: 12px 24px; background-color: #2f855a; color: white; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 4px 6px rgba(47, 133, 90, 0.2);">Start Process</button>
+      <button id="close-btn" style="position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 20px; cursor: pointer; color: #666; transition: all 0.2s ease; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background-color: rgba(248,249,250,0.8); border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.08); z-index: 10002;">✖</button>
+      <div id="modal-content" style="flex: 1; overflow-y: auto; padding: 0 15px 0 0; margin-right: -15px; scrollbar-width: thin; scrollbar-color: #cbd5e0 #f8f9fa;">
+        <div style="margin-bottom: 25px; cursor: move; display: flex; justify-content: center; align-items: center;">
+          <img src="https://crdrdispatch.github.io/GembaScript/Logo.svg" alt="Logo" style="height: 120px; transform: translateZ(0); filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));">
+        </div>
+        <p style="text-align: center; color: #374151; margin-bottom: 25px; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; line-height: 1.5;">Please make sure you're on the full "Route" view before running. Do not interact with the page until progress is complete. Once complete you may move the modal window around and resize it as needed. Thank you.</p>
+        <div id="start-section" style="text-align: center; margin-bottom: 30px;">
+          <button id="start-btn" style="padding: 12px 40px; background: linear-gradient(135deg, #2F855A, #276749); color: white; border: none; border-radius: 12px; cursor: pointer; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 500; font-size: 16px; box-shadow: 0 4px 6px rgba(47, 133, 90, 0.2); transition: all 0.2s ease;">Start Process</button>
+        </div>
+        <div id="progress-section" style="display: none; margin-bottom: 30px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <h3 style="font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif; font-size: 16px; color: #1a202c; margin: 0; font-weight: 600;">Progress</h3>
+              <span id="progress-status" style="display: none; font-size: 12px; padding: 3px 10px; border-radius: 20px; background-color: #4CAF50; color: white; font-weight: 500; box-shadow: 0 2px 4px rgba(76, 175, 80, 0.2);">Complete</span>
+            </div>
+            <button id="toggle-progress" style="background: none; border: none; color: #666; cursor: pointer; font-size: 14px; padding: 5px 10px; border-radius: 5px; transition: background-color 0.2s ease;">Hide</button>
+          </div>
+          <div id="progress-details" style="font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; text-align: left; margin-bottom: 20px; padding: 15px; background: rgba(255,255,255,0.8); border-radius: 12px; border: 1px solid rgba(0,0,0,0.06); box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
+            <p>Initializing...</p>
           </div>
         </div>
-
-        <div id="preview-section" style="flex: 1; display: none; flex-direction: column; overflow-y: auto; padding-right: 15px;">
-          <h2 style="margin-top: 0; margin-bottom: 20px; color: #2c3e50; font-size: 1.5em;">Preview</h2>
-          <div style="margin-bottom: 20px;">
-            <div id="preview-content" style="margin-bottom: 20px;"></div>
-            <div style="display: flex; justify-content: space-between; gap: 10px;">
-              <button id="back-btn" style="padding: 8px 16px; background-color: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 2px 4px rgba(108, 117, 125, 0.2);">Back</button>
-              <button id="preview-next-btn" style="padding: 8px 16px; background-color: #2f855a; color: white; border: none; border-radius: 6px; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 2px 4px rgba(47, 133, 90, 0.2);">Next</button>
-            </div>
+        <div id="da-selection-section" style="display: none; margin-bottom: 30px;">
+          <h3 style="font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif; font-size: 16px; color: #1a202c; margin-bottom: 12px; font-weight: 600;">These routes have multiple DAs. Please select the DA originally assigned to the route as to avoid selecting a rescuer for the progress output.</h3>
+          <div id="da-dropdowns" style="height: calc(100vh - 450px); min-height: 200px; max-height: calc(90vh - 250px); overflow-y: auto; padding: 15px; background: rgba(248,249,250,0.8); border-radius: 12px; border: 1px solid rgba(0,0,0,0.06); box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
+          </div>
+          <div style="margin-top: 20px; text-align: right;">
+            <button id="da-next-btn" style="padding: 12px 30px; background: linear-gradient(135deg, #4CAF50, #43a047); color: white; border: none; border-radius: 12px; cursor: pointer; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 500; font-size: 15px; box-shadow: 0 4px 6px rgba(76, 175, 80, 0.2); transition: all 0.2s ease;">Next</button>
           </div>
         </div>
-
-        <div id="dsp-progress-section" style="flex: 1; display: none; flex-direction: column; overflow-y: auto; padding-right: 15px;">
-          <h2 style="margin-top: 0; margin-bottom: 20px; color: #2c3e50; font-size: 1.5em;">DSP Progress</h2>
-          <div style="margin-bottom: 20px;">
-            <div style="margin-bottom: 15px;">
-              <label style="display: block; margin-bottom: 5px; color: #4a5568;">In Progress:</label>
-              <input type="number" id="in-progress-input" style="width: 100%; padding: 8px; border: 1px solid #e2e8f0; border-radius: 6px;">
-            </div>
-            <div style="margin-bottom: 15px;">
-              <label style="display: block; margin-bottom: 5px; color: #4a5568;">At Risk:</label>
-              <input type="number" id="at-risk-input" style="width: 100%; padding: 8px; border: 1px solid #e2e8f0; border-radius: 6px;">
-            </div>
-            <div style="margin-bottom: 15px;">
-              <label style="display: block; margin-bottom: 5px; color: #4a5568;">Behind:</label>
-              <input type="number" id="behind-input" style="width: 100%; padding: 8px; border: 1px solid #e2e8f0; border-radius: 6px;">
-            </div>
-            <div style="margin-bottom: 15px;">
-              <label style="display: block; margin-bottom: 5px; color: #4a5568;">Package Progress:</label>
-              <input type="number" id="package-progress-input" style="width: 100%; padding: 8px; border: 1px solid #e2e8f0; border-radius: 6px;">
-            </div>
-            <div style="display: flex; justify-content: space-between; gap: 10px;">
-              <button id="progress-back-btn" style="padding: 8px 16px; background-color: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 2px 4px rgba(108, 117, 125, 0.2);">Back</button>
-            </div>
+        <div id="preview-section" style="display: none; margin-bottom: 30px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <button id="back-btn" style="padding: 8px 16px; background-color: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 500; font-size: 14px; box-shadow: 0 2px 4px rgba(108, 117, 125, 0.2); transition: all 0.2s ease; display: flex; align-items: center; gap: 6px;">
+              <span style="font-size: 18px;">←</span> Back
+            </button>
+            <h3 style="font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif; font-size: 16px; color: #1a202c; margin: 0; font-weight: 600;">Route Details</h3>
+            <div style="width: 80px;"></div>
+          </div>
+          <div id="route-details" style="height: calc(100vh - 450px); min-height: 200px; max-height: calc(90vh - 250px); overflow-y: auto; padding: 15px; background: rgba(255,255,255,0.8); border-radius: 12px; border: 1px solid rgba(0,0,0,0.06); box-shadow: 0 1px 3px rgba(0,0,0,0.02); scrollbar-width: thin; scrollbar-color: #cbd5e0 #f8f9fa;">
+          </div>
+          <div style="display: flex; justify-content: flex-end; margin-top: 20px;">
+            <button id="preview-next-btn" style="padding: 12px 30px; background: linear-gradient(135deg, #4CAF50, #43a047); color: white; border: none; border-radius: 12px; cursor: pointer; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 500; font-size: 15px; box-shadow: 0 4px 6px rgba(76, 175, 80, 0.2); transition: all 0.2s ease;">Next</button>
           </div>
         </div>
-
-        <div id="progress-section" style="flex: 1; display: none; flex-direction: column; overflow-y: auto; padding-right: 15px;">
-          <h2 style="margin-top: 0; margin-bottom: 20px; color: #2c3e50; font-size: 1.5em;">Processing Routes</h2>
-          <div style="margin-bottom: 20px;">
-            <div id="progress-content"></div>
-            <div id="download-section" style="display: none; margin-top: 20px;">
-              <button id="download-btn" style="width: 100%; padding: 12px 24px; background-color: #2f855a; color: white; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 4px 6px rgba(47, 133, 90, 0.2);">Download Results</button>
+        <div id="dsp-progress-section" style="display: none;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <button id="progress-back-btn" style="padding: 8px 16px; background-color: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 500; font-size: 14px; box-shadow: 0 2px 4px rgba(108, 117, 125, 0.2); transition: all 0.2s ease; display: flex; align-items: center; gap: 6px;">
+              <span style="font-size: 18px;">←</span> Back
+            </button>
+            <h3 style="font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif; font-size: 16px; color: #1a202c; margin: 0; font-weight: 600;">DSP Total Progress</h3>
+            <div style="width: 80px;"></div>
+          </div>
+          <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin-bottom: 30px;">
+            <div class="input-group">
+              <label style="display: block; margin-bottom: 8px; color: #1a202c; font-weight: 600; font-size: 14px;">In Progress:</label>
+              <input type="number" id="in-progress-input" class="progress-input" style="width: 100%; padding: 10px; border: 1px solid rgba(0,0,0,0.06); border-radius: 6px; font-size: 14px;" min="0">
             </div>
+            <div class="input-group">
+              <label style="display: block; margin-bottom: 8px; color: #1a202c; font-weight: 600; font-size: 14px;">At Risk:</label>
+              <input type="number" id="at-risk-input" class="progress-input" style="width: 100%; padding: 10px; border: 1px solid rgba(0,0,0,0.06); border-radius: 6px; font-size: 14px;" min="0">
+            </div>
+            <div class="input-group">
+              <label style="display: block; margin-bottom: 8px; color: #1a202c; font-weight: 600; font-size: 14px;">Behind:</label>
+              <input type="number" id="behind-input" class="progress-input" style="width: 100%; padding: 10px; border: 1px solid rgba(0,0,0,0.06); border-radius: 6px; font-size: 14px;" min="0">
+            </div>
+            <div class="input-group">
+              <label style="display: block; margin-bottom: 8px; color: #1a202c; font-weight: 600; font-size: 14px;">Package Progress:</label>
+              <input type="number" id="package-progress-input" class="progress-input" style="width: 100%; padding: 10px; border: 1px solid rgba(0,0,0,0.06); border-radius: 6px; font-size: 14px;" min="0" max="100">
+            </div>
+          </div>
+          <div style="text-align: center;">
+            <button id="download-btn" style="padding: 12px 30px; background: linear-gradient(135deg, #4CAF50, #43a047); color: white; border: none; border-radius: 12px; cursor: pointer; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 500; font-size: 15px; box-shadow: 0 4px 6px rgba(76, 175, 80, 0.2); transition: all 0.2s ease;">Download File</button>
           </div>
         </div>
       </div>
@@ -105,7 +110,7 @@
     resizeHandle.style.cursor = 'se-resize';
     resizeHandle.style.zIndex = '10002';
     resizeHandle.style.userSelect = 'none';
-    resizeHandle.style.background = 'linear-gradient(135deg, transparent 50%, rgba(248,249,250,0.95) 50%)';
+    resizeHandle.style.background = '#f8f9fa';
     resizeHandle.style.borderRadius = '0 0 16px 0';
     resizeHandle.style.boxShadow = 'inset -1px -1px 0 rgba(0,0,0,0.1)';
     resizeHandle.style.display = 'flex';
@@ -147,16 +152,14 @@
         resize.isResizing = true;
         resize.startX = e.clientX;
         resize.startY = e.clientY;
-        resize.startWidth = parseInt(getComputedStyle(modal).width);
-        resize.startHeight = parseInt(getComputedStyle(modal).height);
-        e.preventDefault();
+        resize.startWidth = modal.offsetWidth;
+        resize.startHeight = modal.offsetHeight;
         e.stopPropagation();
         document.body.style.cursor = 'se-resize';
     };
 
     const onMouseMove = function(e) {
         if (!resize.isResizing) return;
-        e.preventDefault();
 
         const deltaX = e.clientX - resize.startX;
         const deltaY = e.clientY - resize.startY;
@@ -169,7 +172,7 @@
         updateResizeHandlePosition();
     };
 
-    const onMouseUp = function(e) {
+    const onMouseUp = function() {
         if (resize.isResizing) {
             resize.isResizing = false;
             document.body.style.cursor = 'default';
@@ -310,7 +313,6 @@
       document.removeEventListener("mouseup", dragEnd);
       document.removeEventListener("mousemove", drag);
       modal.remove();
-      createFAB();
     });
 
     // Add resize observer to handle content changes
@@ -334,156 +336,6 @@
     resizeObserver.observe(modalContent);
 
     return modal;
-  };
-
-  const attachModalEventListeners = (modal) => {
-    const startBtn = modal.querySelector("#start-btn");
-    const progressSection = modal.querySelector("#progress-section");
-    const downloadBtn = modal.querySelector("#download-btn");
-    const previewNextBtn = modal.querySelector("#preview-next-btn");
-    const progressBackBtn = modal.querySelector("#progress-back-btn");
-    const backBtn = modal.querySelector("#back-btn");
-
-    // Add click handler for start button
-    startBtn.addEventListener("click", async () => {
-      startBtn.style.display = "none";
-      progressSection.style.display = "block";
-      await processRoutes();  // Start the main process
-    });
-
-    // Add next button to preview section
-    previewNextBtn.addEventListener("click", () => {
-      modal.querySelector("#preview-section").style.display = "none";
-      modal.querySelector("#dsp-progress-section").style.display = "block";
-      
-      // Populate DSP progress section with gathered data
-      if (window.dspProgress) {
-        const inProgressInput = modal.querySelector('#in-progress-input');
-        const atRiskInput = modal.querySelector('#at-risk-input');
-        const behindInput = modal.querySelector('#behind-input');
-        const packageProgressInput = modal.querySelector('#package-progress-input');
-        
-        if (inProgressInput) inProgressInput.value = window.dspProgress.inProgress;
-        if (atRiskInput) atRiskInput.value = window.dspProgress.atRisk;
-        if (behindInput) behindInput.value = window.dspProgress.behind;
-        if (packageProgressInput) packageProgressInput.value = window.dspProgress.packageProgress;
-      }
-    });
-
-    // Add event listeners for the progress back button
-    progressBackBtn.addEventListener("click", () => {
-      modal.querySelector("#dsp-progress-section").style.display = "none";
-      modal.querySelector("#preview-section").style.display = "block";
-    });
-
-    progressBackBtn.addEventListener("mouseover", () => {
-      progressBackBtn.style.backgroundColor = "#5a6268";
-      progressBackBtn.style.boxShadow = "0 4px 6px rgba(108, 117, 125, 0.3)";
-    });
-
-    progressBackBtn.addEventListener("mouseout", () => {
-      progressBackBtn.style.backgroundColor = "#6c757d";
-      progressBackBtn.style.boxShadow = "0 2px 4px rgba(108, 117, 125, 0.2)";
-    });
-
-    backBtn.addEventListener("click", () => {
-      const previewSection = modal.querySelector("#preview-section");
-      const daSelectionSection = modal.querySelector("#da-selection-section");
-      previewSection.style.display = "none";
-      daSelectionSection.style.display = "block";
-    });
-
-    backBtn.addEventListener("mouseover", () => {
-      backBtn.style.backgroundColor = "#5a6268";
-      backBtn.style.boxShadow = "0 4px 6px rgba(108, 117, 125, 0.3)";
-    });
-    backBtn.addEventListener("mouseout", () => {
-      backBtn.style.backgroundColor = "#6c757d";
-      backBtn.style.boxShadow = "0 2px 4px rgba(108, 117, 125, 0.2)";
-    });
-
-    startBtn.addEventListener("mouseover", () => {
-      startBtn.style.transform = "translateY(-1px)";
-      startBtn.style.boxShadow = "0 6px 8px rgba(47, 133, 90, 0.3)";
-    });
-
-    startBtn.addEventListener("mouseout", () => {
-      startBtn.style.transform = "none";
-      startBtn.style.boxShadow = "0 4px 6px rgba(47, 133, 90, 0.2)";
-    });
-
-    // Add click handler for close button
-    modal.querySelector("#close-btn").addEventListener("click", () => {
-      // Clean up existing elements
-      const existingModal = document.getElementById("custom-modal");
-      const existingFAB = document.getElementById("auto-gemba-fab");
-      existingModal?.remove();
-      existingFAB?.remove();
-      
-      // Reset window.dspProgress
-      window.dspProgress = null;
-      
-      // Create new FAB
-      createFAB();
-    });
-  };
-
-  const cleanupAndCreateModal = () => {
-    // Clean up any existing elements
-    const existingModal = document.getElementById("custom-modal");
-    const existingFAB = document.getElementById("auto-gemba-fab");
-    existingModal?.remove();
-    existingFAB?.remove();
-    
-    // Reset window.dspProgress
-    window.dspProgress = null;
-    
-    // Create fresh modal
-    const modal = createModal();
-    document.body.appendChild(modal);
-    attachModalEventListeners(modal);
-  };
-
-  const createFAB = () => {
-    const existingFAB = document.getElementById("auto-gemba-fab");
-    if (existingFAB) return; // Don't create if one already exists
-
-    const fab = document.createElement("button");
-    fab.id = "auto-gemba-fab";
-    fab.textContent = "Run AutoGemba";
-    fab.style.position = "fixed";
-    fab.style.bottom = "30px";
-    fab.style.right = "30px";
-    fab.style.padding = "12px 24px";
-    fab.style.backgroundColor = "#2f855a";
-    fab.style.color = "white";
-    fab.style.border = "none";
-    fab.style.borderRadius = "8px";
-    fab.style.boxShadow = "0 4px 8px rgba(0, 0, 0, 0.2)";
-    fab.style.cursor = "pointer";
-    fab.style.fontSize = "16px";
-    fab.style.fontWeight = "500";
-    fab.style.transition = "all 0.2s ease";
-    fab.style.zIndex = "10000";
-
-    fab.addEventListener("mouseover", () => {
-      fab.style.transform = "translateY(-2px)";
-      fab.style.boxShadow = "0 6px 12px rgba(0, 0, 0, 0.3)";
-      fab.style.backgroundColor = "#276749";
-    });
-
-    fab.addEventListener("mouseout", () => {
-      fab.style.transform = "translateY(0)";
-      fab.style.boxShadow = "0 4px 8px rgba(0, 0, 0, 0.2)";
-      fab.style.backgroundColor = "#2f855a";
-    });
-
-    fab.addEventListener("click", () => {
-      fab.remove(); // Remove FAB before creating modal
-      cleanupAndCreateModal();
-    });
-
-    document.body.appendChild(fab);
   };
 
   const updateProgress = (message, append = true, complete = false) => {
@@ -577,6 +429,11 @@
     updateProgress(`Collected ${routes.length} unique routes so far.`);
     console.log("Completed route collection. Total routes:", routes.length);
   };
+
+  const modal = createModal();
+  const downloadBtn = modal.querySelector("#download-btn");
+  const startBtn = modal.querySelector("#start-btn");
+  const progressSection = modal.querySelector("#progress-section");
 
   async function processRoutes() {
     try {
@@ -812,7 +669,7 @@
               </div>
               <div style="padding: 15px;">
                 <div style="margin-bottom: 15px;">
-                  <label style="display: block; margin-bottom: 5px; color: #1a202c; font-weight: 600; font-size: 14px;">Root Cause:</label>
+                  <label style="display: block; margin-bottom: 8px; color: #1a202c; font-weight: 600; font-size: 14px;">Root Cause:</label>
                   <div class="rc-checkboxes" style="display: flex; flex-direction: column; gap: 10px;">
                     <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 8px; border-radius: 6px; transition: all 0.2s ease;" title="Route covers a large geographical area" onmouseover="this.style.backgroundColor='rgba(248,250,252,0.8)'" onmouseout="this.style.backgroundColor='transparent'">
                       <input type="checkbox" class="rc-checkbox" value="Route is spread out" style="cursor: pointer; width: 16px; height: 16px; border: 2px solid #64748b; border-radius: 4px; transition: all 0.2s ease;" onmouseover="this.style.borderColor='#2F855A'" onmouseout="this.style.borderColor='#64748b'">
@@ -1029,13 +886,47 @@
     }
   };
 
-  // Initialize the app by creating the first modal
-  console.log("Initializing app...");
-  const modal = createModal();
-  console.log("Modal created, appending to body...");
-  document.body.appendChild(modal);
-  console.log("Attaching event listeners...");
-  attachModalEventListeners(modal);
-  console.log("Initialization complete");
+  // Add click handler for start button
+  startBtn.addEventListener("click", async () => {
+    startBtn.style.display = "none";
+    progressSection.style.display = "block";
+    await processRoutes();  // Start the main process
+  });
 
+  // Add next button to preview section
+  const previewNextBtn = modal.querySelector("#preview-next-btn");
+  previewNextBtn.addEventListener("click", () => {
+    modal.querySelector("#preview-section").style.display = "none";
+    modal.querySelector("#dsp-progress-section").style.display = "block";
+    
+    // Populate DSP progress section with gathered data
+    if (window.dspProgress) {
+      const inProgressInput = modal.querySelector('#in-progress-input');
+      const atRiskInput = modal.querySelector('#at-risk-input');
+      const behindInput = modal.querySelector('#behind-input');
+      const packageProgressInput = modal.querySelector('#package-progress-input');
+      
+      if (inProgressInput) inProgressInput.value = window.dspProgress.inProgress;
+      if (atRiskInput) atRiskInput.value = window.dspProgress.atRisk;
+      if (behindInput) behindInput.value = window.dspProgress.behind;
+      if (packageProgressInput) packageProgressInput.value = window.dspProgress.packageProgress;
+    }
+  });
+
+  // Add event listeners for the progress back button
+  const progressBackBtn = modal.querySelector("#progress-back-btn");
+  progressBackBtn.addEventListener("click", () => {
+    modal.querySelector("#dsp-progress-section").style.display = "none";
+    modal.querySelector("#preview-section").style.display = "block";
+  });
+
+  progressBackBtn.addEventListener("mouseover", () => {
+    progressBackBtn.style.backgroundColor = "#5a6268";
+    progressBackBtn.style.boxShadow = "0 4px 6px rgba(108, 117, 125, 0.3)";
+  });
+
+  progressBackBtn.addEventListener("mouseout", () => {
+    progressBackBtn.style.backgroundColor = "#6c757d";
+    progressBackBtn.style.boxShadow = "0 2px 4px rgba(108, 117, 125, 0.2)";
+  });
 })();
