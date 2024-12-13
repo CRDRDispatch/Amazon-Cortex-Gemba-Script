@@ -8,9 +8,10 @@
     modal.style.transform = "translate(-50%, -50%)";
     modal.style.width = "min(40vw, 500px)";
     modal.style.minWidth = "400px";
-    modal.style.maxWidth = "800px";
+    modal.style.maxWidth = "90vw";
     modal.style.height = "auto";
-    modal.style.maxHeight = "90vh";
+    modal.style.minHeight = "200px";
+    modal.style.maxHeight = "80vh";
     modal.style.display = "flex";
     modal.style.flexDirection = "column";
     modal.style.background = "linear-gradient(to bottom, #ffffff, #fafafa)";
@@ -22,6 +23,7 @@
     modal.style.borderRadius = "16px";
     modal.style.zIndex = "10000";
     modal.style.overflow = "hidden";
+    modal.style.resize = "both";
     modal.style.cursor = "move";
 
     modal.innerHTML = `
@@ -244,76 +246,54 @@
 
     document.body.appendChild(modal);
 
-    // Make modal draggable
+    // Add drag functionality
     let isDragging = false;
-    let startX;
-    let startY;
-    let modalRect;
+    let currentX;
+    let currentY;
+    let initialX;
+    let initialY;
+    let xOffset = 0;
+    let yOffset = 0;
 
     const dragStart = (e) => {
-      if (e.target.closest('button') || e.target.closest('select')) return;  
+      // Don't start dragging if we're on the resize handle
+      if (e.target.style.cursor === 'se-resize') return;
+      
+      initialX = e.clientX - xOffset;
+      initialY = e.clientY - yOffset;
 
-      isDragging = true;
-      modalRect = modal.getBoundingClientRect();
-      
-      if (e.type === "touchstart") {
-        startX = e.touches[0].clientX - modalRect.left;
-        startY = e.touches[0].clientY - modalRect.top;
-      } else {
-        startX = e.clientX - modalRect.left;
-        startY = e.clientY - modalRect.top;
+      if (e.target === modal || e.target.closest('#modal-content')) {
+        isDragging = true;
       }
-      
-      modal.style.cursor = 'grabbing';
     };
 
     const dragEnd = () => {
+      initialX = currentX;
+      initialY = currentY;
       isDragging = false;
-      modal.style.cursor = 'move';
     };
 
     const drag = (e) => {
-      if (!isDragging) return;
-      e.preventDefault();
+      if (isDragging) {
+        e.preventDefault();
+        currentX = e.clientX - initialX;
+        currentY = e.clientY - initialY;
+        xOffset = currentX;
+        yOffset = currentY;
 
-      let x, y;
-      if (e.type === "touchmove") {
-        x = e.touches[0].clientX - startX;
-        y = e.touches[0].clientY - startY;
-      } else {
-        x = e.clientX - startX;
-        y = e.clientY - startY;
+        modal.style.transform = `translate(calc(-50% + ${currentX}px), calc(-50% + ${currentY}px))`;
       }
-
-      const modalWidth = modalRect.width;
-      const modalHeight = modalRect.height;
-      const maxX = window.innerWidth - modalWidth;
-      const maxY = window.innerHeight - modalHeight;
-
-      x = Math.max(0, Math.min(x, maxX));
-      y = Math.max(0, Math.min(y, maxY));
-
-      modal.style.left = x + 'px';
-      modal.style.top = y + 'px';
-      modal.style.transform = 'none';
-      modal.style.webkitTransform = 'none';
-      updateResizeHandlePosition();
     };
 
-    modal.addEventListener("touchstart", dragStart, { passive: false });
-    modal.addEventListener("touchend", dragEnd);
-    modal.addEventListener("touchmove", drag, { passive: false });
-    document.addEventListener("mousedown", (e) => {
-      if (modal.contains(e.target)) dragStart(e);
-    });
-    document.addEventListener("mouseup", dragEnd);
+    modal.addEventListener("mousedown", dragStart);
     document.addEventListener("mousemove", drag);
+    document.addEventListener("mouseup", dragEnd);
 
     // Clean up event listeners when modal is closed
     modal.querySelector("#close-btn").addEventListener("click", () => {
       document.removeEventListener("mousedown", dragStart);
-      document.removeEventListener("mouseup", dragEnd);
       document.removeEventListener("mousemove", drag);
+      document.removeEventListener("mouseup", dragEnd);
       modal.remove();
     });
 
@@ -323,12 +303,32 @@
         const modalContent = entry.target;
         const modal = modalContent.parentElement;
         if (modal) {
+          // Get viewport dimensions
+          const viewportWidth = window.innerWidth;
           const viewportHeight = window.innerHeight;
+          
+          // Calculate maximum dimensions
+          const maxWidth = viewportWidth * 0.9;  
+          const maxHeight = viewportHeight * 0.8; 
+          
+          // Get current dimensions
+          const modalWidth = modal.offsetWidth;
           const modalHeight = modal.offsetHeight;
-          if (modalHeight > viewportHeight * 0.9) {
-            modal.style.height = '90vh';
-          } else {
-            modal.style.height = 'auto';
+          
+          // Apply constraints while preserving user's resize intent
+          if (modalWidth > maxWidth) {
+            modal.style.width = maxWidth + 'px';
+          }
+          if (modalHeight > maxHeight) {
+            modal.style.height = maxHeight + 'px';
+          }
+          
+          // Ensure minimum dimensions
+          if (modalWidth < 400) {
+            modal.style.width = '400px';
+          }
+          if (modalHeight < 200) {
+            modal.style.height = '200px';
           }
         }
       }
