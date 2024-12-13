@@ -8,7 +8,7 @@
   // Reset window.dspProgress
   window.dspProgress = null;
 
-  const cleanupAndRestart = () => {
+  const cleanupAndCreateModal = () => {
     // Clean up any existing elements
     const existingModal = document.getElementById("custom-modal");
     const existingFAB = document.getElementById("auto-gemba-fab");
@@ -18,10 +18,9 @@
     // Reset window.dspProgress
     window.dspProgress = null;
     
-    // Start fresh process
+    // Create fresh modal
     const modal = createModal();
     document.body.appendChild(modal);
-    processRoutes();
   };
 
   const createFAB = () => {
@@ -54,9 +53,7 @@
       fab.style.boxShadow = "0 4px 12px rgba(47, 133, 90, 0.3)";
     });
 
-    fab.addEventListener("click", () => {
-      cleanupAndRestart();
-    });
+    fab.addEventListener("click", cleanupAndCreateModal);
 
     document.body.appendChild(fab);
   };
@@ -71,6 +68,9 @@
     modal.style.width = "min(40vw, 500px)";
     modal.style.minWidth = "400px";
     modal.style.maxWidth = "90vw";
+    modal.style.height = "600px";
+    modal.style.minHeight = "400px";
+    modal.style.maxHeight = "90vh";
     modal.style.display = "flex";
     modal.style.flexDirection = "column";
     modal.style.background = "linear-gradient(to bottom, #ffffff, #fafafa)";
@@ -225,14 +225,12 @@
         const deltaX = e.clientX - resize.startX;
         const deltaY = e.clientY - resize.startY;
 
-        const newWidth = Math.max(400, resize.startWidth + deltaX);
-        const newHeight = Math.max(400, resize.startHeight + deltaY);
+        const newWidth = Math.max(400, Math.min(resize.startWidth + deltaX, window.innerWidth * 0.9));
+        const newHeight = Math.max(400, Math.min(resize.startHeight + deltaY, window.innerHeight * 0.9));
 
-        requestAnimationFrame(() => {
-            modal.style.width = newWidth + 'px';
-            modal.style.height = newHeight + 'px';
-            updateResizeHandlePosition();
-        });
+        modal.style.width = newWidth + 'px';
+        modal.style.height = newHeight + 'px';
+        updateResizeHandlePosition();
     };
 
     const onMouseUp = function(e) {
