@@ -8,6 +8,98 @@
   // Reset window.dspProgress
   window.dspProgress = null;
 
+  const attachModalEventListeners = (modal) => {
+    const startBtn = modal.querySelector("#start-btn");
+    const progressSection = modal.querySelector("#progress-section");
+    const downloadBtn = modal.querySelector("#download-btn");
+    const previewNextBtn = modal.querySelector("#preview-next-btn");
+    const progressBackBtn = modal.querySelector("#progress-back-btn");
+    const backBtn = modal.querySelector("#back-btn");
+
+    // Add click handler for start button
+    startBtn.addEventListener("click", async () => {
+      startBtn.style.display = "none";
+      progressSection.style.display = "block";
+      await processRoutes();  // Start the main process
+    });
+
+    // Add next button to preview section
+    previewNextBtn.addEventListener("click", () => {
+      modal.querySelector("#preview-section").style.display = "none";
+      modal.querySelector("#dsp-progress-section").style.display = "block";
+      
+      // Populate DSP progress section with gathered data
+      if (window.dspProgress) {
+        const inProgressInput = modal.querySelector('#in-progress-input');
+        const atRiskInput = modal.querySelector('#at-risk-input');
+        const behindInput = modal.querySelector('#behind-input');
+        const packageProgressInput = modal.querySelector('#package-progress-input');
+        
+        if (inProgressInput) inProgressInput.value = window.dspProgress.inProgress;
+        if (atRiskInput) atRiskInput.value = window.dspProgress.atRisk;
+        if (behindInput) behindInput.value = window.dspProgress.behind;
+        if (packageProgressInput) packageProgressInput.value = window.dspProgress.packageProgress;
+      }
+    });
+
+    // Add event listeners for the progress back button
+    progressBackBtn.addEventListener("click", () => {
+      modal.querySelector("#dsp-progress-section").style.display = "none";
+      modal.querySelector("#preview-section").style.display = "block";
+    });
+
+    progressBackBtn.addEventListener("mouseover", () => {
+      progressBackBtn.style.backgroundColor = "#5a6268";
+      progressBackBtn.style.boxShadow = "0 4px 6px rgba(108, 117, 125, 0.3)";
+    });
+
+    progressBackBtn.addEventListener("mouseout", () => {
+      progressBackBtn.style.backgroundColor = "#6c757d";
+      progressBackBtn.style.boxShadow = "0 2px 4px rgba(108, 117, 125, 0.2)";
+    });
+
+    backBtn.addEventListener("click", () => {
+      const previewSection = modal.querySelector("#preview-section");
+      const daSelectionSection = modal.querySelector("#da-selection-section");
+      previewSection.style.display = "none";
+      daSelectionSection.style.display = "block";
+    });
+
+    backBtn.addEventListener("mouseover", () => {
+      backBtn.style.backgroundColor = "#5a6268";
+      backBtn.style.boxShadow = "0 4px 6px rgba(108, 117, 125, 0.3)";
+    });
+    backBtn.addEventListener("mouseout", () => {
+      backBtn.style.backgroundColor = "#6c757d";
+      backBtn.style.boxShadow = "0 2px 4px rgba(108, 117, 125, 0.2)";
+    });
+
+    startBtn.addEventListener("mouseover", () => {
+      startBtn.style.transform = "translateY(-1px)";
+      startBtn.style.boxShadow = "0 6px 8px rgba(47, 133, 90, 0.3)";
+    });
+
+    startBtn.addEventListener("mouseout", () => {
+      startBtn.style.transform = "none";
+      startBtn.style.boxShadow = "0 4px 6px rgba(47, 133, 90, 0.2)";
+    });
+
+    // Add click handler for close button
+    modal.querySelector("#close-btn").addEventListener("click", () => {
+      // Clean up existing elements
+      const existingModal = document.getElementById("custom-modal");
+      const existingFAB = document.getElementById("auto-gemba-fab");
+      existingModal?.remove();
+      existingFAB?.remove();
+      
+      // Reset window.dspProgress
+      window.dspProgress = null;
+      
+      // Create new FAB
+      createFAB();
+    });
+  };
+
   const cleanupAndCreateModal = () => {
     // Clean up any existing elements
     const existingModal = document.getElementById("custom-modal");
@@ -21,6 +113,7 @@
     // Create fresh modal
     const modal = createModal();
     document.body.appendChild(modal);
+    attachModalEventListeners(modal);
   };
 
   const createFAB = () => {
@@ -493,9 +586,8 @@
   };
 
   const modal = createModal();
-  const downloadBtn = modal.querySelector("#download-btn");
-  const startBtn = modal.querySelector("#start-btn");
-  const progressSection = modal.querySelector("#progress-section");
+  document.body.appendChild(modal);
+  attachModalEventListeners(modal);
 
   async function processRoutes() {
     try {
@@ -948,61 +1040,5 @@
     }
   };
 
-  // Add click handler for start button
-  startBtn.addEventListener("click", async () => {
-    startBtn.style.display = "none";
-    progressSection.style.display = "block";
-    await processRoutes();  // Start the main process
-  });
-
-  // Add next button to preview section
-  const previewNextBtn = modal.querySelector("#preview-next-btn");
-  previewNextBtn.addEventListener("click", () => {
-    modal.querySelector("#preview-section").style.display = "none";
-    modal.querySelector("#dsp-progress-section").style.display = "block";
-    
-    // Populate DSP progress section with gathered data
-    if (window.dspProgress) {
-      const inProgressInput = modal.querySelector('#in-progress-input');
-      const atRiskInput = modal.querySelector('#at-risk-input');
-      const behindInput = modal.querySelector('#behind-input');
-      const packageProgressInput = modal.querySelector('#package-progress-input');
-      
-      if (inProgressInput) inProgressInput.value = window.dspProgress.inProgress;
-      if (atRiskInput) atRiskInput.value = window.dspProgress.atRisk;
-      if (behindInput) behindInput.value = window.dspProgress.behind;
-      if (packageProgressInput) packageProgressInput.value = window.dspProgress.packageProgress;
-    }
-  });
-
-  // Add event listeners for the progress back button
-  const progressBackBtn = modal.querySelector("#progress-back-btn");
-  progressBackBtn.addEventListener("click", () => {
-    modal.querySelector("#dsp-progress-section").style.display = "none";
-    modal.querySelector("#preview-section").style.display = "block";
-  });
-
-  progressBackBtn.addEventListener("mouseover", () => {
-    progressBackBtn.style.backgroundColor = "#5a6268";
-    progressBackBtn.style.boxShadow = "0 4px 6px rgba(108, 117, 125, 0.3)";
-  });
-
-  progressBackBtn.addEventListener("mouseout", () => {
-    progressBackBtn.style.backgroundColor = "#6c757d";
-    progressBackBtn.style.boxShadow = "0 2px 4px rgba(108, 117, 125, 0.2)";
-  });
-
-  modal.querySelector("#close-btn").addEventListener("click", () => {
-    // Clean up existing elements
-    const existingModal = document.getElementById("custom-modal");
-    const existingFAB = document.getElementById("auto-gemba-fab");
-    existingModal?.remove();
-    existingFAB?.remove();
-    
-    // Reset window.dspProgress
-    window.dspProgress = null;
-    
-    // Create new FAB
-    createFAB();
-  });
+  createFAB();
 })();
