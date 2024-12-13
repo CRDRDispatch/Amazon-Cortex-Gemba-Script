@@ -1,17 +1,5 @@
 (async function () {
   const createModal = () => {
-    // Remove existing modal if it exists
-    const existingModal = document.getElementById('custom-modal');
-    if (existingModal) {
-        existingModal.remove();
-    }
-
-    // Remove existing FAB if it exists
-    const existingFab = document.getElementById('gemba-fab');
-    if (existingFab) {
-        existingFab.remove();
-    }
-
     const modal = document.createElement("div");
     modal.id = "custom-modal";
     modal.style.position = "fixed";
@@ -21,9 +9,9 @@
     modal.style.width = "min(40vw, 500px)";
     modal.style.minWidth = "400px";
     modal.style.maxWidth = "90vw";
-    modal.style.height = "auto";
-    modal.style.minHeight = "200px";
-    modal.style.maxHeight = "80vh";
+    modal.style.height = "min(80vh, 600px)";
+    modal.style.minHeight = "400px";
+    modal.style.maxHeight = "90vh";
     modal.style.display = "flex";
     modal.style.flexDirection = "column";
     modal.style.background = "linear-gradient(to bottom, #ffffff, #fafafa)";
@@ -33,17 +21,13 @@
     modal.style.borderRadius = "16px";
     modal.style.zIndex = "10000";
     modal.style.overflow = "hidden";
-    modal.style.resize = "both";
     modal.style.cursor = "move";
-    modal.style.userSelect = "none";
-    modal.style.webkitUserSelect = "none";
-    modal.style.msUserSelect = "none";
 
     modal.innerHTML = `
-      <button id="close-btn" style="position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 20px; cursor: pointer; color: #666; transition: all 0.2s ease; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background-color: rgba(248,249,250,0.8); border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.08); z-index: 10002; user-select: none;">✖</button>
-      <div id="modal-content" style="flex: 1; overflow-y: auto; padding: 0 15px 0 0; margin-right: -15px; scrollbar-width: thin; scrollbar-color: #cbd5e0 #f8f9fa; user-select: none;">
+      <button id="close-btn" style="position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 20px; cursor: pointer; color: #666; transition: all 0.2s ease; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background-color: rgba(248,249,250,0.8); border-radius: 50%; box-shadow: 0 2px 8px rgba(0,0,0,0.08); z-index: 10002;">✖</button>
+      <div id="modal-content" style="flex: 1; overflow-y: auto; padding: 0 15px 0 0; margin-right: -15px; scrollbar-width: thin; scrollbar-color: #cbd5e0 #f8f9fa;">
         <div style="margin-bottom: 25px; cursor: move; display: flex; justify-content: center; align-items: center;">
-          <img src="https://crdrdispatch.github.io/GembaScript/Logo.svg" alt="Logo" style="height: 120px; transform: translateZ(0); filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1)); user-select: none; pointer-events: none;">
+          <img src="https://crdrdispatch.github.io/GembaScript/Logo.svg" alt="Logo" style="height: 120px; transform: translateZ(0); filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));">
         </div>
         <p style="text-align: center; color: #374151; margin-bottom: 25px; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; line-height: 1.5;">Please make sure you're on the full "Route" view before running. Do not interact with the page until progress is complete. Once complete you may move the modal window around and resize it as needed. Thank you.</p>
         <div id="start-section" style="text-align: center; margin-bottom: 30px;">
@@ -116,61 +100,90 @@
       </div>
     `;
 
-    let isDragging = false;
-    let currentX;
-    let currentY;
-    let initialX;
-    let initialY;
-    let xOffset = 0;
-    let yOffset = 0;
+    // Add resize handle styles
+    const resizeHandle = document.createElement('div');
+    resizeHandle.style.position = 'absolute';
+    resizeHandle.style.right = '0';
+    resizeHandle.style.bottom = '0';
+    resizeHandle.style.width = '24px';
+    resizeHandle.style.height = '24px';
+    resizeHandle.style.cursor = 'se-resize';
+    resizeHandle.style.zIndex = '10002';
+    resizeHandle.style.userSelect = 'none';
+    resizeHandle.style.background = 'linear-gradient(135deg, transparent 50%, rgba(248,249,250,0.95) 50%)';
+    resizeHandle.style.borderRadius = '0 0 16px 0';
+    resizeHandle.style.boxShadow = 'inset -1px -1px 0 rgba(0,0,0,0.1)';
+    resizeHandle.style.display = 'flex';
+    resizeHandle.style.alignItems = 'center';
+    resizeHandle.style.justifyContent = 'center';
 
-    const isInResizeArea = (e) => {
-      const rect = modal.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-      return x > rect.width - 20 && y > rect.height - 20;
+    // Create SVG for resize handle with diagonal lines
+    const svgContent = `
+      <svg width="12" height="12" viewBox="0 0 12 12" xmlns="http://www.w3.org/2000/svg" style="transform: translate(2px, 2px)">
+        <style>
+          .resize-line { stroke: rgba(0,0,0,0.4); stroke-width: 1.25; }
+        </style>
+        <line x1="8" y1="12" x2="12" y2="8" class="resize-line" />
+        <line x1="4" y1="12" x2="12" y2="4" class="resize-line" />
+        <line x1="0" y1="12" x2="12" y2="0" class="resize-line" />
+      </svg>
+    `;
+    resizeHandle.innerHTML = svgContent;
+
+    modal.appendChild(resizeHandle);
+
+    // Update resize handle position
+    const updateResizeHandlePosition = () => {
+        // No need to update position since it's absolute positioned
+        // Just ensure the handle is visible
+        resizeHandle.style.display = 'flex';
     };
 
-    const dragStart = (e) => {
-      if (e.target.closest('#close-btn') || isInResizeArea(e)) {
-        return;
-      }
-      
-      initialX = e.clientX - xOffset;
-      initialY = e.clientY - yOffset;
-      isDragging = true;
-      modal.style.cursor = 'grabbing';
+    // Add resize functionality
+    const resize = {
+        isResizing: false,
+        startX: 0,
+        startY: 0,
+        startWidth: 0,
+        startHeight: 0
     };
 
-    const dragEnd = () => {
-      isDragging = false;
-      modal.style.cursor = 'move';
-      initialX = currentX;
-      initialY = currentY;
+    const onMouseDown = function(e) {
+        resize.isResizing = true;
+        resize.startX = e.clientX;
+        resize.startY = e.clientY;
+        resize.startWidth = modal.offsetWidth;
+        resize.startHeight = modal.offsetHeight;
+        e.stopPropagation();
+        document.body.style.cursor = 'se-resize';
     };
 
-    const drag = (e) => {
-      if (isDragging) {
-        e.preventDefault();
-        currentX = e.clientX - initialX;
-        currentY = e.clientY - initialY;
-        xOffset = currentX;
-        yOffset = currentY;
-        modal.style.transform = `translate(calc(-50% + ${currentX}px), calc(-50% + ${currentY}px))`;
-      }
+    const onMouseMove = function(e) {
+        if (!resize.isResizing) return;
+
+        const deltaX = e.clientX - resize.startX;
+        const deltaY = e.clientY - resize.startY;
+
+        const newWidth = Math.max(400, Math.min(resize.startWidth + deltaX, window.innerWidth * 0.9));
+        const newHeight = Math.max(400, Math.min(resize.startHeight + deltaY, window.innerHeight * 0.9));
+
+        modal.style.width = newWidth + 'px';
+        modal.style.height = newHeight + 'px';
     };
 
-    modal.addEventListener("mousedown", dragStart);
-    document.addEventListener("mousemove", drag);
-    document.addEventListener("mouseup", dragEnd);
+    const onMouseUp = function() {
+        if (resize.isResizing) {
+            resize.isResizing = false;
+            document.body.style.cursor = 'default';
+        }
+    };
 
-    const closeBtn = modal.querySelector("#close-btn");
-    closeBtn.addEventListener("click", () => {
-      modal.remove();
-      createFloatingButton();
-    });
+    resizeHandle.addEventListener('mousedown', onMouseDown);
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
 
     // Add hover effects
+    const closeBtn = modal.querySelector("#close-btn");
     closeBtn.addEventListener("mouseover", () => {
         closeBtn.style.backgroundColor = 'rgba(254,226,226,0.8)';
         closeBtn.style.color = '#ef4444';
@@ -228,38 +241,91 @@
 
     document.body.appendChild(modal);
 
+    // Make modal draggable
+    let isDragging = false;
+    let startX;
+    let startY;
+    let modalRect;
+
+    const dragStart = (e) => {
+      if (e.target.closest('button') || e.target.closest('select')) return;  
+
+      isDragging = true;
+      modalRect = modal.getBoundingClientRect();
+      
+      if (e.type === "touchstart") {
+        startX = e.touches[0].clientX - modalRect.left;
+        startY = e.touches[0].clientY - modalRect.top;
+      } else {
+        startX = e.clientX - modalRect.left;
+        startY = e.clientY - modalRect.top;
+      }
+      
+      modal.style.cursor = 'grabbing';
+    };
+
+    const dragEnd = () => {
+      isDragging = false;
+      modal.style.cursor = 'move';
+    };
+
+    const drag = (e) => {
+      if (!isDragging) return;
+      e.preventDefault();
+
+      let x, y;
+      if (e.type === "touchmove") {
+        x = e.touches[0].clientX - startX;
+        y = e.touches[0].clientY - startY;
+      } else {
+        x = e.clientX - startX;
+        y = e.clientY - startY;
+      }
+
+      const modalWidth = modalRect.width;
+      const modalHeight = modalRect.height;
+      const maxX = window.innerWidth - modalWidth;
+      const maxY = window.innerHeight - modalHeight;
+
+      x = Math.max(0, Math.min(x, maxX));
+      y = Math.max(0, Math.min(y, maxY));
+
+      modal.style.left = x + 'px';
+      modal.style.top = y + 'px';
+      modal.style.transform = 'none';
+      modal.style.webkitTransform = 'none';
+      updateResizeHandlePosition();
+    };
+
+    modal.addEventListener("touchstart", dragStart, { passive: false });
+    modal.addEventListener("touchend", dragEnd);
+    modal.addEventListener("touchmove", drag, { passive: false });
+    document.addEventListener("mousedown", (e) => {
+      if (modal.contains(e.target)) dragStart(e);
+    });
+    document.addEventListener("mouseup", dragEnd);
+    document.addEventListener("mousemove", drag);
+
+    // Clean up event listeners when modal is closed
+    modal.querySelector("#close-btn").addEventListener("click", () => {
+      document.removeEventListener("mousedown", dragStart);
+      document.removeEventListener("mouseup", dragEnd);
+      document.removeEventListener("mousemove", drag);
+      modal.remove();
+    });
+
     // Add resize observer to handle content changes
     const resizeObserver = new ResizeObserver(entries => {
       for (let entry of entries) {
         const modalContent = entry.target;
         const modal = modalContent.parentElement;
         if (modal) {
-          // Get viewport dimensions
-          const viewportWidth = window.innerWidth;
           const viewportHeight = window.innerHeight;
-          
-          // Calculate maximum dimensions
-          const maxWidth = viewportWidth * 0.9;  
-          const maxHeight = viewportHeight * 0.8; 
-          
-          // Get current dimensions
-          const modalWidth = modal.offsetWidth;
           const modalHeight = modal.offsetHeight;
-          
-          // Apply constraints while preserving user's resize intent
-          if (modalWidth > maxWidth) {
-            modal.style.width = maxWidth + 'px';
-          }
-          if (modalHeight > maxHeight) {
-            modal.style.height = maxHeight + 'px';
-          }
-          
-          // Ensure minimum dimensions
-          if (modalWidth < 400) {
-            modal.style.width = '400px';
-          }
-          if (modalHeight < 200) {
-            modal.style.height = '200px';
+          if (modalHeight > viewportHeight * 0.9) {
+            modal.style.height = '90vh';
+          } else {
+            modal.style.height = 'auto';
           }
         }
       }
@@ -269,6 +335,53 @@
     resizeObserver.observe(modalContent);
 
     return modal;
+  };
+
+  const createFAB = () => {
+    const fab = document.createElement("button");
+    fab.id = "auto-gemba-fab";
+    fab.textContent = "Run AutoGemba";
+    fab.style.position = "fixed";
+    fab.style.bottom = "32px";
+    fab.style.right = "32px";
+    fab.style.padding = "16px 24px";
+    fab.style.background = "linear-gradient(135deg, #2F855A, #276749)";
+    fab.style.color = "white";
+    fab.style.border = "none";
+    fab.style.borderRadius = "16px";
+    fab.style.cursor = "pointer";
+    fab.style.fontFamily = 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+    fab.style.fontWeight = "500";
+    fab.style.fontSize = "16px";
+    fab.style.boxShadow = "0 4px 12px rgba(47, 133, 90, 0.3)";
+    fab.style.transition = "all 0.2s ease";
+    fab.style.zIndex = "10000";
+
+    fab.addEventListener("mouseover", () => {
+      fab.style.transform = "translateY(-2px)";
+      fab.style.boxShadow = "0 6px 16px rgba(47, 133, 90, 0.4)";
+    });
+
+    fab.addEventListener("mouseout", () => {
+      fab.style.transform = "translateY(0)";
+      fab.style.boxShadow = "0 4px 12px rgba(47, 133, 90, 0.3)";
+    });
+
+    fab.addEventListener("click", () => {
+      // Remove any existing modals or FABs first
+      const existingModal = document.getElementById("custom-modal");
+      const existingFAB = document.getElementById("auto-gemba-fab");
+      existingModal?.remove();
+      existingFAB?.remove();
+      
+      // Reset window.dspProgress
+      window.dspProgress = null;
+      
+      // Start fresh process
+      processRoutes();
+    });
+
+    document.body.appendChild(fab);
   };
 
   const updateProgress = (message, append = true, complete = false) => {
@@ -863,74 +976,17 @@
     progressBackBtn.style.boxShadow = "0 2px 4px rgba(108, 117, 125, 0.2)";
   });
 
-  function createFloatingButton() {
-    const fab = document.createElement('button');
-    fab.id = 'gemba-fab';
-    fab.innerHTML = '<span style="margin-right: 8px;">↻</span>Run AutoGemba';
-    fab.title = 'Restart Auto Gemba';
+  modal.querySelector("#close-btn").addEventListener("click", () => {
+    // Clean up any existing elements
+    const existingModal = document.getElementById("custom-modal");
+    const existingFAB = document.getElementById("auto-gemba-fab");
+    existingModal?.remove();
+    existingFAB?.remove();
     
-    // Style the floating button
-    Object.assign(fab.style, {
-        position: 'fixed',
-        bottom: '30px',
-        right: '30px',
-        height: '48px',
-        padding: '0 24px',
-        borderRadius: '24px',
-        backgroundColor: '#2563eb',
-        color: 'white',
-        border: 'none',
-        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-        cursor: 'pointer',
-        fontSize: '16px',
-        fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-        fontWeight: '500',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        transition: 'all 0.2s ease',
-        zIndex: '10000',
-        userSelect: 'none',
-        whiteSpace: 'nowrap'
-    });
-
-    // Add hover effect
-    fab.onmouseenter = () => {
-        fab.style.transform = 'scale(1.05)';
-        fab.style.backgroundColor = '#1d4ed8';
-        fab.style.boxShadow = '0 6px 16px rgba(0, 0, 0, 0.2)';
-    };
-    fab.onmouseleave = () => {
-        fab.style.transform = 'scale(1)';
-        fab.style.backgroundColor = '#2563eb';
-        fab.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
-    };
-
-    // Add click handler to restart the process
-    fab.onclick = () => {
-        fab.remove();
-        startProcess();
-    };
-
-    document.body.appendChild(fab);
-  }
-
-  function startProcess() {
-    const existingModal = document.getElementById('custom-modal');
-    if (existingModal) {
-        existingModal.remove();
-    }
-    const modal = createModal();
-    const downloadBtn = modal.querySelector("#download-btn");
-    const startBtn = modal.querySelector("#start-btn");
-    const progressSection = modal.querySelector("#progress-section");
-
-    startBtn.addEventListener("click", async () => {
-      startBtn.style.display = "none";
-      progressSection.style.display = "block";
-      await processRoutes();  // Start the main process
-    });
-  }
-
-  startProcess();
+    // Reset window.dspProgress
+    window.dspProgress = null;
+    
+    // Create new FAB
+    createFAB();
+  });
 })();
