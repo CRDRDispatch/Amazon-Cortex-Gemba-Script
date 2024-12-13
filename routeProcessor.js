@@ -26,18 +26,6 @@
     modal.style.resize = "both";
     modal.style.cursor = "move";
 
-    // Create a resize handle
-    const resizeHandle = document.createElement('div');
-    resizeHandle.style.position = 'absolute';
-    resizeHandle.style.right = '0';
-    resizeHandle.style.bottom = '0';
-    resizeHandle.style.width = '15px';
-    resizeHandle.style.height = '15px';
-    resizeHandle.style.cursor = 'se-resize';
-    resizeHandle.style.zIndex = '10001';
-
-    modal.appendChild(resizeHandle);
-
     modal.innerHTML = `
       <button id="close-btn" style="position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 20px; cursor: pointer; color: #666; transition: all 0.2s ease; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background-color: rgba(248,249,250,0.8); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); border-radius: 50%; box-shadow: 0 2px 8px rgba(0,0,0,0.08); z-index: 10002;">✖</button>
       <div id="modal-content" style="flex: 1; overflow-y: auto; padding: 0 15px 0 0; margin-right: -15px; scrollbar-width: thin; scrollbar-color: #cbd5e0 #f8f9fa;">
@@ -115,68 +103,60 @@
       </div>
     `;
 
-    // Add resize handle styles
-    const svgContent = `
-      <svg width="12" height="12" viewBox="0 0 12 12" xmlns="http://www.w3.org/2000/svg" style="transform: translate(2px, 2px)">
-        <style>
-          .resize-line { stroke: rgba(0,0,0,0.4); stroke-width: 1.25; }
-        </style>
-        <line x1="8" y1="12" x2="12" y2="8" class="resize-line" />
-        <line x1="4" y1="12" x2="12" y2="4" class="resize-line" />
-        <line x1="0" y1="12" x2="12" y2="0" class="resize-line" />
-      </svg>
-    `;
-    resizeHandle.innerHTML = svgContent;
+    let isDragging = false;
+    let currentX;
+    let currentY;
+    let initialX;
+    let initialY;
+    let xOffset = 0;
+    let yOffset = 0;
 
-    // Update resize handle position
-    const updateResizeHandlePosition = () => {
-        // No need to update position since it's absolute positioned
-        // Just ensure the handle is visible
-        resizeHandle.style.display = 'flex';
+    const isInResizeArea = (e) => {
+      const rect = modal.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      return x > rect.width - 20 && y > rect.height - 20;
     };
 
-    // Add resize functionality
-    const resize = {
-        isResizing: false,
-        startX: 0,
-        startY: 0,
-        startWidth: 0,
-        startHeight: 0
+    const dragStart = (e) => {
+      if (e.target.closest('#close-btn') || isInResizeArea(e)) {
+        return;
+      }
+      
+      initialX = e.clientX - xOffset;
+      initialY = e.clientY - yOffset;
+      isDragging = true;
+      modal.style.cursor = 'grabbing';
     };
 
-    const onMouseDown = function(e) {
-        resize.isResizing = true;
-        resize.startX = e.clientX;
-        resize.startY = e.clientY;
-        resize.startWidth = modal.offsetWidth;
-        resize.startHeight = modal.offsetHeight;
-        e.stopPropagation();
-        document.body.style.cursor = 'se-resize';
+    const dragEnd = () => {
+      isDragging = false;
+      modal.style.cursor = 'move';
+      initialX = currentX;
+      initialY = currentY;
     };
 
-    const onMouseMove = function(e) {
-        if (!resize.isResizing) return;
-
-        const deltaX = e.clientX - resize.startX;
-        const deltaY = e.clientY - resize.startY;
-
-        const newWidth = Math.max(400, Math.min(resize.startWidth + deltaX, window.innerWidth * 0.9));
-        const newHeight = Math.max(300, Math.min(resize.startHeight + deltaY, window.innerHeight * 0.9));
-
-        modal.style.width = newWidth + 'px';
-        modal.style.height = newHeight + 'px';
+    const drag = (e) => {
+      if (isDragging) {
+        e.preventDefault();
+        currentX = e.clientX - initialX;
+        currentY = e.clientY - initialY;
+        xOffset = currentX;
+        yOffset = currentY;
+        modal.style.transform = `translate(calc(-50% + ${currentX}px), calc(-50% + ${currentY}px))`;
+      }
     };
 
-    const onMouseUp = function() {
-        if (resize.isResizing) {
-            resize.isResizing = false;
-            document.body.style.cursor = 'default';
-        }
-    };
+    modal.addEventListener("mousedown", dragStart);
+    document.addEventListener("mousemove", drag);
+    document.addEventListener("mouseup", dragEnd);
 
-    resizeHandle.addEventListener('mousedown', onMouseDown);
-    document.addEventListener('mousemove', onMouseMove);
-    document.addEventListener('mouseup', onMouseUp);
+    modal.querySelector("#close-btn").addEventListener("click", () => {
+      modal.removeEventListener("mousedown", dragStart);
+      document.removeEventListener("mousemove", drag);
+      document.removeEventListener("mouseup", dragEnd);
+      modal.remove();
+    });
 
     // Add hover effects
     const closeBtn = modal.querySelector("#close-btn");
@@ -236,59 +216,6 @@
     });
 
     document.body.appendChild(modal);
-
-    // Add drag functionality
-    let isDragging = false;
-    let currentX;
-    let currentY;
-    let initialX;
-    let initialY;
-    let xOffset = 0;
-    let yOffset = 0;
-
-    const dragStart = (e) => {
-      // Don't start dragging if we're on the resize handle or close button
-      if (e.target === resizeHandle || e.target.closest('#close-btn')) return;
-      
-      initialX = e.clientX - xOffset;
-      initialY = e.clientY - yOffset;
-      isDragging = true;
-      
-      // Change cursor to grabbing while dragging
-      modal.style.cursor = 'grabbing';
-    };
-
-    const dragEnd = () => {
-      isDragging = false;
-      // Restore cursor to move
-      modal.style.cursor = 'move';
-      initialX = currentX;
-      initialY = currentY;
-    };
-
-    const drag = (e) => {
-      if (isDragging) {
-        e.preventDefault();
-        currentX = e.clientX - initialX;
-        currentY = e.clientY - initialY;
-        xOffset = currentX;
-        yOffset = currentY;
-
-        modal.style.transform = `translate(calc(-50% + ${currentX}px), calc(-50% + ${currentY}px))`;
-      }
-    };
-
-    modal.addEventListener("mousedown", dragStart);
-    document.addEventListener("mousemove", drag);
-    document.addEventListener("mouseup", dragEnd);
-
-    // Clean up event listeners when modal is closed
-    modal.querySelector("#close-btn").addEventListener("click", () => {
-      modal.removeEventListener("mousedown", dragStart);
-      document.removeEventListener("mousemove", drag);
-      document.removeEventListener("mouseup", dragEnd);
-      modal.remove();
-    });
 
     // Add resize observer to handle content changes
     const resizeObserver = new ResizeObserver(entries => {
