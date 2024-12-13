@@ -8,6 +8,59 @@
   // Reset window.dspProgress
   window.dspProgress = null;
 
+  const cleanupAndRestart = () => {
+    // Clean up any existing elements
+    const existingModal = document.getElementById("custom-modal");
+    const existingFAB = document.getElementById("auto-gemba-fab");
+    existingModal?.remove();
+    existingFAB?.remove();
+    
+    // Reset window.dspProgress
+    window.dspProgress = null;
+    
+    // Start fresh process
+    const modal = createModal();
+    document.body.appendChild(modal);
+    processRoutes();
+  };
+
+  const createFAB = () => {
+    const fab = document.createElement("button");
+    fab.id = "auto-gemba-fab";
+    fab.textContent = "Run AutoGemba";
+    fab.style.position = "fixed";
+    fab.style.bottom = "32px";
+    fab.style.right = "32px";
+    fab.style.padding = "16px 24px";
+    fab.style.background = "linear-gradient(135deg, #2F855A, #276749)";
+    fab.style.color = "white";
+    fab.style.border = "none";
+    fab.style.borderRadius = "16px";
+    fab.style.cursor = "pointer";
+    fab.style.fontFamily = 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+    fab.style.fontWeight = "500";
+    fab.style.fontSize = "16px";
+    fab.style.boxShadow = "0 4px 12px rgba(47, 133, 90, 0.3)";
+    fab.style.transition = "all 0.2s ease";
+    fab.style.zIndex = "10000";
+
+    fab.addEventListener("mouseover", () => {
+      fab.style.transform = "translateY(-2px)";
+      fab.style.boxShadow = "0 6px 16px rgba(47, 133, 90, 0.4)";
+    });
+
+    fab.addEventListener("mouseout", () => {
+      fab.style.transform = "translateY(0)";
+      fab.style.boxShadow = "0 4px 12px rgba(47, 133, 90, 0.3)";
+    });
+
+    fab.addEventListener("click", () => {
+      cleanupAndRestart();
+    });
+
+    document.body.appendChild(fab);
+  };
+
   const createModal = () => {
     const modal = document.createElement("div");
     modal.id = "custom-modal";
@@ -18,9 +71,6 @@
     modal.style.width = "min(40vw, 500px)";
     modal.style.minWidth = "400px";
     modal.style.maxWidth = "90vw";
-    modal.style.height = "min(80vh, 600px)";
-    modal.style.minHeight = "400px";
-    modal.style.maxHeight = "90vh";
     modal.style.display = "flex";
     modal.style.flexDirection = "column";
     modal.style.background = "linear-gradient(to bottom, #ffffff, #fafafa)";
@@ -34,7 +84,7 @@
 
     modal.innerHTML = `
       <button id="close-btn" style="position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 20px; cursor: pointer; color: #666; transition: all 0.2s ease; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background-color: rgba(248,249,250,0.8); border-radius: 50%; box-shadow: 0 2px 8px rgba(0,0,0,0.08); z-index: 10002;">✖</button>
-      <div id="modal-content" style="flex: 1; overflow-y: auto; padding: 0 15px 0 0; margin-right: -15px; scrollbar-width: thin; scrollbar-color: #cbd5e0 #f8f9fa; height: calc(100% - 25px);">
+      <div id="modal-content" style="flex: 1; overflow-y: auto; padding: 0 15px 0 0; margin-right: -15px; scrollbar-width: thin; scrollbar-color: #cbd5e0 #f8f9fa;">
         <div style="margin-bottom: 25px; cursor: move; display: flex; justify-content: center; align-items: center;">
           <img src="https://crdrdispatch.github.io/GembaScript/Logo.svg" alt="Logo" style="height: 120px; transform: translateZ(0); filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));">
         </div>
@@ -56,7 +106,7 @@
         </div>
         <div id="da-selection-section" style="display: none; margin-bottom: 30px;">
           <h3 style="font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif; font-size: 16px; color: #1a202c; margin-bottom: 12px; font-weight: 600;">These routes have multiple DAs. Please select the DA originally assigned to the route as to avoid selecting a rescuer for the progress output.</h3>
-          <div id="da-dropdowns" style="height: calc(100vh - 450px); min-height: 200px; max-height: calc(90vh - 250px); overflow-y: auto; padding: 15px; background: rgba(248,249,250,0.8); border-radius: 12px; border: 1px solid rgba(0,0,0,0.06); box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
+          <div id="da-dropdowns" style="overflow-y: auto; padding: 15px; background: rgba(248,249,250,0.8); border-radius: 12px; border: 1px solid rgba(0,0,0,0.06); box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
           </div>
           <div style="margin-top: 20px; text-align: right;">
             <button id="da-next-btn" style="padding: 12px 30px; background: linear-gradient(135deg, #4CAF50, #43a047); color: white; border: none; border-radius: 12px; cursor: pointer; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 500; font-size: 15px; box-shadow: 0 4px 6px rgba(76, 175, 80, 0.2); transition: all 0.2s ease;">Next</button>
@@ -70,7 +120,7 @@
             <h3 style="font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif; font-size: 16px; color: #1a202c; margin: 0; font-weight: 600;">Route Details</h3>
             <div style="width: 80px;"></div>
           </div>
-          <div id="route-details" style="height: calc(100vh - 450px); min-height: 200px; max-height: calc(90vh - 250px); overflow-y: auto; padding: 15px; background: rgba(255,255,255,0.8); border-radius: 12px; border: 1px solid rgba(0,0,0,0.06); box-shadow: 0 1px 3px rgba(0,0,0,0.02); scrollbar-width: thin; scrollbar-color: #cbd5e0 #f8f9fa;">
+          <div id="route-details" style="overflow-y: auto; padding: 15px; background: rgba(255,255,255,0.8); border-radius: 12px; border: 1px solid rgba(0,0,0,0.06); box-shadow: 0 1px 3px rgba(0,0,0,0.02); scrollbar-width: thin; scrollbar-color: #cbd5e0 #f8f9fa;">
           </div>
           <div style="display: flex; justify-content: flex-end; margin-top: 20px;">
             <button id="preview-next-btn" style="padding: 12px 30px; background: linear-gradient(135deg, #4CAF50, #43a047); color: white; border: none; border-radius: 12px; cursor: pointer; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 500; font-size: 15px; box-shadow: 0 4px 6px rgba(76, 175, 80, 0.2); transition: all 0.2s ease;">Next</button>
@@ -161,26 +211,31 @@
         resize.isResizing = true;
         resize.startX = e.clientX;
         resize.startY = e.clientY;
-        resize.startWidth = modal.offsetWidth;
-        resize.startHeight = modal.offsetHeight;
+        resize.startWidth = parseInt(getComputedStyle(modal).width);
+        resize.startHeight = parseInt(getComputedStyle(modal).height);
+        e.preventDefault();
         e.stopPropagation();
         document.body.style.cursor = 'se-resize';
     };
 
     const onMouseMove = function(e) {
         if (!resize.isResizing) return;
+        e.preventDefault();
 
         const deltaX = e.clientX - resize.startX;
         const deltaY = e.clientY - resize.startY;
 
-        const newWidth = Math.max(400, Math.min(resize.startWidth + deltaX, window.innerWidth * 0.9));
-        const newHeight = Math.max(400, Math.min(resize.startHeight + deltaY, window.innerHeight * 0.9));
+        const newWidth = Math.max(400, resize.startWidth + deltaX);
+        const newHeight = Math.max(400, resize.startHeight + deltaY);
 
-        modal.style.width = newWidth + 'px';
-        modal.style.height = newHeight + 'px';
+        requestAnimationFrame(() => {
+            modal.style.width = newWidth + 'px';
+            modal.style.height = newHeight + 'px';
+            updateResizeHandlePosition();
+        });
     };
 
-    const onMouseUp = function() {
+    const onMouseUp = function(e) {
         if (resize.isResizing) {
             resize.isResizing = false;
             document.body.style.cursor = 'default';
@@ -321,6 +376,7 @@
       document.removeEventListener("mouseup", dragEnd);
       document.removeEventListener("mousemove", drag);
       modal.remove();
+      createFAB();
     });
 
     // Add resize observer to handle content changes
@@ -344,53 +400,6 @@
     resizeObserver.observe(modalContent);
 
     return modal;
-  };
-
-  const createFAB = () => {
-    const fab = document.createElement("button");
-    fab.id = "auto-gemba-fab";
-    fab.textContent = "Run AutoGemba";
-    fab.style.position = "fixed";
-    fab.style.bottom = "32px";
-    fab.style.right = "32px";
-    fab.style.padding = "16px 24px";
-    fab.style.background = "linear-gradient(135deg, #2F855A, #276749)";
-    fab.style.color = "white";
-    fab.style.border = "none";
-    fab.style.borderRadius = "16px";
-    fab.style.cursor = "pointer";
-    fab.style.fontFamily = 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-    fab.style.fontWeight = "500";
-    fab.style.fontSize = "16px";
-    fab.style.boxShadow = "0 4px 12px rgba(47, 133, 90, 0.3)";
-    fab.style.transition = "all 0.2s ease";
-    fab.style.zIndex = "10000";
-
-    fab.addEventListener("mouseover", () => {
-      fab.style.transform = "translateY(-2px)";
-      fab.style.boxShadow = "0 6px 16px rgba(47, 133, 90, 0.4)";
-    });
-
-    fab.addEventListener("mouseout", () => {
-      fab.style.transform = "translateY(0)";
-      fab.style.boxShadow = "0 4px 12px rgba(47, 133, 90, 0.3)";
-    });
-
-    fab.addEventListener("click", () => {
-      // Remove any existing modals or FABs first
-      const existingModal = document.getElementById("custom-modal");
-      const existingFAB = document.getElementById("auto-gemba-fab");
-      existingModal?.remove();
-      existingFAB?.remove();
-      
-      // Reset window.dspProgress
-      window.dspProgress = null;
-      
-      // Start fresh process
-      processRoutes();
-    });
-
-    document.body.appendChild(fab);
   };
 
   const updateProgress = (message, append = true, complete = false) => {
@@ -986,7 +995,7 @@
   });
 
   modal.querySelector("#close-btn").addEventListener("click", () => {
-    // Clean up any existing elements
+    // Clean up existing elements
     const existingModal = document.getElementById("custom-modal");
     const existingFAB = document.getElementById("auto-gemba-fab");
     existingModal?.remove();
