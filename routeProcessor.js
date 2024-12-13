@@ -1,5 +1,17 @@
 (async function () {
   const createModal = () => {
+    // Remove existing modal if it exists
+    const existingModal = document.getElementById('custom-modal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+
+    // Remove existing FAB if it exists
+    const existingFab = document.getElementById('gemba-fab');
+    if (existingFab) {
+        existingFab.remove();
+    }
+
     const modal = document.createElement("div");
     modal.id = "custom-modal";
     modal.style.position = "fixed";
@@ -17,20 +29,21 @@
     modal.style.background = "linear-gradient(to bottom, #ffffff, #fafafa)";
     modal.style.boxShadow = "0 10px 25px rgba(0, 0, 0, 0.12), 0 4px 12px rgba(0, 0, 0, 0.08)";
     modal.style.border = "1px solid rgba(0, 0, 0, 0.1)";
-    modal.style.backdropFilter = "blur(8px)";
-    modal.style.webkitBackdropFilter = "blur(8px)";
     modal.style.padding = "25px";
     modal.style.borderRadius = "16px";
     modal.style.zIndex = "10000";
     modal.style.overflow = "hidden";
     modal.style.resize = "both";
     modal.style.cursor = "move";
+    modal.style.userSelect = "none";
+    modal.style.webkitUserSelect = "none";
+    modal.style.msUserSelect = "none";
 
     modal.innerHTML = `
-      <button id="close-btn" style="position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 20px; cursor: pointer; color: #666; transition: all 0.2s ease; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background-color: rgba(248,249,250,0.8); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); border-radius: 50%; box-shadow: 0 2px 8px rgba(0,0,0,0.08); z-index: 10002;">✖</button>
-      <div id="modal-content" style="flex: 1; overflow-y: auto; padding: 0 15px 0 0; margin-right: -15px; scrollbar-width: thin; scrollbar-color: #cbd5e0 #f8f9fa;">
+      <button id="close-btn" style="position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 20px; cursor: pointer; color: #666; transition: all 0.2s ease; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background-color: rgba(248,249,250,0.8); border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.08); z-index: 10002; user-select: none;">✖</button>
+      <div id="modal-content" style="flex: 1; overflow-y: auto; padding: 0 15px 0 0; margin-right: -15px; scrollbar-width: thin; scrollbar-color: #cbd5e0 #f8f9fa; user-select: none;">
         <div style="margin-bottom: 25px; cursor: move; display: flex; justify-content: center; align-items: center;">
-          <img src="https://crdrdispatch.github.io/GembaScript/Logo.svg" alt="Logo" style="height: 120px; transform: translateZ(0); filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));">
+          <img src="https://crdrdispatch.github.io/GembaScript/Logo.svg" alt="Logo" style="height: 120px; transform: translateZ(0); filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1)); user-select: none; pointer-events: none;">
         </div>
         <p style="text-align: center; color: #374151; margin-bottom: 25px; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; line-height: 1.5;">Please make sure you're on the full "Route" view before running. Do not interact with the page until progress is complete. Once complete you may move the modal window around and resize it as needed. Thank you.</p>
         <div id="start-section" style="text-align: center; margin-bottom: 30px;">
@@ -50,7 +63,7 @@
         </div>
         <div id="da-selection-section" style="display: none; margin-bottom: 30px;">
           <h3 style="font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif; font-size: 16px; color: #1a202c; margin-bottom: 12px; font-weight: 600;">These routes have multiple DAs. Please select the DA originally assigned to the route as to avoid selecting a rescuer for the progress output.</h3>
-          <div id="da-dropdowns" style="height: calc(100vh - 450px); min-height: 200px; max-height: calc(90vh - 250px); overflow-y: auto; padding: 15px; background: rgba(248,249,250,0.8); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); border-radius: 12px; border: 1px solid rgba(0,0,0,0.06); box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
+          <div id="da-dropdowns" style="height: calc(100vh - 450px); min-height: 200px; max-height: calc(90vh - 250px); overflow-y: auto; padding: 15px; background: rgba(248,249,250,0.8); border-radius: 12px; border: 1px solid rgba(0,0,0,0.06); box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
           </div>
           <div style="margin-top: 20px; text-align: right;">
             <button id="da-next-btn" style="padding: 12px 30px; background: linear-gradient(135deg, #4CAF50, #43a047); color: white; border: none; border-radius: 12px; cursor: pointer; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 500; font-size: 15px; box-shadow: 0 4px 6px rgba(76, 175, 80, 0.2); transition: all 0.2s ease;">Next</button>
@@ -151,15 +164,13 @@
     document.addEventListener("mousemove", drag);
     document.addEventListener("mouseup", dragEnd);
 
-    modal.querySelector("#close-btn").addEventListener("click", () => {
-      modal.removeEventListener("mousedown", dragStart);
-      document.removeEventListener("mousemove", drag);
-      document.removeEventListener("mouseup", dragEnd);
+    const closeBtn = modal.querySelector("#close-btn");
+    closeBtn.addEventListener("click", () => {
       modal.remove();
+      createFloatingButton();
     });
 
     // Add hover effects
-    const closeBtn = modal.querySelector("#close-btn");
     closeBtn.addEventListener("mouseover", () => {
         closeBtn.style.backgroundColor = 'rgba(254,226,226,0.8)';
         closeBtn.style.color = '#ef4444';
@@ -851,4 +862,75 @@
     progressBackBtn.style.backgroundColor = "#6c757d";
     progressBackBtn.style.boxShadow = "0 2px 4px rgba(108, 117, 125, 0.2)";
   });
+
+  function createFloatingButton() {
+    const fab = document.createElement('button');
+    fab.id = 'gemba-fab';
+    fab.innerHTML = '<span style="margin-right: 8px;">↻</span>Run AutoGemba';
+    fab.title = 'Restart Auto Gemba';
+    
+    // Style the floating button
+    Object.assign(fab.style, {
+        position: 'fixed',
+        bottom: '30px',
+        right: '30px',
+        height: '48px',
+        padding: '0 24px',
+        borderRadius: '24px',
+        backgroundColor: '#2563eb',
+        color: 'white',
+        border: 'none',
+        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+        cursor: 'pointer',
+        fontSize: '16px',
+        fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+        fontWeight: '500',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        transition: 'all 0.2s ease',
+        zIndex: '10000',
+        userSelect: 'none',
+        whiteSpace: 'nowrap'
+    });
+
+    // Add hover effect
+    fab.onmouseenter = () => {
+        fab.style.transform = 'scale(1.05)';
+        fab.style.backgroundColor = '#1d4ed8';
+        fab.style.boxShadow = '0 6px 16px rgba(0, 0, 0, 0.2)';
+    };
+    fab.onmouseleave = () => {
+        fab.style.transform = 'scale(1)';
+        fab.style.backgroundColor = '#2563eb';
+        fab.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
+    };
+
+    // Add click handler to restart the process
+    fab.onclick = () => {
+        fab.remove();
+        startProcess();
+    };
+
+    document.body.appendChild(fab);
+  }
+
+  function startProcess() {
+    const existingModal = document.getElementById('custom-modal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+    const modal = createModal();
+    const downloadBtn = modal.querySelector("#download-btn");
+    const startBtn = modal.querySelector("#start-btn");
+    const progressSection = modal.querySelector("#progress-section");
+
+    startBtn.addEventListener("click", async () => {
+      startBtn.style.display = "none";
+      progressSection.style.display = "block";
+      await processRoutes();  // Start the main process
+    });
+  }
+
+  startProcess();
 })();
