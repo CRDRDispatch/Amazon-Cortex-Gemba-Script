@@ -26,6 +26,18 @@
     modal.style.resize = "both";
     modal.style.cursor = "move";
 
+    // Create a resize handle
+    const resizeHandle = document.createElement('div');
+    resizeHandle.style.position = 'absolute';
+    resizeHandle.style.right = '0';
+    resizeHandle.style.bottom = '0';
+    resizeHandle.style.width = '15px';
+    resizeHandle.style.height = '15px';
+    resizeHandle.style.cursor = 'se-resize';
+    resizeHandle.style.zIndex = '10001';
+
+    modal.appendChild(resizeHandle);
+
     modal.innerHTML = `
       <button id="close-btn" style="position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 20px; cursor: pointer; color: #666; transition: all 0.2s ease; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background-color: rgba(248,249,250,0.8); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); border-radius: 50%; box-shadow: 0 2px 8px rgba(0,0,0,0.08); z-index: 10002;">✖</button>
       <div id="modal-content" style="flex: 1; overflow-y: auto; padding: 0 15px 0 0; margin-right: -15px; scrollbar-width: thin; scrollbar-color: #cbd5e0 #f8f9fa;">
@@ -104,25 +116,6 @@
     `;
 
     // Add resize handle styles
-    const resizeHandle = document.createElement('div');
-    resizeHandle.style.position = 'absolute';
-    resizeHandle.style.right = '0';
-    resizeHandle.style.bottom = '0';
-    resizeHandle.style.width = '24px';
-    resizeHandle.style.height = '24px';
-    resizeHandle.style.cursor = 'se-resize';
-    resizeHandle.style.zIndex = '10002';
-    resizeHandle.style.userSelect = 'none';
-    resizeHandle.style.background = 'linear-gradient(135deg, transparent 50%, rgba(248,249,250,0.95) 50%)';
-    resizeHandle.style.borderRadius = '0 0 16px 0';
-    resizeHandle.style.boxShadow = 'inset -1px -1px 0 rgba(0,0,0,0.1)';
-    resizeHandle.style.backdropFilter = 'blur(4px)';
-    resizeHandle.style.webkitBackdropFilter = 'blur(4px)';
-    resizeHandle.style.display = 'flex';
-    resizeHandle.style.alignItems = 'center';
-    resizeHandle.style.justifyContent = 'center';
-
-    // Create SVG for resize handle with diagonal lines
     const svgContent = `
       <svg width="12" height="12" viewBox="0 0 12 12" xmlns="http://www.w3.org/2000/svg" style="transform: translate(2px, 2px)">
         <style>
@@ -134,8 +127,6 @@
       </svg>
     `;
     resizeHandle.innerHTML = svgContent;
-
-    modal.appendChild(resizeHandle);
 
     // Update resize handle position
     const updateResizeHandlePosition = () => {
@@ -256,21 +247,23 @@
     let yOffset = 0;
 
     const dragStart = (e) => {
-      // Don't start dragging if we're on the resize handle
-      if (e.target.style.cursor === 'se-resize') return;
+      // Don't start dragging if we're on the resize handle or close button
+      if (e.target === resizeHandle || e.target.closest('#close-btn')) return;
       
       initialX = e.clientX - xOffset;
       initialY = e.clientY - yOffset;
-
-      if (e.target === modal || e.target.closest('#modal-content')) {
-        isDragging = true;
-      }
+      isDragging = true;
+      
+      // Change cursor to grabbing while dragging
+      modal.style.cursor = 'grabbing';
     };
 
     const dragEnd = () => {
+      isDragging = false;
+      // Restore cursor to move
+      modal.style.cursor = 'move';
       initialX = currentX;
       initialY = currentY;
-      isDragging = false;
     };
 
     const drag = (e) => {
@@ -291,7 +284,7 @@
 
     // Clean up event listeners when modal is closed
     modal.querySelector("#close-btn").addEventListener("click", () => {
-      document.removeEventListener("mousedown", dragStart);
+      modal.removeEventListener("mousedown", dragStart);
       document.removeEventListener("mousemove", drag);
       document.removeEventListener("mouseup", dragEnd);
       modal.remove();
