@@ -97,6 +97,19 @@
     previewNextBtn.addEventListener("click", () => {
       previewSection.style.display = "none";
       dspProgressSection.style.display = "block";
+      
+      // Populate DSP progress section with gathered data
+      if (window.dspProgress) {
+        const inProgressInput = modal.querySelector('#in-progress-input');
+        const atRiskInput = modal.querySelector('#at-risk-input');
+        const behindInput = modal.querySelector('#behind-input');
+        const packageProgressInput = modal.querySelector('#package-progress-input');
+        
+        if (inProgressInput) inProgressInput.value = window.dspProgress.inProgress;
+        if (atRiskInput) atRiskInput.value = window.dspProgress.atRisk;
+        if (behindInput) behindInput.value = window.dspProgress.behind;
+        if (packageProgressInput) packageProgressInput.value = window.dspProgress.packageProgress;
+      }
     });
 
     backBtn.addEventListener("click", () => {
@@ -107,6 +120,17 @@
     progressBackBtn.addEventListener("click", () => {
       dspProgressSection.style.display = "none";
       previewSection.style.display = "block";
+    });
+
+    // Add hover effects for progress back button
+    progressBackBtn.addEventListener("mouseover", () => {
+      progressBackBtn.style.backgroundColor = "#5a6268";
+      progressBackBtn.style.boxShadow = "0 4px 6px rgba(108, 117, 125, 0.3)";
+    });
+
+    progressBackBtn.addEventListener("mouseout", () => {
+      progressBackBtn.style.backgroundColor = "#6c757d";
+      progressBackBtn.style.boxShadow = "0 2px 4px rgba(108, 117, 125, 0.2)";
     });
 
     // Store resize observer in window for cleanup
