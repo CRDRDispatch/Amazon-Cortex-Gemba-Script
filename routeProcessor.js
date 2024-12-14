@@ -6,6 +6,12 @@
   }
   window.__routeProcessorRunning = true;
 
+  // Remove existing FAB if present
+  const existingFab = document.querySelector("#auto-gemba-fab");
+  if (existingFab) {
+    existingFab.remove();
+  }
+
   // Add cleanup function
   function cleanup() {
     const existingModal = document.querySelector("#custom-modal");
@@ -15,6 +21,47 @@
     window.__routeProcessorRunning = false;
     delete window.dspProgress;
     window.removeEventListener("unload", cleanup);
+
+    // Create and add FAB after cleanup
+    const fab = document.createElement("button");
+    fab.id = "auto-gemba-fab";
+    fab.textContent = "Run AutoGemba";
+    fab.style.position = "fixed";
+    fab.style.bottom = "20px";
+    fab.style.right = "20px";
+    fab.style.padding = "16px 24px";
+    fab.style.backgroundColor = "#2F855A";
+    fab.style.color = "white";
+    fab.style.border = "none";
+    fab.style.borderRadius = "12px";
+    fab.style.cursor = "pointer";
+    fab.style.fontFamily = "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+    fab.style.fontSize = "16px";
+    fab.style.fontWeight = "500";
+    fab.style.boxShadow = "0 4px 6px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06)";
+    fab.style.transition = "all 0.2s ease";
+    fab.style.zIndex = "9999";
+
+    fab.onmouseover = () => {
+      fab.style.transform = "translateY(-2px)";
+      fab.style.boxShadow = "0 6px 8px rgba(0, 0, 0, 0.1), 0 3px 6px rgba(0, 0, 0, 0.06)";
+      fab.style.backgroundColor = "#276749";
+    };
+
+    fab.onmouseout = () => {
+      fab.style.transform = "translateY(0)";
+      fab.style.boxShadow = "0 4px 6px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06)";
+      fab.style.backgroundColor = "#2F855A";
+    };
+
+    fab.onclick = () => {
+      fab.remove();
+      const script = document.createElement("script");
+      script.src = "routeProcessor.js";
+      document.body.appendChild(script);
+    };
+
+    document.body.appendChild(fab);
   }
 
   // Add cleanup on window unload
