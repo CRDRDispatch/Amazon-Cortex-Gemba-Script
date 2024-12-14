@@ -69,6 +69,16 @@
     
     // Create and show new modal
     const modal = createModal();
+    const startBtn = modal.querySelector("#start-btn");
+    const progressSection = modal.querySelector("#progress-section");
+    
+    // Add click handler for start button
+    startBtn.addEventListener("click", async () => {
+      startBtn.style.display = "none";
+      progressSection.style.display = "block";
+      await processRoutes();
+    });
+
     // Store resize observer in window for cleanup
     window.autoGembaResizeObserver = new ResizeObserver(entries => {
       for (let entry of entries) {
