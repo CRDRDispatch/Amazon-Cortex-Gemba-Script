@@ -147,7 +147,26 @@
         startX: 0,
         startY: 0,
         startWidth: 0,
-        startHeight: 0
+        startHeight: 0,
+        rafId: null
+    };
+
+    const updateModalSize = (newWidth, newHeight) => {
+        // Cache DOM queries
+        const contentAreas = modal.querySelectorAll('#da-dropdowns, #route-details');
+        
+        // Apply new dimensions using transform for better performance
+        modal.style.width = `${newWidth}px`;
+        modal.style.height = `${newHeight}px`;
+
+        // Update content areas
+        const availableHeight = newHeight - 200;
+        const maxHeight = Math.min(availableHeight, window.innerHeight * 0.7);
+        contentAreas.forEach(area => {
+            if (area) {
+                area.style.height = `${Math.max(200, maxHeight)}px`;
+            }
+        });
     };
 
     const onMouseDown = function(e) {
@@ -158,30 +177,30 @@
         resize.startHeight = modal.offsetHeight;
         e.stopPropagation();
         document.body.style.cursor = 'se-resize';
+        
+        // Cancel any existing animation frame
+        if (resize.rafId) {
+            cancelAnimationFrame(resize.rafId);
+        }
     };
 
     const onMouseMove = function(e) {
         if (!resize.isResizing) return;
 
-        const deltaX = e.clientX - resize.startX;
-        const deltaY = e.clientY - resize.startY;
+        // Cancel previous frame if it exists
+        if (resize.rafId) {
+            cancelAnimationFrame(resize.rafId);
+        }
 
-        // Calculate new dimensions with padding consideration
-        const padding = 50; // 25px padding on each side
-        const newWidth = Math.max(400, Math.min(resize.startWidth + deltaX, window.innerWidth * 0.9));
-        const newHeight = Math.max(300, Math.min(resize.startHeight + deltaY, window.innerHeight * 0.9));
+        // Schedule new frame
+        resize.rafId = requestAnimationFrame(() => {
+            const deltaX = e.clientX - resize.startX;
+            const deltaY = e.clientY - resize.startY;
 
-        // Apply new dimensions
-        modal.style.width = newWidth + 'px';
-        modal.style.height = newHeight + 'px';
+            const newWidth = Math.max(400, Math.min(resize.startWidth + deltaX, window.innerWidth * 0.9));
+            const newHeight = Math.max(300, Math.min(resize.startHeight + deltaY, window.innerHeight * 0.9));
 
-        // Update content areas to be responsive
-        const contentAreas = modal.querySelectorAll('#da-dropdowns, #route-details');
-        contentAreas.forEach(area => {
-            if (area) {
-                const availableHeight = newHeight - 200; // Account for other elements
-                area.style.height = Math.max(200, Math.min(availableHeight, window.innerHeight * 0.7)) + 'px';
-            }
+            updateModalSize(newWidth, newHeight);
         });
 
         // Prevent text selection during resize
@@ -192,6 +211,12 @@
         if (resize.isResizing) {
             resize.isResizing = false;
             document.body.style.cursor = 'default';
+            
+            // Cancel any pending animation frame
+            if (resize.rafId) {
+                cancelAnimationFrame(resize.rafId);
+                resize.rafId = null;
+            }
         }
     };
 
