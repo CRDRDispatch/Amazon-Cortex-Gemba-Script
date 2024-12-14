@@ -965,3 +965,4 @@
     progressBackBtn.style.boxShadow = "0 2px 4px rgba(108, 117, 125, 0.2)";
   });
 })();
+
