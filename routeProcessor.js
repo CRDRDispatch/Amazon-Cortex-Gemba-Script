@@ -6,10 +6,11 @@
     modal.style.top = "50%";
     modal.style.left = "50%";
     modal.style.transform = "translate(-50%, -50%)";
-    modal.style.width = "min(40vw, 500px)";
+    modal.style.width = "500px";
     modal.style.minWidth = "400px";
-    modal.style.maxWidth = "800px";
-    modal.style.height = "auto";
+    modal.style.maxWidth = "90vw";
+    modal.style.height = "min-content";
+    modal.style.minHeight = "300px";
     modal.style.maxHeight = "90vh";
     modal.style.display = "flex";
     modal.style.flexDirection = "column";
@@ -21,9 +22,10 @@
     modal.style.zIndex = "10000";
     modal.style.overflow = "hidden";
     modal.style.cursor = "move";
+    modal.style.transition = "width 0.2s ease, height 0.2s ease";
 
     modal.innerHTML = `
-      <button id="close-btn" style="position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 20px; cursor: pointer; color: #666; transition: all 0.2s ease; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background-color: rgba(248,249,250,0.8); border-radius: 50%; box-shadow: 0 2px 8px rgba(0,0,0,0.08); z-index: 10002;">✖</button>
+      <button id="close-btn" style="position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 20px; cursor: pointer; color: #666; transition: all 0.2s ease; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background-color: rgba(248,249,250,0.8); border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.08); z-index: 10002;">✖</button>
       <div id="modal-content" style="flex: 1; overflow-y: auto; padding: 0 15px 0 0; margin-right: -15px; scrollbar-width: thin; scrollbar-color: #cbd5e0 #f8f9fa;">
         <div style="margin-bottom: 25px; cursor: move; display: flex; justify-content: center; align-items: center;">
           <img src="https://crdrdispatch.github.io/GembaScript/Logo.svg" alt="Logo" style="height: 120px; transform: translateZ(0); filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));">
@@ -104,8 +106,8 @@
     resizeHandle.style.position = 'absolute';
     resizeHandle.style.right = '0';
     resizeHandle.style.bottom = '0';
-    resizeHandle.style.width = '24px';
-    resizeHandle.style.height = '24px';
+    resizeHandle.style.width = '32px';
+    resizeHandle.style.height = '32px';
     resizeHandle.style.cursor = 'se-resize';
     resizeHandle.style.zIndex = '10002';
     resizeHandle.style.userSelect = 'none';
@@ -115,6 +117,7 @@
     resizeHandle.style.display = 'flex';
     resizeHandle.style.alignItems = 'center';
     resizeHandle.style.justifyContent = 'center';
+    resizeHandle.style.touchAction = 'none';
 
     // Create SVG for resize handle with diagonal lines
     const svgContent = `
@@ -163,11 +166,26 @@
         const deltaX = e.clientX - resize.startX;
         const deltaY = e.clientY - resize.startY;
 
+        // Calculate new dimensions with padding consideration
+        const padding = 50; // 25px padding on each side
         const newWidth = Math.max(400, Math.min(resize.startWidth + deltaX, window.innerWidth * 0.9));
         const newHeight = Math.max(300, Math.min(resize.startHeight + deltaY, window.innerHeight * 0.9));
 
+        // Apply new dimensions
         modal.style.width = newWidth + 'px';
         modal.style.height = newHeight + 'px';
+
+        // Update content areas to be responsive
+        const contentAreas = modal.querySelectorAll('#da-dropdowns, #route-details');
+        contentAreas.forEach(area => {
+            if (area) {
+                const availableHeight = newHeight - 200; // Account for other elements
+                area.style.height = Math.max(200, Math.min(availableHeight, window.innerHeight * 0.7)) + 'px';
+            }
+        });
+
+        // Prevent text selection during resize
+        e.preventDefault();
     };
 
     const onMouseUp = function() {
@@ -315,23 +333,17 @@
 
     // Add resize observer to handle content changes
     const resizeObserver = new ResizeObserver(entries => {
-      for (let entry of entries) {
-        const modalContent = entry.target;
-        const modal = modalContent.parentElement;
-        if (modal) {
-          const viewportHeight = window.innerHeight;
-          const modalHeight = modal.offsetHeight;
-          if (modalHeight > viewportHeight * 0.9) {
-            modal.style.height = '90vh';
-          } else {
-            modal.style.height = 'auto';
-          }
+        for (let entry of entries) {
+            const contentAreas = entry.target.querySelectorAll('#da-dropdowns, #route-details');
+            contentAreas.forEach(area => {
+                if (area) {
+                    const availableHeight = entry.contentRect.height - 200;
+                    area.style.height = Math.max(200, Math.min(availableHeight, window.innerHeight * 0.7)) + 'px';
+                }
+            });
         }
-      }
     });
-
-    const modalContent = modal.querySelector('#modal-content');
-    resizeObserver.observe(modalContent);
+    resizeObserver.observe(modal);
 
     return modal;
   };
