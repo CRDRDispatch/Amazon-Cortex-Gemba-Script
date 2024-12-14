@@ -2,14 +2,14 @@
   const createModal = () => {
     const modal = document.createElement("div");
     modal.id = "custom-modal";
-    modal.style.position = "absolute";
-    modal.style.top = "100px";
-    modal.style.left = "100px";
-    modal.style.width = "500px";
+    modal.style.position = "fixed";
+    modal.style.top = "50%";
+    modal.style.left = "50%";
+    modal.style.transform = "translate(-50%, -50%)";
+    modal.style.width = "min(40vw, 500px)";
     modal.style.minWidth = "400px";
-    modal.style.maxWidth = "90vw";
-    modal.style.height = "600px";
-    modal.style.minHeight = "400px";
+    modal.style.maxWidth = "800px";
+    modal.style.height = "auto";
     modal.style.maxHeight = "90vh";
     modal.style.display = "flex";
     modal.style.flexDirection = "column";
@@ -20,11 +20,11 @@
     modal.style.borderRadius = "16px";
     modal.style.zIndex = "10000";
     modal.style.overflow = "hidden";
-    modal.style.userSelect = "none";
+    modal.style.cursor = "move";
 
     modal.innerHTML = `
-      <button id="close-btn" style="position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 20px; cursor: pointer; color: #666; transition: all 0.2s ease; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background-color: rgba(248,249,250,0.8); border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.08); z-index: 10002;">✖</button>
-      <div id="modal-content" style="flex: 1; overflow-y: auto; padding: 0 15px 0 0; margin-right: -15px; scrollbar-width: thin; scrollbar-color: #cbd5e0 #f8f9fa; min-height: 0;">
+      <button id="close-btn" style="position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 20px; cursor: pointer; color: #666; transition: all 0.2s ease; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background-color: rgba(248,249,250,0.8); border-radius: 50%; box-shadow: 0 2px 8px rgba(0,0,0,0.08); z-index: 10002;">✖</button>
+      <div id="modal-content" style="flex: 1; overflow-y: auto; padding: 0 15px 0 0; margin-right: -15px; scrollbar-width: thin; scrollbar-color: #cbd5e0 #f8f9fa;">
         <div style="margin-bottom: 25px; cursor: move; display: flex; justify-content: center; align-items: center;">
           <img src="https://crdrdispatch.github.io/GembaScript/Logo.svg" alt="Logo" style="height: 120px; transform: translateZ(0); filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));">
         </div>
@@ -46,7 +46,7 @@
         </div>
         <div id="da-selection-section" style="display: none; margin-bottom: 30px;">
           <h3 style="font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif; font-size: 16px; color: #1a202c; margin-bottom: 12px; font-weight: 600;">These routes have multiple DAs. Please select the DA originally assigned to the route as to avoid selecting a rescuer for the progress output.</h3>
-          <div id="da-dropdowns" style="height: auto; min-height: 200px; max-height: calc(90vh - 250px); overflow-y: auto; padding: 15px; background: rgba(248,249,250,0.8); border-radius: 12px; border: 1px solid rgba(0,0,0,0.06); box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
+          <div id="da-dropdowns" style="height: calc(100vh - 450px); min-height: 200px; max-height: calc(90vh - 250px); overflow-y: auto; padding: 15px; background: rgba(248,249,250,0.8); border-radius: 12px; border: 1px solid rgba(0,0,0,0.06); box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
           </div>
           <div style="margin-top: 20px; text-align: right;">
             <button id="da-next-btn" style="padding: 12px 30px; background: linear-gradient(135deg, #4CAF50, #43a047); color: white; border: none; border-radius: 12px; cursor: pointer; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 500; font-size: 15px; box-shadow: 0 4px 6px rgba(76, 175, 80, 0.2); transition: all 0.2s ease;">Next</button>
@@ -60,7 +60,7 @@
             <h3 style="font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif; font-size: 16px; color: #1a202c; margin: 0; font-weight: 600;">Route Details</h3>
             <div style="width: 80px;"></div>
           </div>
-          <div id="route-details" style="height: auto; min-height: 200px; max-height: calc(90vh - 250px); overflow-y: auto; padding: 15px; background: rgba(255,255,255,0.8); border-radius: 12px; border: 1px solid rgba(0,0,0,0.06); box-shadow: 0 1px 3px rgba(0,0,0,0.02); scrollbar-width: thin; scrollbar-color: #cbd5e0 #f8f9fa;">
+          <div id="route-details" style="height: calc(100vh - 450px); min-height: 200px; max-height: calc(90vh - 250px); overflow-y: auto; padding: 15px; background: rgba(255,255,255,0.8); border-radius: 12px; border: 1px solid rgba(0,0,0,0.06); box-shadow: 0 1px 3px rgba(0,0,0,0.02); scrollbar-width: thin; scrollbar-color: #cbd5e0 #f8f9fa;">
           </div>
           <div style="display: flex; justify-content: flex-end; margin-top: 20px;">
             <button id="preview-next-btn" style="padding: 12px 30px; background: linear-gradient(135deg, #4CAF50, #43a047); color: white; border: none; border-radius: 12px; cursor: pointer; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 500; font-size: 15px; box-shadow: 0 4px 6px rgba(76, 175, 80, 0.2); transition: all 0.2s ease;">Next</button>
@@ -99,50 +99,87 @@
       </div>
     `;
 
-    // Create resize handle
+    // Add resize handle styles
     const resizeHandle = document.createElement('div');
     resizeHandle.style.position = 'absolute';
     resizeHandle.style.right = '0';
     resizeHandle.style.bottom = '0';
-    resizeHandle.style.width = '15px';
-    resizeHandle.style.height = '15px';
+    resizeHandle.style.width = '24px';
+    resizeHandle.style.height = '24px';
     resizeHandle.style.cursor = 'se-resize';
-    resizeHandle.style.zIndex = '10001';
+    resizeHandle.style.zIndex = '10002';
+    resizeHandle.style.userSelect = 'none';
+    resizeHandle.style.background = 'linear-gradient(135deg, transparent 50%, rgba(248,249,250,0.95) 50%)';
+    resizeHandle.style.borderRadius = '0 0 16px 0';
+    resizeHandle.style.boxShadow = 'inset -1px -1px 0 rgba(0,0,0,0.1)';
+    resizeHandle.style.display = 'flex';
+    resizeHandle.style.alignItems = 'center';
+    resizeHandle.style.justifyContent = 'center';
 
-    let isResizing = false;
-    let originalWidth;
-    let originalHeight;
-    let originalX;
-    let originalY;
-
-    resizeHandle.addEventListener('mousedown', (e) => {
-        isResizing = true;
-        originalWidth = modal.offsetWidth;
-        originalHeight = modal.offsetHeight;
-        originalX = e.clientX;
-        originalY = e.clientY;
-        e.preventDefault();
-    });
-
-    document.addEventListener('mousemove', (e) => {
-        if (!isResizing) return;
-
-        const width = originalWidth + (e.clientX - originalX);
-        const height = originalHeight + (e.clientY - originalY);
-
-        if (width >= 400 && width <= window.innerWidth * 0.9) {
-            modal.style.width = width + 'px';
-        }
-        if (height >= 400 && height <= window.innerHeight * 0.9) {
-            modal.style.height = height + 'px';
-        }
-    });
-
-    document.addEventListener('mouseup', () => {
-        isResizing = false;
-    });
+    // Create SVG for resize handle with diagonal lines
+    const svgContent = `
+      <svg width="12" height="12" viewBox="0 0 12 12" xmlns="http://www.w3.org/2000/svg" style="transform: translate(2px, 2px)">
+        <style>
+          .resize-line { stroke: rgba(0,0,0,0.4); stroke-width: 1.25; }
+        </style>
+        <line x1="8" y1="12" x2="12" y2="8" class="resize-line" />
+        <line x1="4" y1="12" x2="12" y2="4" class="resize-line" />
+        <line x1="0" y1="12" x2="12" y2="0" class="resize-line" />
+      </svg>
+    `;
+    resizeHandle.innerHTML = svgContent;
 
     modal.appendChild(resizeHandle);
+
+    // Update resize handle position
+    const updateResizeHandlePosition = () => {
+        // No need to update position since it's absolute positioned
+        // Just ensure the handle is visible
+        resizeHandle.style.display = 'flex';
+    };
+
+    // Add resize functionality
+    const resize = {
+        isResizing: false,
+        startX: 0,
+        startY: 0,
+        startWidth: 0,
+        startHeight: 0
+    };
+
+    const onMouseDown = function(e) {
+        resize.isResizing = true;
+        resize.startX = e.clientX;
+        resize.startY = e.clientY;
+        resize.startWidth = modal.offsetWidth;
+        resize.startHeight = modal.offsetHeight;
+        e.stopPropagation();
+        document.body.style.cursor = 'se-resize';
+    };
+
+    const onMouseMove = function(e) {
+        if (!resize.isResizing) return;
+
+        const deltaX = e.clientX - resize.startX;
+        const deltaY = e.clientY - resize.startY;
+
+        const newWidth = Math.max(400, Math.min(resize.startWidth + deltaX, window.innerWidth * 0.9));
+        const newHeight = Math.max(300, Math.min(resize.startHeight + deltaY, window.innerHeight * 0.9));
+
+        modal.style.width = newWidth + 'px';
+        modal.style.height = newHeight + 'px';
+    };
+
+    const onMouseUp = function() {
+        if (resize.isResizing) {
+            resize.isResizing = false;
+            document.body.style.cursor = 'default';
+        }
+    };
+
+    resizeHandle.addEventListener('mousedown', onMouseDown);
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
 
     // Add hover effects
     const closeBtn = modal.querySelector("#close-btn");
@@ -256,6 +293,7 @@
       modal.style.top = y + 'px';
       modal.style.transform = 'none';
       modal.style.webkitTransform = 'none';
+      updateResizeHandlePosition();
     };
 
     modal.addEventListener("touchstart", dragStart, { passive: false });
