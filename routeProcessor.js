@@ -145,7 +145,7 @@
       const now = new Date();
       const month = String(now.getMonth() + 1).padStart(2, '0');
       const day = String(now.getDate()).padStart(2, '0');
-      const year = String(now.getFullYear()).slice(-2);  // Get last 2 digits of year
+      const year = String(now.getFullYear()).slice(-2);
       const hour = now.getHours();
       const minute = now.getMinutes();
       // Round to nearest hour
