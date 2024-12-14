@@ -60,14 +60,9 @@
 
     fab.onclick = () => {
       fab.remove();
-      // Get the current script content and re-execute it
-      const scripts = document.querySelectorAll('script');
-      const currentScript = Array.from(scripts).find(script => script.textContent.includes('routeProcessor'));
-      if (currentScript) {
-        const newScript = document.createElement('script');
-        newScript.textContent = currentScript.textContent;
-        document.body.appendChild(newScript);
-      }
+      const script = document.createElement('script');
+      script.textContent = `(${routeProcessor.toString()})()`;
+      document.head.appendChild(script);
     };
 
     document.body.appendChild(fab);
@@ -818,7 +813,7 @@
                 </div>
                 <div>
                   <label style="display: block; margin-bottom: 8px; color: #1a202c; font-weight: 600; font-size: 14px;">Point of Action:</label>
-                  <select class="poa-select" style="width: 100%; padding: 10px 12px; border: 1px solid rgba(0,0,0,0.16); border-radius: 6px; font-size: 14px; background-color: white; cursor: pointer; color: #374151; appearance: none; background: white url('data:image/svg+xml;utf8,<svg fill="%23374151" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/></svg>') no-repeat right 12px center; background-size: 16px; transition: all 0.2s ease;" title="Select the current action being taken" onmouseover="this.style.borderColor='#2F855A'; this.style.boxShadow='0 0 0 1px #2F855A'" onmouseout="this.style.borderColor='rgba(0,0,0,0.16)'; this.style.boxShadow='none'">
+                  <select class="poa-select" style="width: 100%; padding: 10px 12px; border: 1px solid rgba(0,0,0,0.16); border-radius: 6px; font-size: 14px; background-color: white; cursor: pointer; color: #374151; appearance: none; background: white url('data:image/svg+xml;charset=utf-8,%3Csvg%20width%3D%2224%22%20height%3D%2224%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20d%3D%22M7%2010l5%205%205-5%22%20stroke%3D%22%23374151%22%20fill%3D%22none%22%20stroke-width%3D%222%22%2F%3E%3C%2Fsvg%3E') no-repeat right 12px center; background-size: 16px; transition: all 0.2s ease;" title="Select the current action being taken" onmouseover="this.style.borderColor='#2F855A'; this.style.boxShadow='0 0 0 1px #2F855A'" onmouseout="this.style.borderColor='rgba(0,0,0,0.16)'; this.style.boxShadow='none'">
                     <option value="">Select a point of action...</option>
                     <option value="Rescue Planned" title="A rescue has been scheduled">Rescue Planned</option>
                     <option value="Rescue Sent" title="A rescue has been dispatched">Rescue Sent</option>
