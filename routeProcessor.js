@@ -392,11 +392,9 @@
     resizeObserver.observe(modal);
 
     // Add cleanup on close button click
-    const closeBtn = modal.querySelector("#close-btn");
-    closeBtn.addEventListener("click", () => {
-      cleanup();
-    });
+    modal.querySelector("#close-btn").addEventListener("click", cleanup);
 
+    document.body.appendChild(modal);
     return modal;
   };
 
