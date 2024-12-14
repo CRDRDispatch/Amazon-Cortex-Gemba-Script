@@ -1,4 +1,4 @@
-(async function () {
+(async function routeProcessor() {
   // Check if script is already running
   if (window.__routeProcessorRunning) {
     alert("Route Processor is already running. Please close the existing modal first.");
@@ -25,7 +25,8 @@
     // Create and add FAB after cleanup
     const fab = document.createElement("button");
     fab.id = "auto-gemba-fab";
-    fab.innerHTML = `<svg style="width: 16px; height: 16px; margin-right: 8px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>Run AutoGemba`;
+    const restartIcon = encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>`);
+    fab.innerHTML = `<img src="data:image/svg+xml;utf8,${restartIcon}" style="width: 16px; height: 16px; margin-right: 8px;" alt="restart">Run AutoGemba`;
     fab.style.position = "fixed";
     fab.style.bottom = "36px";
     fab.style.right = "20px";
@@ -59,9 +60,14 @@
 
     fab.onclick = () => {
       fab.remove();
-      const script = document.createElement("script");
-      script.src = "routeProcessor.js";
-      document.body.appendChild(script);
+      // Get the current script content and re-execute it
+      const scripts = document.querySelectorAll('script');
+      const currentScript = Array.from(scripts).find(script => script.textContent.includes('routeProcessor'));
+      if (currentScript) {
+        const newScript = document.createElement('script');
+        newScript.textContent = currentScript.textContent;
+        document.body.appendChild(newScript);
+      }
     };
 
     document.body.appendChild(fab);
