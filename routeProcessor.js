@@ -71,12 +71,42 @@
     const modal = createModal();
     const startBtn = modal.querySelector("#start-btn");
     const progressSection = modal.querySelector("#progress-section");
+    const daSelectionSection = modal.querySelector("#da-selection-section");
+    const previewSection = modal.querySelector("#preview-section");
+    const dspProgressSection = modal.querySelector("#dsp-progress-section");
+    const progressDetails = modal.querySelector("#progress-details");
+    const daNextBtn = modal.querySelector("#da-next-btn");
+    const previewNextBtn = modal.querySelector("#preview-next-btn");
+    const backBtn = modal.querySelector("#back-btn");
+    const progressBackBtn = modal.querySelector("#progress-back-btn");
+    const downloadBtn = modal.querySelector("#download-btn");
     
     // Add click handler for start button
     startBtn.addEventListener("click", async () => {
       startBtn.style.display = "none";
       progressSection.style.display = "block";
       await processRoutes();
+    });
+
+    // Add click handlers for navigation buttons
+    daNextBtn.addEventListener("click", () => {
+      daSelectionSection.style.display = "none";
+      previewSection.style.display = "block";
+    });
+
+    previewNextBtn.addEventListener("click", () => {
+      previewSection.style.display = "none";
+      dspProgressSection.style.display = "block";
+    });
+
+    backBtn.addEventListener("click", () => {
+      previewSection.style.display = "none";
+      daSelectionSection.style.display = "block";
+    });
+
+    progressBackBtn.addEventListener("click", () => {
+      dspProgressSection.style.display = "none";
+      previewSection.style.display = "block";
     });
 
     // Store resize observer in window for cleanup
