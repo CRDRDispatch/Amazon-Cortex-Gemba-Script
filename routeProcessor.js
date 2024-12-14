@@ -2,9 +2,9 @@
   const createModal = () => {
     const modal = document.createElement("div");
     modal.id = "custom-modal";
-    modal.style.position = "fixed";
-    modal.style.top = "50%";
-    modal.style.left = "50%";
+    modal.style.position = "absolute";
+    modal.style.top = "100px";
+    modal.style.left = "100px";
     modal.style.width = "500px";
     modal.style.minWidth = "400px";
     modal.style.maxWidth = "90vw";
@@ -20,8 +20,7 @@
     modal.style.borderRadius = "16px";
     modal.style.zIndex = "10000";
     modal.style.overflow = "hidden";
-    modal.style.resize = "both";
-    modal.style.margin = "-300px 0 0 -250px";
+    modal.style.userSelect = "none";
 
     modal.innerHTML = `
       <button id="close-btn" style="position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 20px; cursor: pointer; color: #666; transition: all 0.2s ease; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background-color: rgba(248,249,250,0.8); border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.08); z-index: 10002;">✖</button>
@@ -100,87 +99,50 @@
       </div>
     `;
 
-    // Add resize handle styles
+    // Create resize handle
     const resizeHandle = document.createElement('div');
     resizeHandle.style.position = 'absolute';
     resizeHandle.style.right = '0';
     resizeHandle.style.bottom = '0';
-    resizeHandle.style.width = '24px';
-    resizeHandle.style.height = '24px';
+    resizeHandle.style.width = '15px';
+    resizeHandle.style.height = '15px';
     resizeHandle.style.cursor = 'se-resize';
-    resizeHandle.style.zIndex = '10002';
-    resizeHandle.style.userSelect = 'none';
-    resizeHandle.style.background = 'linear-gradient(135deg, transparent 50%, rgba(248,249,250,0.95) 50%)';
-    resizeHandle.style.borderRadius = '0 0 16px 0';
-    resizeHandle.style.boxShadow = 'inset -1px -1px 0 rgba(0,0,0,0.1)';
-    resizeHandle.style.display = 'flex';
-    resizeHandle.style.alignItems = 'center';
-    resizeHandle.style.justifyContent = 'center';
+    resizeHandle.style.zIndex = '10001';
 
-    // Create SVG for resize handle with diagonal lines
-    const svgContent = `
-      <svg width="12" height="12" viewBox="0 0 12 12" xmlns="http://www.w3.org/2000/svg" style="transform: translate(2px, 2px)">
-        <style>
-          .resize-line { stroke: rgba(0,0,0,0.4); stroke-width: 1.25; }
-        </style>
-        <line x1="8" y1="12" x2="12" y2="8" class="resize-line" />
-        <line x1="4" y1="12" x2="12" y2="4" class="resize-line" />
-        <line x1="0" y1="12" x2="12" y2="0" class="resize-line" />
-      </svg>
-    `;
-    resizeHandle.innerHTML = svgContent;
+    let isResizing = false;
+    let originalWidth;
+    let originalHeight;
+    let originalX;
+    let originalY;
+
+    resizeHandle.addEventListener('mousedown', (e) => {
+        isResizing = true;
+        originalWidth = modal.offsetWidth;
+        originalHeight = modal.offsetHeight;
+        originalX = e.clientX;
+        originalY = e.clientY;
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', (e) => {
+        if (!isResizing) return;
+
+        const width = originalWidth + (e.clientX - originalX);
+        const height = originalHeight + (e.clientY - originalY);
+
+        if (width >= 400 && width <= window.innerWidth * 0.9) {
+            modal.style.width = width + 'px';
+        }
+        if (height >= 400 && height <= window.innerHeight * 0.9) {
+            modal.style.height = height + 'px';
+        }
+    });
+
+    document.addEventListener('mouseup', () => {
+        isResizing = false;
+    });
 
     modal.appendChild(resizeHandle);
-
-    // Update resize handle position
-    const updateResizeHandlePosition = () => {
-        // No need to update position since it's absolute positioned
-        // Just ensure the handle is visible
-        resizeHandle.style.display = 'flex';
-    };
-
-    // Add resize functionality
-    const resize = {
-        isResizing: false,
-        startX: 0,
-        startY: 0,
-        startWidth: 0,
-        startHeight: 0
-    };
-
-    const onMouseDown = function(e) {
-        resize.isResizing = true;
-        resize.startX = e.clientX;
-        resize.startY = e.clientY;
-        resize.startWidth = modal.offsetWidth;
-        resize.startHeight = modal.offsetHeight;
-        e.stopPropagation();
-        document.body.style.cursor = 'se-resize';
-    };
-
-    const onMouseMove = function(e) {
-        if (!resize.isResizing) return;
-
-        const deltaX = e.clientX - resize.startX;
-        const deltaY = e.clientY - resize.startY;
-
-        const newWidth = Math.max(400, Math.min(resize.startWidth + deltaX, window.innerWidth * 0.9));
-        const newHeight = Math.max(300, Math.min(resize.startHeight + deltaY, window.innerHeight * 0.9));
-
-        modal.style.width = newWidth + 'px';
-        modal.style.height = newHeight + 'px';
-    };
-
-    const onMouseUp = function() {
-        if (resize.isResizing) {
-            resize.isResizing = false;
-            document.body.style.cursor = 'default';
-        }
-    };
-
-    resizeHandle.addEventListener('mousedown', onMouseDown);
-    document.addEventListener('mousemove', onMouseMove);
-    document.addEventListener('mouseup', onMouseUp);
 
     // Add hover effects
     const closeBtn = modal.querySelector("#close-btn");
@@ -294,7 +256,6 @@
       modal.style.top = y + 'px';
       modal.style.transform = 'none';
       modal.style.webkitTransform = 'none';
-      updateResizeHandlePosition();
     };
 
     modal.addEventListener("touchstart", dragStart, { passive: false });
