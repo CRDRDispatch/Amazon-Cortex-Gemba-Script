@@ -145,10 +145,14 @@
       const now = new Date();
       const month = String(now.getMonth() + 1).padStart(2, '0');
       const day = String(now.getDate()).padStart(2, '0');
-      const year = now.getFullYear();
+      const year = String(now.getFullYear()).slice(-2);  // Get last 2 digits of year
       const hour = now.getHours();
       const minute = now.getMinutes();
-      const roundedHour = `${hour % 12 || 12}:${String(minute).padStart(2, '0')}${hour >= 12 ? 'PM' : 'AM'}`;
+      // Round to nearest hour
+      const roundedHour = minute >= 30 ? 
+        `${((hour + 1) % 12) || 12}${(hour + 1) >= 12 ? 'PM' : 'AM'}` : 
+        `${hour % 12 || 12}${hour >= 12 ? 'PM' : 'AM'}`;
+      
       const formattedDate = `${month}/${day}/${year}`;
       
       // Get route information
@@ -1036,10 +1040,10 @@
           const formattedDate = `${month}/${day}/${year}`;
           
           const header = `/md\n@Present\n## CRDR UPDATE - ${formattedDate} ${roundedHour}\n\n` +
-                        `**IN PROGRESS: ${window.dspProgress.inProgress.toString().padStart(2, '0')}**\n` +
-                        `**AT RISK: ${window.dspProgress.atRisk.toString().padStart(2, '0')}**\n` +
-                        `**BEHIND: ${window.dspProgress.behind.toString().padStart(2, '0')}**\n` +
-                        `**PACKAGE PROGRESS: ${window.dspProgress.packageProgress.toString().padStart(2, '0')}%**\n\n` +
+                        `**IN PROGRESS: ${(inProgressInput?.value || dspProgress.inProgress || '0').toString().padStart(2, '0')}**\n` +
+                        `**AT RISK: ${(atRiskInput?.value || dspProgress.atRisk || '0').toString().padStart(2, '0')}**\n` +
+                        `**BEHIND: ${(behindInput?.value || dspProgress.behind || '0').toString().padStart(2, '0')}**\n` +
+                        `**PACKAGE PROGRESS: ${(packageProgressInput?.value || dspProgress.packageProgress || '0').toString().padStart(2, '0')}%**\n\n` +
                         `---\n\n`;
 
           const routeContent = behindRoutes.map((route) => {
