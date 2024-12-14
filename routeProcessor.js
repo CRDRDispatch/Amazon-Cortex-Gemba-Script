@@ -166,7 +166,7 @@
         const containers = document.querySelectorAll('#route-details > div');
         const container = Array.from(containers).find(div => {
           const h4 = div.querySelector('h4 span');
-          return h4 && h4.textContent.includes(route.routeCode);
+          return h4 && h4.textContent.includes(`${route.routeCode}:`);
         });
         
         if (!container) return `${route.routeCode}: ${associateInfo} (${route.progress})\n`;
@@ -885,7 +885,7 @@
             label.style.marginBottom = "8px";
             label.style.fontWeight = "600";
             label.style.color = "#1a202c";
-            label.style.fontFamily = "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif";
+            label.style.fontFamily = "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
             
             const select = document.createElement("select");
             select.style.width = "100%";
@@ -1053,7 +1053,7 @@
             const containers = document.querySelectorAll('#route-details > div');
             const container = Array.from(containers).find(div => {
               const h4 = div.querySelector('h4 span');
-              return h4 && h4.textContent.includes(route.routeCode);
+              return h4 && h4.textContent.includes(`${route.routeCode}:`);
             });
             
             if (!container) return `${route.routeCode}: ${associateInfo} (${route.progress})\n`;
