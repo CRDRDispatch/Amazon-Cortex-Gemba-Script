@@ -1,237 +1,4 @@
 (async function () {
-  const cleanup = () => {
-    // Remove existing modal if present
-    const existingModal = document.querySelector('#custom-modal');
-    if (existingModal) {
-      existingModal.remove();
-    }
-    
-    // Remove existing FAB if present
-    const existingFab = document.querySelector('#auto-gemba-fab');
-    if (existingFab) {
-      existingFab.remove();
-    }
-    
-    // Clean up any observers or event listeners
-    if (window.autoGembaResizeObserver) {
-      window.autoGembaResizeObserver.disconnect();
-    }
-  };
-
-  const createFab = () => {
-    const fab = document.createElement('button');
-    fab.id = 'auto-gemba-fab';
-    fab.innerHTML = 'Run AutoGemba';
-    
-    // FAB Styling
-    Object.assign(fab.style, {
-      position: 'fixed',
-      bottom: '32px',
-      right: '32px',
-      padding: '16px 24px',
-      backgroundColor: '#2F855A',
-      color: 'white',
-      border: 'none',
-      borderRadius: '12px',
-      cursor: 'pointer',
-      fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
-      fontSize: '16px',
-      fontWeight: '500',
-      boxShadow: '0 4px 6px rgba(47, 133, 90, 0.2)',
-      transition: 'all 0.2s ease',
-      zIndex: '9999',
-      userSelect: 'none'
-    });
-    
-    // Hover effects
-    fab.addEventListener('mouseover', () => {
-      fab.style.backgroundColor = '#276749';
-      fab.style.boxShadow = '0 6px 8px rgba(47, 133, 90, 0.3)';
-    });
-    
-    fab.addEventListener('mouseout', () => {
-      fab.style.backgroundColor = '#2F855A';
-      fab.style.boxShadow = '0 4px 6px rgba(47, 133, 90, 0.2)';
-    });
-    
-    // Click handler
-    fab.addEventListener('click', () => {
-      fab.remove();
-      initAutoGemba();
-    });
-    
-    document.body.appendChild(fab);
-  };
-
-  const initAutoGemba = () => {
-    // Clean up any existing instances
-    cleanup();
-    
-    // Create and show new modal
-    const modal = createModal();
-    const startBtn = modal.querySelector("#start-btn");
-    const progressSection = modal.querySelector("#progress-section");
-    const daSelectionSection = modal.querySelector("#da-selection-section");
-    const previewSection = modal.querySelector("#preview-section");
-    const dspProgressSection = modal.querySelector("#dsp-progress-section");
-    const progressDetails = modal.querySelector("#progress-details");
-    const daNextBtn = modal.querySelector("#da-next-btn");
-    const previewNextBtn = modal.querySelector("#preview-next-btn");
-    const backBtn = modal.querySelector("#back-btn");
-    const progressBackBtn = modal.querySelector("#progress-back-btn");
-    const downloadBtn = modal.querySelector("#download-btn");
-    
-    // Add click handler for start button
-    startBtn.addEventListener("click", async () => {
-      startBtn.style.display = "none";
-      progressSection.style.display = "block";
-      await processRoutes(modal);
-    });
-
-    // Add click handlers for navigation buttons
-    daNextBtn.addEventListener("click", () => {
-      daSelectionSection.style.display = "none";
-      previewSection.style.display = "block";
-    });
-
-    previewNextBtn.addEventListener("click", () => {
-      previewSection.style.display = "none";
-      dspProgressSection.style.display = "block";
-      
-      // Populate DSP progress section with gathered data
-      if (window.dspProgress) {
-        const inProgressInput = modal.querySelector('#in-progress-input');
-        const atRiskInput = modal.querySelector('#at-risk-input');
-        const behindInput = modal.querySelector('#behind-input');
-        const packageProgressInput = modal.querySelector('#package-progress-input');
-        
-        if (inProgressInput) inProgressInput.value = window.dspProgress.inProgress;
-        if (atRiskInput) atRiskInput.value = window.dspProgress.atRisk;
-        if (behindInput) behindInput.value = window.dspProgress.behind;
-        if (packageProgressInput) packageProgressInput.value = window.dspProgress.packageProgress;
-      }
-    });
-
-    backBtn.addEventListener("click", () => {
-      previewSection.style.display = "none";
-      daSelectionSection.style.display = "block";
-    });
-
-    progressBackBtn.addEventListener("click", () => {
-      dspProgressSection.style.display = "none";
-      previewSection.style.display = "block";
-    });
-
-    // Add hover effects for progress back button
-    progressBackBtn.addEventListener("mouseover", () => {
-      progressBackBtn.style.backgroundColor = "#5a6268";
-      progressBackBtn.style.boxShadow = "0 4px 6px rgba(108, 117, 125, 0.3)";
-    });
-
-    progressBackBtn.addEventListener("mouseout", () => {
-      progressBackBtn.style.backgroundColor = "#6c757d";
-      progressBackBtn.style.boxShadow = "0 2px 4px rgba(108, 117, 125, 0.2)";
-    });
-
-    // Add download button functionality
-    downloadBtn.addEventListener("click", () => {
-      const dspProgress = window.dspProgress || {};
-      const inProgressInput = modal.querySelector('#in-progress-input');
-      const atRiskInput = modal.querySelector('#at-risk-input');
-      const behindInput = modal.querySelector('#behind-input');
-      const packageProgressInput = modal.querySelector('#package-progress-input');
-      
-      // Get current date and time
-      const now = new Date();
-      const month = String(now.getMonth() + 1).padStart(2, '0');
-      const day = String(now.getDate()).padStart(2, '0');
-      const year = String(now.getFullYear()).slice(-2);
-      const hour = now.getHours();
-      const minute = now.getMinutes();
-      // Round to nearest hour
-      const roundedHour = minute >= 30 ? 
-        `${((hour + 1) % 12) || 12}${(hour + 1) >= 12 ? 'PM' : 'AM'}` : 
-        `${hour % 12 || 12}${hour >= 12 ? 'PM' : 'AM'}`;
-      
-      const formattedDate = `${month}/${day}/${year}`;
-      
-      // Get route information
-      const daDropdowns = modal.querySelector('#da-dropdowns');
-      const behindRoutes = window.behindRoutes || [];
-      
-      const routeContent = behindRoutes.map((route) => {
-        const select = daDropdowns.querySelector(`select[data-route-code="${route.routeCode}"]`);
-        const associateInfo = select ? select.value : route.associateInfo;
-        
-        const containers = document.querySelectorAll('#route-details > div');
-        const container = Array.from(containers).find(div => {
-          const h4 = div.querySelector('h4 span');
-          return h4 && h4.textContent.includes(`${route.routeCode}:`);
-        });
-        
-        if (!container) return `${route.routeCode}: ${associateInfo} (${route.progress})\n`;
-        
-        const checkedBoxes = container.querySelectorAll('input[type="checkbox"]:checked');
-        const rootCauses = Array.from(checkedBoxes).map(checkbox => {
-          if (checkbox.classList.contains('other-checkbox') && checkbox.checked) {
-            const otherInput = container.querySelector('.other-input');
-            return otherInput.value.trim() || 'Other (unspecified)';
-          }
-          return checkbox.value;
-        }).filter(Boolean);
-        
-        const rc = rootCauses.length > 0 ? rootCauses.join(', ') : 'N/A';
-        
-        const poaSelect = container.querySelector('.poa-select');
-        let poa = poaSelect ? poaSelect.value : 'N/A';
-        if (poa === 'Other') {
-          const poaOtherInput = container.querySelector('.poa-other-input');
-          poa = poaOtherInput && poaOtherInput.value.trim() || 'Other (unspecified)';
-        }
-        poa = poa || 'N/A';
-        
-        return `**${route.routeCode}** | ${associateInfo} | **${route.progress}**\nRC: ${rc}\nPOA: ${poa}\n`;
-      }).join('\n');
-      
-      const header = `/md\n@Present\n## CRDR UPDATE - ${formattedDate} ${roundedHour}\n\n` +
-                    `**IN PROGRESS: ${(inProgressInput?.value || dspProgress.inProgress || '0').toString().padStart(2, '0')}**\n` +
-                    `**AT RISK: ${(atRiskInput?.value || dspProgress.atRisk || '0').toString().padStart(2, '0')}**\n` +
-                    `**BEHIND: ${(behindInput?.value || dspProgress.behind || '0').toString().padStart(2, '0')}**\n` +
-                    `**PACKAGE PROGRESS: ${(packageProgressInput?.value || dspProgress.packageProgress || '0').toString().padStart(2, '0')}%**\n\n` +
-                    `---\n\n`;
-      
-      const fileContent = header + routeContent;
-      
-      // Create and trigger download
-      const blob = new Blob([fileContent], { type: 'text/plain' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `CRDR_Update_${formattedDate.replace(/\//g, '-')}.txt`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      
-      modal.remove();
-      createFab();
-    });
-
-    // Store resize observer in window for cleanup
-    window.autoGembaResizeObserver = new ResizeObserver(entries => {
-      for (let entry of entries) {
-        const contentAreas = entry.target.querySelectorAll('#da-dropdowns, #route-details');
-        contentAreas.forEach(area => {
-          if (area) {
-            const availableHeight = entry.contentRect.height - 200;
-            area.style.height = Math.max(200, Math.min(availableHeight, window.innerHeight * 0.7)) + 'px';
-          }
-        });
-      }
-    });
-    window.autoGembaResizeObserver.observe(modal);
-  };
-
   const createModal = () => {
     const modal = document.createElement("div");
     modal.id = "custom-modal";
@@ -256,9 +23,6 @@
     modal.style.overflow = "hidden";
     modal.style.cursor = "move";
     modal.style.transition = "width 0.2s ease, height 0.2s ease";
-    modal.style.userSelect = "none";
-    modal.style.webkitUserSelect = "none";
-    modal.style.msUserSelect = "none";
 
     modal.innerHTML = `
       <button id="close-btn" style="position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 20px; cursor: pointer; color: #666; transition: all 0.2s ease; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background-color: rgba(248,249,250,0.8); border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.08); z-index: 10002;">✖</button>
@@ -266,14 +30,14 @@
         <div style="margin-bottom: 25px; cursor: move; display: flex; justify-content: center; align-items: center;">
           <img src="https://crdrdispatch.github.io/GembaScript/Logo.svg" alt="Logo" style="height: 120px; transform: translateZ(0); filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));">
         </div>
-        <p style="text-align: center; color: #374151; margin-bottom: 25px; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; line-height: 1.5;">Please make sure you're on the full "Route" view before running. Do not interact with the page until progress is complete. Once complete you may move the modal window around and resize it as needed. Thank you.</p>
+        <p style="text-align: center; color: #374151; margin-bottom: 25px; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; line-height: 1.5;">Please make sure you're on the full "Route" view before running. Do not interact with the page until progress is complete. Once complete you may move the modal window around and resize it as needed. Thank you.</p>
         <div id="start-section" style="text-align: center; margin-bottom: 30px;">
           <button id="start-btn" style="padding: 12px 40px; background: linear-gradient(135deg, #2F855A, #276749); color: white; border: none; border-radius: 12px; cursor: pointer; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 500; font-size: 16px; box-shadow: 0 4px 6px rgba(47, 133, 90, 0.2); transition: all 0.2s ease;">Start Process</button>
         </div>
         <div id="progress-section" style="display: none; margin-bottom: 30px;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
             <div style="display: flex; align-items: center; gap: 10px;">
-              <h3 style="font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; color: #1a202c; margin: 0; font-weight: 600;">Progress</h3>
+              <h3 style="font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif; font-size: 16px; color: #1a202c; margin: 0; font-weight: 600;">Progress</h3>
               <span id="progress-status" style="display: none; font-size: 12px; padding: 3px 10px; border-radius: 20px; background-color: #4CAF50; color: white; font-weight: 500; box-shadow: 0 2px 4px rgba(76, 175, 80, 0.2);">Complete</span>
             </div>
             <button id="toggle-progress" style="background: none; border: none; color: #666; cursor: pointer; font-size: 14px; padding: 5px 10px; border-radius: 5px; transition: background-color 0.2s ease;">Hide</button>
@@ -590,7 +354,6 @@
       document.removeEventListener("mouseup", dragEnd);
       document.removeEventListener("mousemove", drag);
       modal.remove();
-      createFab();
     });
 
     // Add resize observer to handle content changes
@@ -702,12 +465,13 @@
     console.log("Completed route collection. Total routes:", routes.length);
   };
 
-  async function processRoutes(modal) {
-    try {
-      const progressSection = modal.querySelector("#progress-section");
-      const daSelectionSection = modal.querySelector("#da-selection-section");
-      const daDropdowns = modal.querySelector("#da-dropdowns");
+  const modal = createModal();
+  const downloadBtn = modal.querySelector("#download-btn");
+  const startBtn = modal.querySelector("#start-btn");
+  const progressSection = modal.querySelector("#progress-section");
 
+  async function processRoutes() {
+    try {
       updateProgress("Script started...");
 
       const isV1 = document.querySelector(".css-hkr77h")?.checked;
@@ -861,11 +625,9 @@
       updateProgress(`Found ${behindRoutes.length} routes that are behind schedule.`, true, true);
 
       if (behindRoutes.length > 0) {
-        // Clear any existing content
-        daDropdowns.innerHTML = '';
+        const daSelectionSection = modal.querySelector("#da-selection-section");
+        const daDropdowns = modal.querySelector("#da-dropdowns");
         
-        // Show DA selection section and hide progress section
-        progressSection.style.display = "none";
         daSelectionSection.style.display = "block";
 
         behindRoutes.forEach((route) => {
@@ -885,7 +647,7 @@
             label.style.marginBottom = "8px";
             label.style.fontWeight = "600";
             label.style.color = "#1a202c";
-            label.style.fontFamily = "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+            label.style.fontFamily = "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif";
             
             const select = document.createElement("select");
             select.style.width = "100%";
@@ -1040,10 +802,10 @@
           const formattedDate = `${month}/${day}/${year}`;
           
           const header = `/md\n@Present\n## CRDR UPDATE - ${formattedDate} ${roundedHour}\n\n` +
-                        `**IN PROGRESS: ${(inProgressInput?.value || dspProgress.inProgress || '0').toString().padStart(2, '0')}**\n` +
-                        `**AT RISK: ${(atRiskInput?.value || dspProgress.atRisk || '0').toString().padStart(2, '0')}**\n` +
-                        `**BEHIND: ${(behindInput?.value || dspProgress.behind || '0').toString().padStart(2, '0')}**\n` +
-                        `**PACKAGE PROGRESS: ${(packageProgressInput?.value || dspProgress.packageProgress || '0').toString().padStart(2, '0')}%**\n\n` +
+                        `**IN PROGRESS: ${window.dspProgress.inProgress.toString().padStart(2, '0')}**\n` +
+                        `**AT RISK: ${window.dspProgress.atRisk.toString().padStart(2, '0')}**\n` +
+                        `**BEHIND: ${window.dspProgress.behind.toString().padStart(2, '0')}**\n` +
+                        `**PACKAGE PROGRESS: ${window.dspProgress.packageProgress.toString().padStart(2, '0')}%**\n\n` +
                         `---\n\n`;
 
           const routeContent = behindRoutes.map((route) => {
@@ -1053,7 +815,7 @@
             const containers = document.querySelectorAll('#route-details > div');
             const container = Array.from(containers).find(div => {
               const h4 = div.querySelector('h4 span');
-              return h4 && h4.textContent.includes(`${route.routeCode}:`);
+              return h4 && h4.textContent.includes(route.routeCode);
             });
             
             if (!container) return `${route.routeCode}: ${associateInfo} (${route.progress})\n`;
@@ -1144,7 +906,6 @@
         progressBackBtn.style.boxShadow = "0 2px 4px rgba(108, 117, 125, 0.2)";
       });
 
-      const startBtn = modal.querySelector("#start-btn");
       startBtn.addEventListener("mouseover", () => {
         startBtn.style.transform = "translateY(-1px)";
         startBtn.style.boxShadow = "0 6px 8px rgba(47, 133, 90, 0.3)";
@@ -1160,7 +921,47 @@
     }
   };
 
-  // Initial cleanup and start
-  cleanup();
-  initAutoGemba();
+  // Add click handler for start button
+  startBtn.addEventListener("click", async () => {
+    startBtn.style.display = "none";
+    progressSection.style.display = "block";
+    await processRoutes();  // Start the main process
+  });
+
+  // Add next button to preview section
+  const previewNextBtn = modal.querySelector("#preview-next-btn");
+  previewNextBtn.addEventListener("click", () => {
+    modal.querySelector("#preview-section").style.display = "none";
+    modal.querySelector("#dsp-progress-section").style.display = "block";
+    
+    // Populate DSP progress section with gathered data
+    if (window.dspProgress) {
+      const inProgressInput = modal.querySelector('#in-progress-input');
+      const atRiskInput = modal.querySelector('#at-risk-input');
+      const behindInput = modal.querySelector('#behind-input');
+      const packageProgressInput = modal.querySelector('#package-progress-input');
+      
+      if (inProgressInput) inProgressInput.value = window.dspProgress.inProgress;
+      if (atRiskInput) atRiskInput.value = window.dspProgress.atRisk;
+      if (behindInput) behindInput.value = window.dspProgress.behind;
+      if (packageProgressInput) packageProgressInput.value = window.dspProgress.packageProgress;
+    }
+  });
+
+  // Add event listeners for the progress back button
+  const progressBackBtn = modal.querySelector("#progress-back-btn");
+  progressBackBtn.addEventListener("click", () => {
+    modal.querySelector("#dsp-progress-section").style.display = "none";
+    modal.querySelector("#preview-section").style.display = "block";
+  });
+
+  progressBackBtn.addEventListener("mouseover", () => {
+    progressBackBtn.style.backgroundColor = "#5a6268";
+    progressBackBtn.style.boxShadow = "0 4px 6px rgba(108, 117, 125, 0.3)";
+  });
+
+  progressBackBtn.addEventListener("mouseout", () => {
+    progressBackBtn.style.backgroundColor = "#6c757d";
+    progressBackBtn.style.boxShadow = "0 2px 4px rgba(108, 117, 125, 0.2)";
+  });
 })();
