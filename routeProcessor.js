@@ -1,4 +1,89 @@
 (async function () {
+  const cleanup = () => {
+    // Remove existing modal if present
+    const existingModal = document.querySelector('#custom-modal');
+    if (existingModal) {
+      existingModal.remove();
+    }
+    
+    // Remove existing FAB if present
+    const existingFab = document.querySelector('#auto-gemba-fab');
+    if (existingFab) {
+      existingFab.remove();
+    }
+    
+    // Clean up any observers or event listeners
+    if (window.autoGembaResizeObserver) {
+      window.autoGembaResizeObserver.disconnect();
+    }
+  };
+
+  const createFab = () => {
+    const fab = document.createElement('button');
+    fab.id = 'auto-gemba-fab';
+    fab.innerHTML = 'Run AutoGemba';
+    
+    // FAB Styling
+    Object.assign(fab.style, {
+      position: 'fixed',
+      bottom: '32px',
+      right: '32px',
+      padding: '16px 24px',
+      backgroundColor: '#2F855A',
+      color: 'white',
+      border: 'none',
+      borderRadius: '12px',
+      cursor: 'pointer',
+      fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+      fontSize: '16px',
+      fontWeight: '500',
+      boxShadow: '0 4px 6px rgba(47, 133, 90, 0.2)',
+      transition: 'all 0.2s ease',
+      zIndex: '9999',
+      userSelect: 'none'
+    });
+    
+    // Hover effects
+    fab.addEventListener('mouseover', () => {
+      fab.style.backgroundColor = '#276749';
+      fab.style.boxShadow = '0 6px 8px rgba(47, 133, 90, 0.3)';
+    });
+    
+    fab.addEventListener('mouseout', () => {
+      fab.style.backgroundColor = '#2F855A';
+      fab.style.boxShadow = '0 4px 6px rgba(47, 133, 90, 0.2)';
+    });
+    
+    // Click handler
+    fab.addEventListener('click', () => {
+      fab.remove();
+      initAutoGemba();
+    });
+    
+    document.body.appendChild(fab);
+  };
+
+  const initAutoGemba = () => {
+    // Clean up any existing instances
+    cleanup();
+    
+    // Create and show new modal
+    const modal = createModal();
+    // Store resize observer in window for cleanup
+    window.autoGembaResizeObserver = new ResizeObserver(entries => {
+      for (let entry of entries) {
+        const contentAreas = entry.target.querySelectorAll('#da-dropdowns, #route-details');
+        contentAreas.forEach(area => {
+          if (area) {
+            const availableHeight = entry.contentRect.height - 200;
+            area.style.height = Math.max(200, Math.min(availableHeight, window.innerHeight * 0.7)) + 'px';
+          }
+        });
+      }
+    });
+    window.autoGembaResizeObserver.observe(modal);
+  };
+
   const createModal = () => {
     const modal = document.createElement("div");
     modal.id = "custom-modal";
@@ -40,7 +125,7 @@
         <div id="progress-section" style="display: none; margin-bottom: 30px;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
             <div style="display: flex; align-items: center; gap: 10px;">
-              <h3 style="font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif; font-size: 16px; color: #1a202c; margin: 0; font-weight: 600;">Progress</h3>
+              <h3 style="font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; color: #1a202c; margin: 0; font-weight: 600;">Progress</h3>
               <span id="progress-status" style="display: none; font-size: 12px; padding: 3px 10px; border-radius: 20px; background-color: #4CAF50; color: white; font-weight: 500; box-shadow: 0 2px 4px rgba(76, 175, 80, 0.2);">Complete</span>
             </div>
             <button id="toggle-progress" style="background: none; border: none; color: #666; cursor: pointer; font-size: 14px; padding: 5px 10px; border-radius: 5px; transition: background-color 0.2s ease;">Hide</button>
@@ -357,6 +442,7 @@
       document.removeEventListener("mouseup", dragEnd);
       document.removeEventListener("mousemove", drag);
       modal.remove();
+      createFab();
     });
 
     // Add resize observer to handle content changes
@@ -967,4 +1053,8 @@
     progressBackBtn.style.backgroundColor = "#6c757d";
     progressBackBtn.style.boxShadow = "0 2px 4px rgba(108, 117, 125, 0.2)";
   });
+
+  // Initial cleanup and start
+  cleanup();
+  initAutoGemba();
 })();
