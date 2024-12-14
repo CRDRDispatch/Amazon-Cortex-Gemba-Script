@@ -25,9 +25,9 @@
     // Create and add FAB after cleanup
     const fab = document.createElement("button");
     fab.id = "auto-gemba-fab";
-    fab.textContent = "Run AutoGemba";
+    fab.innerHTML = `<svg style="width: 16px; height: 16px; margin-right: 8px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>Run AutoGemba`;
     fab.style.position = "fixed";
-    fab.style.bottom = "20px";
+    fab.style.bottom = "36px";
     fab.style.right = "20px";
     fab.style.padding = "16px 24px";
     fab.style.backgroundColor = "#2F855A";
@@ -41,6 +41,9 @@
     fab.style.boxShadow = "0 4px 6px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06)";
     fab.style.transition = "all 0.2s ease";
     fab.style.zIndex = "9999";
+    fab.style.display = "flex";
+    fab.style.alignItems = "center";
+    fab.style.justifyContent = "center";
 
     fab.onmouseover = () => {
       fab.style.transform = "translateY(-2px)";
