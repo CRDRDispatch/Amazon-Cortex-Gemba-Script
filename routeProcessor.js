@@ -85,7 +85,7 @@
     startBtn.addEventListener("click", async () => {
       startBtn.style.display = "none";
       progressSection.style.display = "block";
-      await processRoutes();
+      await processRoutes(modal);
     });
 
     // Add click handlers for navigation buttons
@@ -158,7 +158,7 @@
         <div style="margin-bottom: 25px; cursor: move; display: flex; justify-content: center; align-items: center;">
           <img src="https://crdrdispatch.github.io/GembaScript/Logo.svg" alt="Logo" style="height: 120px; transform: translateZ(0); filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));">
         </div>
-        <p style="text-align: center; color: #374151; margin-bottom: 25px; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; line-height: 1.5;">Please make sure you're on the full "Route" view before running. Do not interact with the page until progress is complete. Once complete you may move the modal window around and resize it as needed. Thank you.</p>
+        <p style="text-align: center; color: #374151; margin-bottom: 25px; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; line-height: 1.5;">Please make sure you're on the full "Route" view before running. Do not interact with the page until progress is complete. Once complete you may move the modal window around and resize it as needed. Thank you.</p>
         <div id="start-section" style="text-align: center; margin-bottom: 30px;">
           <button id="start-btn" style="padding: 12px 40px; background: linear-gradient(135deg, #2F855A, #276749); color: white; border: none; border-radius: 12px; cursor: pointer; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 500; font-size: 16px; box-shadow: 0 4px 6px rgba(47, 133, 90, 0.2); transition: all 0.2s ease;">Start Process</button>
         </div>
@@ -594,13 +594,12 @@
     console.log("Completed route collection. Total routes:", routes.length);
   };
 
-  const modal = createModal();
-  const downloadBtn = modal.querySelector("#download-btn");
-  const startBtn = modal.querySelector("#start-btn");
-  const progressSection = modal.querySelector("#progress-section");
-
-  async function processRoutes() {
+  async function processRoutes(modal) {
     try {
+      const progressSection = modal.querySelector("#progress-section");
+      const daSelectionSection = modal.querySelector("#da-selection-section");
+      const daDropdowns = modal.querySelector("#da-dropdowns");
+
       updateProgress("Script started...");
 
       const isV1 = document.querySelector(".css-hkr77h")?.checked;
@@ -754,9 +753,11 @@
       updateProgress(`Found ${behindRoutes.length} routes that are behind schedule.`, true, true);
 
       if (behindRoutes.length > 0) {
-        const daSelectionSection = modal.querySelector("#da-selection-section");
-        const daDropdowns = modal.querySelector("#da-dropdowns");
+        // Clear any existing content
+        daDropdowns.innerHTML = '';
         
+        // Show DA selection section and hide progress section
+        progressSection.style.display = "none";
         daSelectionSection.style.display = "block";
 
         behindRoutes.forEach((route) => {
@@ -1035,6 +1036,7 @@
         progressBackBtn.style.boxShadow = "0 2px 4px rgba(108, 117, 125, 0.2)";
       });
 
+      const startBtn = modal.querySelector("#start-btn");
       startBtn.addEventListener("mouseover", () => {
         startBtn.style.transform = "translateY(-1px)";
         startBtn.style.boxShadow = "0 6px 8px rgba(47, 133, 90, 0.3)";
@@ -1049,50 +1051,6 @@
       updateProgress("Error: " + error.message, true, true);
     }
   };
-
-  // Add click handler for start button
-  startBtn.addEventListener("click", async () => {
-    startBtn.style.display = "none";
-    progressSection.style.display = "block";
-    await processRoutes();  // Start the main process
-  });
-
-  // Add next button to preview section
-  const previewNextBtn = modal.querySelector("#preview-next-btn");
-  previewNextBtn.addEventListener("click", () => {
-    modal.querySelector("#preview-section").style.display = "none";
-    modal.querySelector("#dsp-progress-section").style.display = "block";
-    
-    // Populate DSP progress section with gathered data
-    if (window.dspProgress) {
-      const inProgressInput = modal.querySelector('#in-progress-input');
-      const atRiskInput = modal.querySelector('#at-risk-input');
-      const behindInput = modal.querySelector('#behind-input');
-      const packageProgressInput = modal.querySelector('#package-progress-input');
-      
-      if (inProgressInput) inProgressInput.value = window.dspProgress.inProgress;
-      if (atRiskInput) atRiskInput.value = window.dspProgress.atRisk;
-      if (behindInput) behindInput.value = window.dspProgress.behind;
-      if (packageProgressInput) packageProgressInput.value = window.dspProgress.packageProgress;
-    }
-  });
-
-  // Add event listeners for the progress back button
-  const progressBackBtn = modal.querySelector("#progress-back-btn");
-  progressBackBtn.addEventListener("click", () => {
-    modal.querySelector("#dsp-progress-section").style.display = "none";
-    modal.querySelector("#preview-section").style.display = "block";
-  });
-
-  progressBackBtn.addEventListener("mouseover", () => {
-    progressBackBtn.style.backgroundColor = "#5a6268";
-    progressBackBtn.style.boxShadow = "0 4px 6px rgba(108, 117, 125, 0.3)";
-  });
-
-  progressBackBtn.addEventListener("mouseout", () => {
-    progressBackBtn.style.backgroundColor = "#6c757d";
-    progressBackBtn.style.boxShadow = "0 2px 4px rgba(108, 117, 125, 0.2)";
-  });
 
   // Initial cleanup and start
   cleanup();
