@@ -1,4 +1,25 @@
 (async function () {
+  // Check if script is already running
+  if (window.__routeProcessorRunning) {
+    alert("Route Processor is already running. Please close the existing modal first.");
+    return;
+  }
+  window.__routeProcessorRunning = true;
+
+  // Add cleanup function
+  function cleanup() {
+    const existingModal = document.querySelector("#custom-modal");
+    if (existingModal) {
+      existingModal.remove();
+    }
+    window.__routeProcessorRunning = false;
+    delete window.dspProgress;
+    window.removeEventListener("unload", cleanup);
+  }
+
+  // Add cleanup on window unload
+  window.addEventListener("unload", cleanup);
+
   const createModal = () => {
     const modal = document.createElement("div");
     modal.id = "custom-modal";
@@ -369,6 +390,12 @@
         }
     });
     resizeObserver.observe(modal);
+
+    // Add cleanup on close button click
+    const closeBtn = modal.querySelector("#close-btn");
+    closeBtn.addEventListener("click", () => {
+      cleanup();
+    });
 
     return modal;
   };
@@ -918,6 +945,7 @@
     } catch (error) {
       console.error("Error in processRoutes:", error);
       updateProgress("Error: " + error.message, true, true);
+      cleanup();
     }
   };
 
