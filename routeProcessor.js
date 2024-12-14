@@ -23,6 +23,9 @@
     modal.style.overflow = "hidden";
     modal.style.cursor = "move";
     modal.style.transition = "width 0.2s ease, height 0.2s ease";
+    modal.style.userSelect = "none";
+    modal.style.webkitUserSelect = "none";
+    modal.style.msUserSelect = "none";
 
     modal.innerHTML = `
       <button id="close-btn" style="position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 20px; cursor: pointer; color: #666; transition: all 0.2s ease; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background-color: rgba(248,249,250,0.8); border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.08); z-index: 10002;">✖</button>
@@ -965,4 +968,3 @@
     progressBackBtn.style.boxShadow = "0 2px 4px rgba(108, 117, 125, 0.2)";
   });
 })();
-
