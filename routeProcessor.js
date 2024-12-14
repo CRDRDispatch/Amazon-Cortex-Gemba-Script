@@ -133,6 +133,86 @@
       progressBackBtn.style.boxShadow = "0 2px 4px rgba(108, 117, 125, 0.2)";
     });
 
+    // Add download button functionality
+    downloadBtn.addEventListener("click", () => {
+      const dspProgress = window.dspProgress || {};
+      const inProgressInput = modal.querySelector('#in-progress-input');
+      const atRiskInput = modal.querySelector('#at-risk-input');
+      const behindInput = modal.querySelector('#behind-input');
+      const packageProgressInput = modal.querySelector('#package-progress-input');
+      
+      // Get current date and time
+      const now = new Date();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      const year = now.getFullYear();
+      const hour = now.getHours();
+      const minute = now.getMinutes();
+      const roundedHour = `${hour % 12 || 12}:${String(minute).padStart(2, '0')}${hour >= 12 ? 'PM' : 'AM'}`;
+      const formattedDate = `${month}/${day}/${year}`;
+      
+      // Get route information
+      const daDropdowns = modal.querySelector('#da-dropdowns');
+      const behindRoutes = window.behindRoutes || [];
+      
+      const routeContent = behindRoutes.map((route) => {
+        const select = daDropdowns.querySelector(`select[data-route-code="${route.routeCode}"]`);
+        const associateInfo = select ? select.value : route.associateInfo;
+        
+        const containers = document.querySelectorAll('#route-details > div');
+        const container = Array.from(containers).find(div => {
+          const h4 = div.querySelector('h4 span');
+          return h4 && h4.textContent.includes(route.routeCode);
+        });
+        
+        if (!container) return `${route.routeCode}: ${associateInfo} (${route.progress})\n`;
+        
+        const checkedBoxes = container.querySelectorAll('input[type="checkbox"]:checked');
+        const rootCauses = Array.from(checkedBoxes).map(checkbox => {
+          if (checkbox.classList.contains('other-checkbox') && checkbox.checked) {
+            const otherInput = container.querySelector('.other-input');
+            return otherInput.value.trim() || 'Other (unspecified)';
+          }
+          return checkbox.value;
+        }).filter(Boolean);
+        
+        const rc = rootCauses.length > 0 ? rootCauses.join(', ') : 'N/A';
+        
+        const poaSelect = container.querySelector('.poa-select');
+        let poa = poaSelect ? poaSelect.value : 'N/A';
+        if (poa === 'Other') {
+          const poaOtherInput = container.querySelector('.poa-other-input');
+          poa = poaOtherInput && poaOtherInput.value.trim() || 'Other (unspecified)';
+        }
+        poa = poa || 'N/A';
+        
+        return `**${route.routeCode}** | ${associateInfo} | **${route.progress}**\nRC: ${rc}\nPOA: ${poa}\n`;
+      }).join('\n');
+      
+      const header = `/md\n@Present\n## CRDR UPDATE - ${formattedDate} ${roundedHour}\n\n` +
+                    `**IN PROGRESS: ${(inProgressInput?.value || dspProgress.inProgress || '0').toString().padStart(2, '0')}**\n` +
+                    `**AT RISK: ${(atRiskInput?.value || dspProgress.atRisk || '0').toString().padStart(2, '0')}**\n` +
+                    `**BEHIND: ${(behindInput?.value || dspProgress.behind || '0').toString().padStart(2, '0')}**\n` +
+                    `**PACKAGE PROGRESS: ${(packageProgressInput?.value || dspProgress.packageProgress || '0').toString().padStart(2, '0')}%**\n\n` +
+                    `---\n\n`;
+      
+      const fileContent = header + routeContent;
+      
+      // Create and trigger download
+      const blob = new Blob([fileContent], { type: 'text/markdown' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `CRDR_Update_${formattedDate.replace(/\//g, '-')}.md`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+      modal.remove();
+      createFab();
+    });
+
     // Store resize observer in window for cleanup
     window.autoGembaResizeObserver = new ResizeObserver(entries => {
       for (let entry of entries) {
