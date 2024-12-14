@@ -3,9 +3,9 @@
     const modal = document.createElement("div");
     modal.id = "custom-modal";
     modal.style.position = "fixed";
-    modal.style.top = "50%";
+    modal.style.top = "10%";
     modal.style.left = "50%";
-    modal.style.transform = "translate(-50%, -50%)";
+    modal.style.marginLeft = "-15vw";
     modal.style.width = "30vw";
     modal.style.minWidth = "400px";
     modal.style.maxWidth = "90vw";
@@ -21,7 +21,6 @@
     modal.style.zIndex = "10000";
     modal.style.overflow = "hidden";
     modal.style.resize = "both";
-    modal.style.transformOrigin = "center";
 
     modal.innerHTML = `
       <button id="close-btn" style="position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 20px; cursor: pointer; color: #666; transition: all 0.2s ease; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background-color: rgba(248,249,250,0.8); border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.08); z-index: 10002;">✖</button>
