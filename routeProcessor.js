@@ -6,9 +6,9 @@
     modal.style.top = "50%";
     modal.style.left = "50%";
     modal.style.transform = "translate(-50%, -50%)";
-    modal.style.width = "min(40vw, 500px)";
+    modal.style.width = "40vw";
     modal.style.minWidth = "400px";
-    modal.style.maxWidth = "800px";
+    modal.style.maxWidth = "90vw";
     modal.style.height = "auto";
     modal.style.maxHeight = "90vh";
     modal.style.display = "flex";
@@ -16,17 +16,15 @@
     modal.style.background = "linear-gradient(to bottom, #ffffff, #fafafa)";
     modal.style.boxShadow = "0 10px 25px rgba(0, 0, 0, 0.12), 0 4px 12px rgba(0, 0, 0, 0.08)";
     modal.style.border = "1px solid rgba(0, 0, 0, 0.1)";
-    modal.style.backdropFilter = "blur(8px)";
-    modal.style.webkitBackdropFilter = "blur(8px)";
     modal.style.padding = "25px";
     modal.style.borderRadius = "16px";
     modal.style.zIndex = "10000";
     modal.style.overflow = "hidden";
-    modal.style.cursor = "move";
+    modal.style.resize = "both";
 
     modal.innerHTML = `
-      <button id="close-btn" style="position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 20px; cursor: pointer; color: #666; transition: all 0.2s ease; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background-color: rgba(248,249,250,0.8); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); border-radius: 50%; box-shadow: 0 2px 8px rgba(0,0,0,0.08); z-index: 10002;">✖</button>
-      <div id="modal-content" style="flex: 1; overflow-y: auto; padding: 0 15px 0 0; margin-right: -15px; scrollbar-width: thin; scrollbar-color: #cbd5e0 #f8f9fa;">
+      <button id="close-btn" style="position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 20px; cursor: pointer; color: #666; transition: all 0.2s ease; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background-color: rgba(248,249,250,0.8); border-radius: 50%; box-shadow: 0 2px 8px rgba(0,0,0,0.08); z-index: 10002;">✖</button>
+      <div id="modal-content" style="flex: 1; overflow-y: auto; padding: 0 15px 0 0; margin-right: -15px; scrollbar-width: thin; scrollbar-color: #cbd5e0 #f8f9fa; min-height: 0;">
         <div style="margin-bottom: 25px; cursor: move; display: flex; justify-content: center; align-items: center;">
           <img src="https://crdrdispatch.github.io/GembaScript/Logo.svg" alt="Logo" style="height: 120px; transform: translateZ(0); filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));">
         </div>
@@ -48,7 +46,7 @@
         </div>
         <div id="da-selection-section" style="display: none; margin-bottom: 30px;">
           <h3 style="font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif; font-size: 16px; color: #1a202c; margin-bottom: 12px; font-weight: 600;">These routes have multiple DAs. Please select the DA originally assigned to the route as to avoid selecting a rescuer for the progress output.</h3>
-          <div id="da-dropdowns" style="height: calc(100vh - 450px); min-height: 200px; max-height: calc(90vh - 250px); overflow-y: auto; padding: 15px; background: rgba(248,249,250,0.8); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); border-radius: 12px; border: 1px solid rgba(0,0,0,0.06); box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
+          <div id="da-dropdowns" style="height: auto; min-height: 200px; max-height: calc(90vh - 250px); overflow-y: auto; padding: 15px; background: rgba(248,249,250,0.8); border-radius: 12px; border: 1px solid rgba(0,0,0,0.06); box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
           </div>
           <div style="margin-top: 20px; text-align: right;">
             <button id="da-next-btn" style="padding: 12px 30px; background: linear-gradient(135deg, #4CAF50, #43a047); color: white; border: none; border-radius: 12px; cursor: pointer; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 500; font-size: 15px; box-shadow: 0 4px 6px rgba(76, 175, 80, 0.2); transition: all 0.2s ease;">Next</button>
@@ -62,7 +60,7 @@
             <h3 style="font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif; font-size: 16px; color: #1a202c; margin: 0; font-weight: 600;">Route Details</h3>
             <div style="width: 80px;"></div>
           </div>
-          <div id="route-details" style="height: calc(100vh - 450px); min-height: 200px; max-height: calc(90vh - 250px); overflow-y: auto; padding: 15px; background: rgba(255,255,255,0.8); border-radius: 12px; border: 1px solid rgba(0,0,0,0.06); box-shadow: 0 1px 3px rgba(0,0,0,0.02); scrollbar-width: thin; scrollbar-color: #cbd5e0 #f8f9fa;">
+          <div id="route-details" style="height: auto; min-height: 200px; max-height: calc(90vh - 250px); overflow-y: auto; padding: 15px; background: rgba(255,255,255,0.8); border-radius: 12px; border: 1px solid rgba(0,0,0,0.06); box-shadow: 0 1px 3px rgba(0,0,0,0.02); scrollbar-width: thin; scrollbar-color: #cbd5e0 #f8f9fa;">
           </div>
           <div style="display: flex; justify-content: flex-end; margin-top: 20px;">
             <button id="preview-next-btn" style="padding: 12px 30px; background: linear-gradient(135deg, #4CAF50, #43a047); color: white; border: none; border-radius: 12px; cursor: pointer; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 500; font-size: 15px; box-shadow: 0 4px 6px rgba(76, 175, 80, 0.2); transition: all 0.2s ease;">Next</button>
@@ -114,8 +112,6 @@
     resizeHandle.style.background = 'linear-gradient(135deg, transparent 50%, rgba(248,249,250,0.95) 50%)';
     resizeHandle.style.borderRadius = '0 0 16px 0';
     resizeHandle.style.boxShadow = 'inset -1px -1px 0 rgba(0,0,0,0.1)';
-    resizeHandle.style.backdropFilter = 'blur(4px)';
-    resizeHandle.style.webkitBackdropFilter = 'blur(4px)';
     resizeHandle.style.display = 'flex';
     resizeHandle.style.alignItems = 'center';
     resizeHandle.style.justifyContent = 'center';
