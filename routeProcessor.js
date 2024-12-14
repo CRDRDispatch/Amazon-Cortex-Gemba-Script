@@ -199,11 +199,11 @@
       const fileContent = header + routeContent;
       
       // Create and trigger download
-      const blob = new Blob([fileContent], { type: 'text/markdown' });
+      const blob = new Blob([fileContent], { type: 'text/plain' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `CRDR_Update_${formattedDate.replace(/\//g, '-')}.md`;
+      a.download = `CRDR_Update_${formattedDate.replace(/\//g, '-')}.txt`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
