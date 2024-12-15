@@ -1,4 +1,76 @@
-(async function () {
+(async function routeProcessor() {
+  // Check if script is already running
+  if (window.__routeProcessorRunning) {
+    alert("Route Processor is already running. Please close the existing modal first.");
+    return;
+  }
+  window.__routeProcessorRunning = true;
+
+  // Remove existing FAB if present
+  const existingFab = document.querySelector("#auto-gemba-fab");
+  if (existingFab) {
+    existingFab.remove();
+  }
+
+  // Add cleanup function
+  function cleanup() {
+    const existingModal = document.querySelector("#custom-modal");
+    if (existingModal) {
+      existingModal.remove();
+    }
+    window.__routeProcessorRunning = false;
+    delete window.dspProgress;
+    window.removeEventListener("unload", cleanup);
+
+    // Create and add FAB after cleanup
+    const fab = document.createElement("button");
+    fab.id = "auto-gemba-fab";
+    const restartIcon = encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>`);
+    fab.innerHTML = `<img src="data:image/svg+xml;utf8,${restartIcon}" style="width: 16px; height: 16px; margin-right: 8px;" alt="restart">Run AutoGemba`;
+    fab.style.position = "fixed";
+    fab.style.bottom = "36px";
+    fab.style.right = "20px";
+    fab.style.padding = "16px 24px";
+    fab.style.backgroundColor = "#2F855A";
+    fab.style.color = "white";
+    fab.style.border = "none";
+    fab.style.borderRadius = "12px";
+    fab.style.cursor = "pointer";
+    fab.style.fontFamily = "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+    fab.style.fontSize = "16px";
+    fab.style.fontWeight = "500";
+    fab.style.boxShadow = "0 4px 6px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06)";
+    fab.style.transition = "all 0.2s ease";
+    fab.style.zIndex = "9999";
+    fab.style.display = "flex";
+    fab.style.alignItems = "center";
+    fab.style.justifyContent = "center";
+
+    fab.onmouseover = () => {
+      fab.style.transform = "translateY(-2px)";
+      fab.style.boxShadow = "0 6px 8px rgba(0, 0, 0, 0.1), 0 3px 6px rgba(0, 0, 0, 0.06)";
+      fab.style.backgroundColor = "#276749";
+    };
+
+    fab.onmouseout = () => {
+      fab.style.transform = "translateY(0)";
+      fab.style.boxShadow = "0 4px 6px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06)";
+      fab.style.backgroundColor = "#2F855A";
+    };
+
+    fab.onclick = () => {
+      fab.remove();
+      const script = document.createElement('script');
+      script.textContent = `(${routeProcessor.toString()})()`;
+      document.head.appendChild(script);
+    };
+
+    document.body.appendChild(fab);
+  }
+
+  // Add cleanup on window unload
+  window.addEventListener("unload", cleanup);
+
   const createModal = () => {
     const modal = document.createElement("div");
     modal.id = "custom-modal";
@@ -6,31 +78,31 @@
     modal.style.top = "50%";
     modal.style.left = "50%";
     modal.style.transform = "translate(-50%, -50%)";
-    modal.style.width = "min(40vw, 500px)";
+    modal.style.width = "500px";
     modal.style.minWidth = "400px";
-    modal.style.maxWidth = "800px";
-    modal.style.height = "auto";
+    modal.style.maxWidth = "90vw";
+    modal.style.height = "min-content";
+    modal.style.minHeight = "300px";
     modal.style.maxHeight = "90vh";
     modal.style.display = "flex";
     modal.style.flexDirection = "column";
     modal.style.background = "linear-gradient(to bottom, #ffffff, #fafafa)";
     modal.style.boxShadow = "0 10px 25px rgba(0, 0, 0, 0.12), 0 4px 12px rgba(0, 0, 0, 0.08)";
     modal.style.border = "1px solid rgba(0, 0, 0, 0.1)";
-    modal.style.backdropFilter = "blur(8px)";
-    modal.style.webkitBackdropFilter = "blur(8px)";
     modal.style.padding = "25px";
     modal.style.borderRadius = "16px";
     modal.style.zIndex = "10000";
     modal.style.overflow = "hidden";
     modal.style.cursor = "move";
+    modal.style.transition = "width 0.2s ease, height 0.2s ease";
 
     modal.innerHTML = `
-      <button id="close-btn" style="position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 20px; cursor: pointer; color: #666; transition: all 0.2s ease; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background-color: rgba(248,249,250,0.8); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); border-radius: 50%; box-shadow: 0 2px 8px rgba(0,0,0,0.08); z-index: 10002;">✖</button>
+      <button id="close-btn" style="position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 20px; cursor: pointer; color: #666; transition: all 0.2s ease; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background-color: rgba(248,249,250,0.8); border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.08); z-index: 10002;">✖</button>
       <div id="modal-content" style="flex: 1; overflow-y: auto; padding: 0 15px 0 0; margin-right: -15px; scrollbar-width: thin; scrollbar-color: #cbd5e0 #f8f9fa;">
         <div style="margin-bottom: 25px; cursor: move; display: flex; justify-content: center; align-items: center;">
           <img src="https://crdrdispatch.github.io/GembaScript/Logo.svg" alt="Logo" style="height: 120px; transform: translateZ(0); filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));">
         </div>
-        <p style="text-align: center; color: #374151; margin-bottom: 25px; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; line-height: 1.5;">Please make sure you're on the full Route list view before running. Do not interact with the page until progress is complete. Once complete you may move the modal window around and resize it as needed. Thank you.</p>
+        <p style="text-align: center; color: #374151; margin-bottom: 25px; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; line-height: 1.5;">Please make sure you're on the full "Route" view before running. Do not interact with the page until progress is complete. Once complete you may move the modal window around and resize it as needed. Thank you.</p>
         <div id="start-section" style="text-align: center; margin-bottom: 30px;">
           <button id="start-btn" style="padding: 12px 40px; background: linear-gradient(135deg, #2F855A, #276749); color: white; border: none; border-radius: 12px; cursor: pointer; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 500; font-size: 16px; box-shadow: 0 4px 6px rgba(47, 133, 90, 0.2); transition: all 0.2s ease;">Start Process</button>
         </div>
@@ -48,7 +120,7 @@
         </div>
         <div id="da-selection-section" style="display: none; margin-bottom: 30px;">
           <h3 style="font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif; font-size: 16px; color: #1a202c; margin-bottom: 12px; font-weight: 600;">These routes have multiple DAs. Please select the DA originally assigned to the route as to avoid selecting a rescuer for the progress output.</h3>
-          <div id="da-dropdowns" style="height: calc(100vh - 450px); min-height: 200px; max-height: calc(90vh - 250px); overflow-y: auto; padding: 15px; background: rgba(248,249,250,0.8); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); border-radius: 12px; border: 1px solid rgba(0,0,0,0.06); box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
+          <div id="da-dropdowns" style="height: calc(100vh - 450px); min-height: 200px; max-height: calc(90vh - 250px); overflow-y: auto; padding: 15px; background: rgba(248,249,250,0.8); border-radius: 12px; border: 1px solid rgba(0,0,0,0.06); box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
           </div>
           <div style="margin-top: 20px; text-align: right;">
             <button id="da-next-btn" style="padding: 12px 30px; background: linear-gradient(135deg, #4CAF50, #43a047); color: white; border: none; border-radius: 12px; cursor: pointer; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 500; font-size: 15px; box-shadow: 0 4px 6px rgba(76, 175, 80, 0.2); transition: all 0.2s ease;">Next</button>
@@ -106,19 +178,18 @@
     resizeHandle.style.position = 'absolute';
     resizeHandle.style.right = '0';
     resizeHandle.style.bottom = '0';
-    resizeHandle.style.width = '24px';
-    resizeHandle.style.height = '24px';
+    resizeHandle.style.width = '32px';
+    resizeHandle.style.height = '32px';
     resizeHandle.style.cursor = 'se-resize';
     resizeHandle.style.zIndex = '10002';
     resizeHandle.style.userSelect = 'none';
     resizeHandle.style.background = 'linear-gradient(135deg, transparent 50%, rgba(248,249,250,0.95) 50%)';
     resizeHandle.style.borderRadius = '0 0 16px 0';
     resizeHandle.style.boxShadow = 'inset -1px -1px 0 rgba(0,0,0,0.1)';
-    resizeHandle.style.backdropFilter = 'blur(4px)';
-    resizeHandle.style.webkitBackdropFilter = 'blur(4px)';
     resizeHandle.style.display = 'flex';
     resizeHandle.style.alignItems = 'center';
     resizeHandle.style.justifyContent = 'center';
+    resizeHandle.style.touchAction = 'none';
 
     // Create SVG for resize handle with diagonal lines
     const svgContent = `
@@ -148,7 +219,26 @@
         startX: 0,
         startY: 0,
         startWidth: 0,
-        startHeight: 0
+        startHeight: 0,
+        rafId: null
+    };
+
+    const updateModalSize = (newWidth, newHeight) => {
+        // Cache DOM queries
+        const contentAreas = modal.querySelectorAll('#da-dropdowns, #route-details');
+        
+        // Apply new dimensions using transform for better performance
+        modal.style.width = `${newWidth}px`;
+        modal.style.height = `${newHeight}px`;
+
+        // Update content areas
+        const availableHeight = newHeight - 200;
+        const maxHeight = Math.min(availableHeight, window.innerHeight * 0.7);
+        contentAreas.forEach(area => {
+            if (area) {
+                area.style.height = `${Math.max(200, maxHeight)}px`;
+            }
+        });
     };
 
     const onMouseDown = function(e) {
@@ -159,25 +249,46 @@
         resize.startHeight = modal.offsetHeight;
         e.stopPropagation();
         document.body.style.cursor = 'se-resize';
+        
+        // Cancel any existing animation frame
+        if (resize.rafId) {
+            cancelAnimationFrame(resize.rafId);
+        }
     };
 
     const onMouseMove = function(e) {
         if (!resize.isResizing) return;
 
-        const deltaX = e.clientX - resize.startX;
-        const deltaY = e.clientY - resize.startY;
+        // Cancel previous frame if it exists
+        if (resize.rafId) {
+            cancelAnimationFrame(resize.rafId);
+        }
 
-        const newWidth = Math.max(400, Math.min(resize.startWidth + deltaX, window.innerWidth * 0.9));
-        const newHeight = Math.max(300, Math.min(resize.startHeight + deltaY, window.innerHeight * 0.9));
+        // Schedule new frame
+        resize.rafId = requestAnimationFrame(() => {
+            const deltaX = e.clientX - resize.startX;
+            const deltaY = e.clientY - resize.startY;
 
-        modal.style.width = newWidth + 'px';
-        modal.style.height = newHeight + 'px';
+            const newWidth = Math.max(400, Math.min(resize.startWidth + deltaX, window.innerWidth * 0.9));
+            const newHeight = Math.max(300, Math.min(resize.startHeight + deltaY, window.innerHeight * 0.9));
+
+            updateModalSize(newWidth, newHeight);
+        });
+
+        // Prevent text selection during resize
+        e.preventDefault();
     };
 
     const onMouseUp = function() {
         if (resize.isResizing) {
             resize.isResizing = false;
             document.body.style.cursor = 'default';
+            
+            // Cancel any pending animation frame
+            if (resize.rafId) {
+                cancelAnimationFrame(resize.rafId);
+                resize.rafId = null;
+            }
         }
     };
 
@@ -319,24 +430,22 @@
 
     // Add resize observer to handle content changes
     const resizeObserver = new ResizeObserver(entries => {
-      for (let entry of entries) {
-        const modalContent = entry.target;
-        const modal = modalContent.parentElement;
-        if (modal) {
-          const viewportHeight = window.innerHeight;
-          const modalHeight = modal.offsetHeight;
-          if (modalHeight > viewportHeight * 0.9) {
-            modal.style.height = '90vh';
-          } else {
-            modal.style.height = 'auto';
-          }
+        for (let entry of entries) {
+            const contentAreas = entry.target.querySelectorAll('#da-dropdowns, #route-details');
+            contentAreas.forEach(area => {
+                if (area) {
+                    const availableHeight = entry.contentRect.height - 200;
+                    area.style.height = Math.max(200, Math.min(availableHeight, window.innerHeight * 0.7)) + 'px';
+                }
+            });
         }
-      }
     });
+    resizeObserver.observe(modal);
 
-    const modalContent = modal.querySelector('#modal-content');
-    resizeObserver.observe(modalContent);
+    // Add cleanup on close button click
+    modal.querySelector("#close-btn").addEventListener("click", cleanup);
 
+    document.body.appendChild(modal);
     return modal;
   };
 
@@ -704,7 +813,7 @@
                 </div>
                 <div>
                   <label style="display: block; margin-bottom: 8px; color: #1a202c; font-weight: 600; font-size: 14px;">Point of Action:</label>
-                  <select class="poa-select" style="width: 100%; padding: 10px 12px; border: 1px solid rgba(0,0,0,0.16); border-radius: 6px; font-size: 14px; background-color: white; cursor: pointer; color: #374151; appearance: none; background-image: url('data:image/svg+xml;charset=US-ASCII,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%23374151" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>'); background-repeat: no-repeat; background-position: right 12px center; background-size: 16px; transition: all 0.2s ease;" title="Select the current action being taken" onmouseover="this.style.borderColor='#2F855A'; this.style.boxShadow='0 0 0 1px #2F855A'" onmouseout="this.style.borderColor='rgba(0,0,0,0.16)'; this.style.boxShadow='none'">
+                  <select class="poa-select" style="width: 100%; padding: 10px 12px; border: 1px solid rgba(0,0,0,0.16); border-radius: 6px; font-size: 14px; background-color: white; cursor: pointer; color: #374151; appearance: none; background: white url('data:image/svg+xml;charset=utf-8,%3Csvg%20width%3D%2224%22%20height%3D%2224%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20d%3D%22M7%2010l5%205%205-5%22%20stroke%3D%22%23374151%22%20fill%3D%22none%22%20stroke-width%3D%222%22%2F%3E%3C%2Fsvg%3E') no-repeat right 12px center; background-size: 16px; transition: all 0.2s ease;" title="Select the current action being taken" onmouseover="this.style.borderColor='#2F855A'; this.style.boxShadow='0 0 0 1px #2F855A'" onmouseout="this.style.borderColor='rgba(0,0,0,0.16)'; this.style.boxShadow='none'">
                     <option value="">Select a point of action...</option>
                     <option value="Rescue Planned" title="A rescue has been scheduled">Rescue Planned</option>
                     <option value="Rescue Sent" title="A rescue has been dispatched">Rescue Sent</option>
@@ -885,6 +994,7 @@
     } catch (error) {
       console.error("Error in processRoutes:", error);
       updateProgress("Error: " + error.message, true, true);
+      cleanup();
     }
   };
 
