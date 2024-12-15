@@ -875,7 +875,7 @@
             `${hour === 12 ? 12 : hour - 12}PM` : 
             `${hour === 0 ? 12 : hour}AM`;
           
-          const formattedDate = `${month}/${day}/${year}`;
+          const formattedDate = `${month}-${day}-${year}`;
           
           const header = `/md\n@Present\n## LELT UPDATE - ${formattedDate} ${roundedHour}\n\n` +
                         `**IN PROGRESS: ${window.dspProgress.inProgress.toString().padStart(2, '0')}**\n` +
@@ -925,7 +925,7 @@
 
           const link = document.createElement("a");
           link.href = blobURL;
-          link.download = "behind_routes.txt";
+          link.download = `LELT UPDATE - ${formattedDate.replace(/\//g, '-')} ${roundedHour}.txt`;
           link.click();
           URL.revokeObjectURL(blobURL);
         };
